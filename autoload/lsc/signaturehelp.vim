@@ -47,20 +47,28 @@ function! s:ShowHelp(signatureHelp) abort
   endif
 
   if !has_key(l:signature, 'parameters')
-    call lsc#util#displayAsPreview([l:signature.label], &filetype,
-        \ function('<SID>HighlightCurrentParameter'))
-    return
+      call popup_atcursor(l:signature.label, {})
+      "call lsc#util#displayAsPreview([l:signature.label], &filetype, function('<SID>HighlightCurrentParameter'))
+      return
   endif
 
+  let s:active_param_len = 0
   if has_key(a:signatureHelp, 'activeParameter')
     let l:active_parameter = a:signatureHelp.activeParameter
-    if l:active_parameter < len(l:signature.parameters)
-        \ && has_key(l:signature.parameters[l:active_parameter], 'label')
+    if l:active_parameter < len(l:signature.parameters) && has_key(l:signature.parameters[l:active_parameter], 'label')
       let s:current_parameter = l:signature.parameters[l:active_parameter].label
+      let s:active_param_len = len(s:current_parameter)
+      let s:active_param_start_pos = stridx(l:signature.label, s:current_parameter) + 1
     endif
   endif
-
-  call lsc#util#displayAsPreview([l:signature.label], &filetype,
-      \ function('<SID>HighlightCurrentParameter'))
+  let popup_id = popup_atcursor(l:signature.label, {})
+  let popup_win_id = winbufnr(popup_id)
+  call prop_type_delete('signature')
+  call prop_type_add('signature', {'bufnr': popup_win_id ,'highlight': 'PmenuSel'})
+  if s:active_param_len > 0
+      call prop_add(1, s:active_param_start_pos, {'bufnr': popup_win_id, 'type': 'signature', 'length': s:active_param_len})
+  endif
+  "call lsc#util#displayAsPreview([l:signature.label], &filetype,
+  "    \ function('<SID>HighlightCurrentParameter'))
 
 endfunction
