@@ -12,6 +12,7 @@ function! lsc#complete#insertCharPre() abort
 endfunction
 
 function! lsc#complete#textChanged() abort
+  call lsc#signaturehelp#getSignatureHelp()
   if &paste | return | endif
   if !g:lsc_enable_autocomplete | return | endif
   " This may be <BS> or similar if not due to a character typed
