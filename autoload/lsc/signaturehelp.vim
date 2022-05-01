@@ -1,6 +1,7 @@
 if !exists('s:initialized')
   let s:current_parameter = ''
   let s:initialized = v:true
+  let s:popup_id = -1
 endif
 
 function! lsc#signaturehelp#getSignatureHelp() abort
@@ -47,7 +48,8 @@ function! s:ShowHelp(signatureHelp) abort
   endif
 
   if !has_key(l:signature, 'parameters')
-      call popup_atcursor(l:signature.label, {})
+      call popup_close(s:popup_id)
+      let s:popup_id = popup_atcursor(l:signature.label, {})
       "call lsc#util#displayAsPreview([l:signature.label], &filetype, function('<SID>HighlightCurrentParameter'))
       return
   endif
@@ -61,8 +63,9 @@ function! s:ShowHelp(signatureHelp) abort
       let s:active_param_start_pos = stridx(l:signature.label, s:current_parameter) + 1
     endif
   endif
-  let popup_id = popup_atcursor(l:signature.label, {})
-  let popup_win_id = winbufnr(popup_id)
+  call popup_close(s:popup_id)
+  let s:popup_id = popup_atcursor(l:signature.label, {})
+  let popup_win_id = winbufnr(s:popup_id)
   call prop_type_delete('signature')
   call prop_type_add('signature', {'bufnr': popup_win_id ,'highlight': 'PmenuSel'})
   if s:active_param_len > 0
