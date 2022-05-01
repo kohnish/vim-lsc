@@ -22,7 +22,8 @@ function! lsc#complete#textChanged() abort
 endfunction
 
 function! s:typedCharacter() abort
-  if s:isTrigger(s:next_char) || s:isCompletable()
+  "if s:isTrigger(s:next_char) || s:isCompletable()
+  if s:isCompletable()
     call s:startCompletion(v:true)
   endif
 endfunction
