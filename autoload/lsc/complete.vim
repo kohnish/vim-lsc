@@ -65,10 +65,13 @@ function! s:isCompletable() abort
     let l:len_word = len(l:word)
     if l:len_word > 2
         let l:last_chars = trim(l:word[l:len_word - 2 : l:len_word - 1])
+        let l:banned_chars = [';', '{', '}', ',', '(', ')', '+']
         if len(l:last_chars) > 1
-            if l:last_chars[0] == '{' || l:last_chars[1] == '{' || l:last_chars[0] == '}' || l:last_chars[1] == '}' || l:last_chars[0] == ',' || l:last_chars[1] == ',' || l:last_chars[0] == '(' || l:last_chars[1] == '(' || l:last_chars[0] == ')' || l:last_chars[1] == ')'
-                return v:false
-            endif
+            for i in l:banned_chars
+                if l:last_chars[0] == i || l:last_chars[1] == i
+                    return v:false
+                endif
+            endfor
             return v:true
         endif
     endif
