@@ -61,19 +61,20 @@ augroup END
 "
 " Minimum length can be configured with `g:lsc_autocomplete_length`.
 function! s:isCompletable() abort
-    let l:word = trim(getline("."))
-    let l:len_word = len(l:word)
-    if l:len_word > 2
-        let l:last_chars = trim(l:word[l:len_word - 2 : l:len_word - 1])
-        let l:banned_chars = [';', '{', '}', ',', '(', ')', '+']
-        if len(l:last_chars) > 1
-            for i in l:banned_chars
-                if l:last_chars[0] == i || l:last_chars[1] == i
-                    return v:false
-                endif
-            endfor
-            return v:true
-        endif
+    let l:pos = col(".")
+    let l:line = getline(".")
+    let l:surr_chars = ""
+    if len(l:line) > 2
+        let l:surr_chars =  l:line[l:pos - 4 : l:pos - 2]
+    endif
+    if len(trim(l:surr_chars)) > 2
+       let l:banned_chars = [';', '{', '}', ',', '(', ')', '+']
+       for i in l:banned_chars
+           if l:surr_chars[0] == i || l:surr_chars[1] == i || l:surr_chars[2] == i
+               return v:false
+           endif
+       endfor
+       return v:true
     endif
     return v:false
   "if exists('b:lsc_is_completing') && b:lsc_is_completing
