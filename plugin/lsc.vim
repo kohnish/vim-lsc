@@ -112,7 +112,7 @@ augroup LSC
   " fired such as `:split` and `:lopen` so `WinEnter` is used as a fallback with
   " a block to ensure it only happens once.
   autocmd BufEnter * call LSCEnsureCurrentWindowState()
-  autocmd WinEnter * call timer_start(1, function('<SID>OnWinEnter'))
+  "autocmd WinEnter * call timer_start(1, function('<SID>OnWinEnter'))
 
   " Window local state is only correctly maintained for the current tab.
   autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
@@ -126,7 +126,7 @@ augroup LSC
 
   "autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
   autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onMove')
-  autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
+  "autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
   autocmd WinLeave,InsertEnter * call <SID>IfEnabled('lsc#cursor#clean')
   autocmd User LSCOnChangesFlushed
       \ call <SID>IfEnabled('lsc#cursor#onChangesFlushed')
@@ -171,7 +171,7 @@ function! LSCEnsureCurrentWindowState() abort
   endif
   call lsc#diagnostics#updateCurrentWindow()
   call lsc#highlights#update()
-  call lsc#cursor#onWinEnter()
+  "call lsc#cursor#onWinEnter()
 endfunction
 
 " Run `function` if LSC is enabled for the current filetype.
@@ -224,7 +224,7 @@ if !hlexists('lscDiagnosticHint')
   highlight link lscDiagnosticHint SpellCap
 endif
 if !hlexists('lscReference')
-  highlight link lscReference CursorColumn
+  highlight link lscReference CtrlPMatch
 endif
 if !hlexists('lscCurrentParameter')
   highlight link lscCurrentParameter CursorColumn
