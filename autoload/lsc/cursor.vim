@@ -6,7 +6,7 @@ endif
 
 function! lsc#cursor#onMove() abort
   call lsc#cursor#showDiagnostic()
-  "call s:HighlightReferences(v:false)
+  call s:HighlightReferences(v:false)
 endfunction
 
 function! lsc#cursor#onWinEnter() abort
