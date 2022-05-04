@@ -260,7 +260,7 @@ function! s:openHoverPopup(lines, filetype) abort
     " Close the floating window upon a cursor move.
     " vint: -ProhibitAutocmdWithNoGroup
     " https://github.com/Kuniwak/vint/issues/285
-    autocmd CursorMoved <buffer> ++once call s:closeHoverPopup()
+    "autocmd CursorMoved <buffer> ++once call s:closeHoverPopup()
     " vint: +ProhibitAutocmdWithNoGroup
     " Also close the floating window when focussed into with the escape key.
     call nvim_buf_set_keymap(l:buf, 'n', '<Esc>', ':close<CR>', {})
