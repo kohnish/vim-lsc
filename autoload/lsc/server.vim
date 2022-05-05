@@ -272,7 +272,7 @@ function! lsc#server#register(filetype, config) abort
       \}
   let l:server.languageId[a:filetype] = l:languageId
   function! l:server.request(method, params, callback, ...) abort
-    if l:self.status !=# 'running' | return v:false | endif
+    "if l:self.status !=# 'running' | return v:false | endif
     let l:params = lsc#config#messageHook(l:self, a:method, a:params)
     if l:params is lsc#config#skip() | return v:false | endif
     let l:Callback = lsc#config#responseHook(l:self, a:method, a:callback)
