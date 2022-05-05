@@ -112,7 +112,7 @@ augroup LSC
   " fired such as `:split` and `:lopen` so `WinEnter` is used as a fallback with
   " a block to ensure it only happens once.
   autocmd BufEnter * call LSCEnsureCurrentWindowState()
-  "autocmd WinEnter * call timer_start(1, function('<SID>OnWinEnter'))
+  autocmd WinEnter * call timer_start(1, function('<SID>OnWinEnter'))
 
   " Window local state is only correctly maintained for the current tab.
   autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
