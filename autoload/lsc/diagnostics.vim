@@ -367,6 +367,49 @@ function! lsc#diagnostics#underCursor() abort
   return l:closest_diagnostic
 endfunction
 
+function! lsc#diagnostics#hover() abort
+  let l:file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
+  let l:line = line('.')
+  let l:diag_msg = ""
+
+  if !has_key(l:file_diagnostics, l:line)
+    if l:line != line('$') | return | endif
+    " Find a diagnostic reported after the end of the file
+    for l:diagnostic_line in keys(l:file_diagnostics)
+      if l:diagnostic_line > l:line
+        let l:diag_msg = l:file_diagnostics[l:diagnostic_line][0]
+      endif
+    endfor
+    return
+  endif
+
+  let l:diagnostics = l:file_diagnostics[l:line]
+  let l:col = col('.')
+  let l:closest_diagnostic = {}
+  let l:closest_distance = -1
+  let l:closest_is_within = v:false
+  for l:diagnostic in l:file_diagnostics[l:line]
+    let l:range = l:diagnostic.range
+    let l:is_within = l:range.start.character < l:col &&
+        \ (l:range.end.line >= l:line || l:range.end.character > l:col)
+    if l:closest_is_within && !l:is_within
+      continue
+    endif
+    let l:distance = abs(l:range.start.character - l:col)
+    if l:closest_distance < 0 || l:distance < l:closest_distance
+      let l:closest_diagnostic = l:diagnostic
+      let l:closest_distance = l:distance
+      let l:closest_is_within = l:is_within
+    endif
+  endfor
+  if len(l:closest_distance) > 0
+    let l:diag_msg = l:closest_diagnostic
+  endif
+  if has_key(l:diag_msg,"message")
+    call popup_atcursor(split(l:diag_msg["message"], "\n"), {})
+  endif
+endfunction
+
 " Returns the original LSP representation of diagnostics on a zero-indexed line.
 function! lsc#diagnostics#forLine(file, line) abort
   let l:result = []
