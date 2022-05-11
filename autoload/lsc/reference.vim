@@ -115,12 +115,22 @@ function! s:QuickFixItem(location) abort
   return l:item
 endfunction
 
+function s:focus_if_open(filename) abort
+    for buf in getbufinfo()
+        if buf.loaded && buf.name == a:filename && len(buf.windows) > 0
+            keepjumps call win_gotoid(buf.windows[0])
+            return
+        endif
+    endfor
+endfunction
+
 function! s:goTo(file, line, character, mods, issplit) abort
+  call s:focus_if_open(a:file)
   let l:prev_buf = bufnr('%')
   if a:issplit || a:file !=# lsc#file#fullPath()
     let l:cmd = 'edit'
-    if a:issplit
-      let l:cmd = lsc#file#bufnr(a:file) == -1 ? 'split' : 'sbuffer'
+    if &modified
+      let l:cmd = 'vsplit'
     endif
     let l:relative_path = fnamemodify(a:file, ':~:.')
     exec a:mods l:cmd fnameescape(l:relative_path)
