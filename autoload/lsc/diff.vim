@@ -29,58 +29,60 @@ function! lsc#diff#compute(old, new) abort
   return l:result
 endfunction
 
-let s:has_lua = has('lua') || has('nvim-0.4.0')
+"let s:has_lua = has('lua') || has('nvim-0.4.0')
 " neovim, and recent vim use 1-index in lua
 " older vim without patch-8.2.1066 lists use 0-index
-let s:lua_array_start_index = has('nvim-0.4.0') || has('patch-8.2.1066')
+"let s:lua_array_start_index = has('nvim-0.4.0') || has('patch-8.2.1066')
 
-if s:has_lua && !exists('s:lua')
-  function! s:DefLua() abort
-    lua <<EOF
-    -- Returns a zero-based index of the last line that is different between
-    -- old and new. If old and new are not zero indexed, pass offset to indicate
-    -- the index base.
-    function lsc_last_difference(old, new, offset)
-      local length = math.min(#old, #new)
-      for i = 0, length - 1 do
-        if old[#old - i + offset] ~= new[#new - i + offset] then
-          return -1 * i
-        end
-      end
-      return -1 * length
-    end
-    -- Returns a zero-based index of the first line that is different between
-    -- old and new. If old and new are not zero indexed, pass offset to indicate
-    -- the index base.
-    function lsc_first_difference(old, new, offset)
-      local length = math.min(#old, #new)
-      for i = 0, length - 1 do
-        if old[i + offset] ~= new[i + offset] then
-          return i
-        end
-      end
-      return length - 1
-    end
-EOF
-  endfunction
-  call s:DefLua()
-endif
-let s:lua = 1
+"if s:has_lua && !exists('s:lua')
+"  function! s:DefLua() abort
+"    lua <<EOF
+"    -- Returns a zero-based index of the last line that is different between
+"    -- old and new. If old and new are not zero indexed, pass offset to indicate
+"    -- the index base.
+"    function lsc_last_difference(old, new, offset)
+"      local length = math.min(#old, #new)
+"      for i = 0, length - 1 do
+"        if old[#old - i + offset] ~= new[#new - i + offset] then
+"          return -1 * i
+"        end
+"      end
+"      return -1 * length
+"    end
+"    -- Returns a zero-based index of the first line that is different between
+"    -- old and new. If old and new are not zero indexed, pass offset to indicate
+"    -- the index base.
+"    function lsc_first_difference(old, new, offset)
+"      local length = math.min(#old, #new)
+"      for i = 0, length - 1 do
+"        if old[i + offset] ~= new[i + offset] then
+"          return i
+"        end
+"      end
+"      return length - 1
+"    end
+"EOF
+"  endfunction
+"  call s:DefLua()
+"endif
+"let s:lua = 1
 
 " Finds the line and character of the first different character between two
 " list of Strings.
 function! s:FirstDifference(old, new) abort
   let l:line_count = min([len(a:old), len(a:new)])
   if l:line_count == 0 | return [0, 0] | endif
-  if s:has_lua
-    let l:eval = has('nvim') ? 'vim.api.nvim_eval' : 'vim.eval'
-    let l:i = float2nr(luaeval('lsc_first_difference('
-        \.l:eval.'("a:old"),'.l:eval.'("a:new"),'.s:lua_array_start_index.')'))
-  else
-    for l:i in range(l:line_count)
-      if a:old[l:i] !=# a:new[l:i] | break | endif
-    endfor
-  endif
+  "if s:has_lua
+  "  let l:eval = has('nvim') ? 'vim.api.nvim_eval' : 'vim.eval'
+  "  let l:i = float2nr(luaeval('lsc_first_difference('
+  "      \.l:eval.'("a:old"),'.l:eval.'("a:new"),'.s:lua_array_start_index.')'))
+  "else
+  "  for l:i in range(l:line_count)
+  "    if a:old[l:i] !=# a:new[l:i] | break | endif
+  "  endfor
+  "endif
+  let l:i = float2nr(g:Vim9_lsc_first_difference(a:old, a:new, 0))
+
   if l:i >= l:line_count
     return [l:line_count - 1, strchars(a:old[l:line_count - 1])]
   endif
@@ -100,15 +102,16 @@ endfunction
 function! s:LastDifference(old, new, start_char) abort
   let l:line_count = min([len(a:old), len(a:new)])
   if l:line_count == 0 | return [0, 0] | endif
-  if s:has_lua
-    let l:eval = has('nvim') ? 'vim.api.nvim_eval' : 'vim.eval'
-    let l:i = float2nr(luaeval('lsc_last_difference('
-        \.l:eval.'("a:old"),'.l:eval.'("a:new"),'.l:eval.'("has(\"nvim\")"))'))
-  else
-    for l:i in range(-1, -1 * l:line_count, -1)
-      if a:old[l:i] !=# a:new[l:i] | break | endif
-    endfor
-  endif
+  "if s:has_lua
+  "  let l:eval = has('nvim') ? 'vim.api.nvim_eval' : 'vim.eval'
+  "  let l:i = float2nr(luaeval('lsc_last_difference('
+  "      \.l:eval.'("a:old"),'.l:eval.'("a:new"),'.l:eval.'("has(\"nvim\")"))'))
+  "else
+  "  for l:i in range(-1, -1 * l:line_count, -1)
+  "    if a:old[l:i] !=# a:new[l:i] | break | endif
+  "  endfor
+  "endif
+  let l:i = float2nr(g:Vim9_lsc_last_difference(a:old, a:new, -1))
   if l:i <= -1 * l:line_count
     let l:i = -1 * l:line_count
     let l:old_line = strcharpart(a:old[l:i], a:start_char)
