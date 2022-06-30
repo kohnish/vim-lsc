@@ -132,43 +132,17 @@ endfunction
 " Flushes only if `onChange` had previously been called for the file and those
 " changes aren't flushed yet, and the file is tracked by at least one server.
 function! s:FlushIfChanged(file_path, filetype) abort
-  " Buffer may not have any pending changes to flush.
-  if !has_key(s:flush_timers, a:file_path) | return | endif
-  " Buffer may not be tracked with a `didOpen` call by any server yet.
-  if !has_key(s:file_versions, a:file_path) | return | endif
-  let s:file_versions[a:file_path] += 1
-  if has_key(s:flush_timers, a:file_path)
+    if !has_key(s:flush_timers, a:file_path) | return | endif
+    if !has_key(s:file_versions, a:file_path) | return | endif
+
+    let s:file_versions[a:file_path] += 1
     call timer_stop(s:flush_timers[a:file_path])
     unlet s:flush_timers[a:file_path]
-  endif
-  let l:document_params = {'textDocument':
-      \   {'uri': lsc#uri#documentUri(a:file_path),
-      \    'version': s:file_versions[a:file_path],
-      \   },
-      \ }
-  let l:current_content = getbufline(lsc#file#bufnr(a:file_path), 1, '$')
-  for l:server in lsc#server#forFileType(a:filetype)
-    if l:server.status !=# 'running' | continue | endif
-    if l:server.capabilities.textDocumentSync.incremental
-      if !exists('l:incremental_params')
-        let l:old_content = s:file_content[a:file_path]
-        let l:change = lsc#diff#compute(l:old_content, l:current_content)
-        let s:file_content[a:file_path] = l:current_content
-        let l:incremental_params = copy(l:document_params)
-        let l:incremental_params.contentChanges = [l:change]
-      endif
-      let l:params = l:incremental_params
-    else
-      if !exists('l:full_params')
-        let l:full_params = copy(l:document_params)
-        let l:change = {'text': join(l:current_content, "\n")."\n"}
-        let l:full_params.contentChanges = [l:change]
-      endif
-      let l:params = l:full_params
-    endif
-      call l:server.notify('textDocument/didChange', l:params)
-  endfor
-  doautocmd <nomodeline> User LSCOnChangesFlushed
+
+    let l:server = lsc#server#forFileType(a:filetype)[0]
+    let l:params = g:Vim9_lsc9_did_change_param(s:file_versions, a:file_path, s:file_content, l:server.capabilities.textDocumentSync.incremental)
+    call l:server.notify('textDocument/didChange', l:params)
+    doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction
 
 function! lsc#file#version() abort
