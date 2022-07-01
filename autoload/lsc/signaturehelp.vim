@@ -9,10 +9,11 @@ function! lsc#signaturehelp#getSignatureHelp() abort
   let l:params = lsc#params#documentPosition()
   " TODO handle multiple servers
   let l:server = lsc#server#forFileType(&filetype)[0]
-  if has_key(l:server, "request")
+  try
     call l:server.request('textDocument/signatureHelp', l:params,
       \ lsc#util#gateResult('SignatureHelp', function('<SID>ShowHelp')))
-  endif
+  catch
+  endtry
 endfunction
 
 function! s:HighlightCurrentParameter() abort
