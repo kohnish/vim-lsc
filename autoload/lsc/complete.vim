@@ -229,7 +229,7 @@ function! s:CompletionItems(base, lsp_items) abort
     else
       continue
     endif
-    call s:FinishItem(l:lsp_item, l:vim_item)
+    call g:FinishItem(l:lsp_item, l:vim_item)
   endfor
 
   return l:prefix_case_matches + l:prefix_matches + l:substring_matches
@@ -259,97 +259,3 @@ function! s:CompletionItemWord(lsp_item) abort
   return l:item
 endfunction
 
-" Fill out the non-word fields of the vim completion item from an LSP item.
-"
-" Deprecated suggestions get a strike-through on their `abbr`.
-" The `kind` field is translated from LSP numeric values into a single letter
-" vim kind identifier.
-" The `menu` and `info` vim fields are normalized from the `detail` and
-" `documentation` LSP fields.
-function! s:FinishItem(lsp_item, vim_item) abort
-  if get(a:lsp_item, 'deprecated', v:false) ||
-      \ index(get(a:lsp_item, 'tags', []), 1) >=0
-    let a:vim_item.abbr =
-        \ substitute(a:vim_item.word, '.', "\\0\<char-0x0336>", 'g')
-  endif
-  if has_key(a:lsp_item, 'kind')
-    let a:vim_item.kind = s:CompletionItemKind(a:lsp_item.kind)
-  endif
-  if has_key(a:lsp_item, 'detail') && a:lsp_item.detail != v:null
-    let l:detail_lines = split(a:lsp_item.detail, "\n")
-    if len(l:detail_lines) > 0
-      let a:vim_item.menu = l:detail_lines[0]
-      let a:vim_item.info = a:lsp_item.detail
-    endif
-  endif
-  if has_key(a:lsp_item, 'documentation')
-    let l:documentation = a:lsp_item.documentation
-    if has_key(a:vim_item, 'info')
-      let a:vim_item.info .= "\n\n"
-    else
-      let a:vim_item.info = ''
-    endif
-    if type(l:documentation) == type('')
-      let a:vim_item.info .= l:documentation
-    elseif type(l:documentation) == type({})
-        \ && has_key(l:documentation, 'value')
-      let a:vim_item.info .= l:documentation.value
-    endif
-  endif
-endfunction
-
-function! s:CompletionItemKind(lsp_kind) abort
-  if a:lsp_kind == 1
-    return 'Text'
-  elseif a:lsp_kind == 2
-    return 'Method'
-  elseif a:lsp_kind == 3
-    return 'Function'
-  elseif a:lsp_kind == 4
-    return 'Constructor'
-  elseif a:lsp_kind == 5
-    return 'Field'
-  elseif a:lsp_kind == 6
-    return 'Variable'
-  elseif a:lsp_kind == 7
-    return 'Class'
-  elseif a:lsp_kind == 8
-    return 'Interface'
-  elseif a:lsp_kind == 9
-    return 'Module'
-  elseif a:lsp_kind == 10
-    return 'Property'
-  elseif a:lsp_kind == 11
-    return 'Unit'
-  elseif a:lsp_kind == 12
-    return 'Value'
-  elseif a:lsp_kind == 13
-    return 'Enum'
-  elseif a:lsp_kind == 14
-    return 'Keyword'
-  elseif a:lsp_kind == 15
-    return 'Snippet'
-  elseif a:lsp_kind == 16
-    return 'Color'
-  elseif a:lsp_kind == 17
-    return 'File'
-  elseif a:lsp_kind == 18
-    return 'Reference'
-  elseif a:lsp_kind == 19
-    return 'Folder'
-  elseif a:lsp_kind == 20
-    return 'EnumMember'
-  elseif a:lsp_kind == 21
-    return 'Constant'
-  elseif a:lsp_kind == 22
-    return 'Struct'
-  elseif a:lsp_kind == 23
-    return 'Event'
-  elseif a:lsp_kind == 24
-    return 'Operator'
-  elseif a:lsp_kind == 25
-    return 'TypeParameter'
-  else
-    return ''
-  endif
-endfunction
