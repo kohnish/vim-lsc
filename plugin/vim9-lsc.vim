@@ -164,3 +164,97 @@ def g:Vim9_lsc9_did_change_param(file_versions: dict<any>, file_path: string, fi
     endif
     return params
 enddef
+
+
+
+def CompletionItemKind(lsp_kind: number): string
+  if lsp_kind == 1
+    return 'Text'
+  elseif lsp_kind == 2
+    return 'Method'
+  elseif lsp_kind == 3
+    return 'Function'
+  elseif lsp_kind == 4
+    return 'Constructor'
+  elseif lsp_kind == 5
+    return 'Field'
+  elseif lsp_kind == 6
+    return 'Variable'
+  elseif lsp_kind == 7
+    return 'Class'
+  elseif lsp_kind == 8
+    return 'Interface'
+  elseif lsp_kind == 9
+    return 'Module'
+  elseif lsp_kind == 10
+    return 'Property'
+  elseif lsp_kind == 11
+    return 'Unit'
+  elseif lsp_kind == 12
+    return 'Value'
+  elseif lsp_kind == 13
+    return 'Enum'
+  elseif lsp_kind == 14
+    return 'Keyword'
+  elseif lsp_kind == 15
+    return 'Snippet'
+  elseif lsp_kind == 16
+    return 'Color'
+  elseif lsp_kind == 17
+    return 'File'
+  elseif lsp_kind == 18
+    return 'Reference'
+  elseif lsp_kind == 19
+    return 'Folder'
+  elseif lsp_kind == 20
+    return 'EnumMember'
+  elseif lsp_kind == 21
+    return 'Constant'
+  elseif lsp_kind == 22
+    return 'Struct'
+  elseif lsp_kind == 23
+    return 'Event'
+  elseif lsp_kind == 24
+    return 'Operator'
+  elseif lsp_kind == 25
+    return 'TypeParameter'
+  else
+    return ''
+  endif
+enddef
+
+# Fill out the non-word fields of the vim completion item from an LSP item.
+#
+# Deprecated suggestions get a strike-through on their `abbr`.
+# The `kind` field is translated from LSP numeric values into a single letter
+# vim kind identifier.
+# The `menu` and `info` vim fields are normalized from the `detail` and
+# `documentation` LSP fields.
+def g:FinishItem(lsp_item: dict<any>, vim_item: dict<any>): void
+    if get(lsp_item, 'deprecated', v:false) || index(get(lsp_item, 'tags', []), 1) >= 0
+        vim_item.abbr = substitute(vim_item.word, '.', "\\0\<char-0x0336>", 'g')
+    endif
+    if has_key(lsp_item, 'kind')
+        vim_item.kind = CompletionItemKind(lsp_item.kind)
+    endif
+    if has_key(lsp_item, 'detail') && lsp_item.detail != v:null
+        var detail_lines = split(lsp_item.detail, "\n")
+        if len(detail_lines) > 0
+            vim_item.menu = detail_lines[0]
+            vim_item.info = lsp_item.detail
+        endif
+    endif
+    if has_key(lsp_item, 'documentation')
+        var documentation = lsp_item.documentation
+        if has_key(vim_item, 'info')
+            vim_item.info = vim_item.info .. "\n\n"
+        else
+            vim_item.info = ''
+        endif
+        if type(documentation) == type('')
+            vim_item.info = vim_item.info .. documentation
+        elseif type(documentation) == type({}) && has_key(documentation, 'value')
+            vim_item.info = vim_item.info .. documentation.value
+        endif
+    endif
+enddef
