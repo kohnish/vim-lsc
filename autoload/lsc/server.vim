@@ -79,9 +79,11 @@ endfunction
 " Calls `OnExit` after the exit is requested. Returns `v:false` if no request
 " was made because the server is not currently running.
 function! s:Kill(server, status, OnExit) abort
-  return a:server.request('shutdown', v:null,
-      \ funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]),
-      \ {'sync': v:true})
+    try
+        return a:server.request('shutdown', v:null, funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]), {'sync': v:true})
+    catch
+        return v:false
+    endtry
 endfunction
 
 function! s:HandleShutdownResponse(server, status, OnExit, result) abort
