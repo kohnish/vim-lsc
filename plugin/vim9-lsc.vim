@@ -261,7 +261,8 @@ enddef
 
 
 var popup_id = -1
-def g:ShowHelp(signatureHelp: dict<any>): void
+# sometimes it gets special instead of dict<any> for unknown reason
+def g:ShowHelp(signatureHelp: any): void
   if empty(signatureHelp)
     #call lsc#message#show('No signature help available')
     return
@@ -318,4 +319,28 @@ def g:ShowHelp(signatureHelp: dict<any>): void
   endif
   #call lsc#util#displayAsPreview([l:signature.label], &filetype,
   #    \ function('<SID>HighlightCurrentParameter'))
+enddef
+
+ # Whether the cursor follows a minimum count of  word characters, and completion isn't already in progress.
+ # Minimum length can be configured with `g:lsc_autocomplete_length`.
+def g:IsCompletable(): bool
+    var pos = col(".")
+    var line = getline(".")
+    var surr_chars = ""
+    if len(line) > 2
+        surr_chars =  line[pos - 4 : pos - 2]
+    endif
+    if len(trim(surr_chars)) > 2
+       var banned_chars = [';', '{', '}', ',', '(', ')', '+']
+       if surr_chars[2] == ':' && surr_chars[1] != ':'
+           return false
+       endif
+       for i in banned_chars
+           if surr_chars[0] == i || surr_chars[1] == i || surr_chars[2] == i
+               return false
+           endif
+       endfor
+       return true
+    endif
+    return false
 enddef
