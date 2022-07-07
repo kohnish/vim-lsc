@@ -15,6 +15,7 @@ if !exists('s:initialized')
       \ 'WorkspaceSymbol': 'gS',
       \ 'SignatureHelp': 'gm',
       \ 'Completion': 'completefunc',
+      \ 'SwitchSourceHeader': 'gs',
       \}
   let s:skip_marker = {}
 endif
@@ -65,6 +66,7 @@ function! lsc#config#mapKeys() abort
       \ 'DocumentSymbol',
       \ 'WorkspaceSymbol',
       \ 'SignatureHelp',
+      \ 'SwitchSourceHeader',
       \] + (get(g:, 'lsc_enable_apply_edit', 1) ? ['Rename'] : [])
     let l:lhs = get(l:maps, l:command, [])
     if type(l:lhs) != type('') && type(l:lhs) != type([])

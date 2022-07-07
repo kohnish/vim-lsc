@@ -229,7 +229,7 @@ function! s:CompletionItems(base, lsp_items) abort
     else
       continue
     endif
-    call g:FinishItem(l:lsp_item, l:vim_item)
+    call g:Vim9_lsc_finish_item(l:lsp_item, l:vim_item)
   endfor
 
   return l:prefix_case_matches + l:prefix_matches + l:substring_matches
