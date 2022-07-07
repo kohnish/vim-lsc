@@ -310,7 +310,7 @@ def g:ShowHelp(signatureHelp: any): void
     endif
   endif
   popup_close(popup_id)
-  popup_id = popup_atcursor(signature.label, {})
+  popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
   var popup_win_id = winbufnr(popup_id)
   prop_type_delete('signature')
   prop_type_add('signature', {'bufnr': popup_win_id, 'highlight': 'PmenuSel'})
