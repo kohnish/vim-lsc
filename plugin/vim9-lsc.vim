@@ -230,7 +230,7 @@ enddef
 # vim kind identifier.
 # The `menu` and `info` vim fields are normalized from the `detail` and
 # `documentation` LSP fields.
-def g:FinishItem(lsp_item: dict<any>, vim_item: dict<any>): void
+def g:Vim9_lsc_finish_item(lsp_item: dict<any>, vim_item: dict<any>): void
     if get(lsp_item, 'deprecated', v:false) || index(get(lsp_item, 'tags', []), 1) >= 0
         vim_item.abbr = substitute(vim_item.word, '.', "\\0\<char-0x0336>", 'g')
     endif
@@ -344,3 +344,84 @@ def g:IsCompletable(): bool
     endif
     return false
 enddef
+
+def Os_normalize(path: string): string
+  if has('win32')
+      return substitute(path, '\\', '/', 'g')
+  endif
+  return path
+enddef
+
+def Normalize_path(original_path: string): string
+  var full_path = original_path
+  if full_path !~# '^/\|\%([c-zC-Z]:[/\\]\)'
+    full_path = getcwd() .. '/' .. full_path
+  endif
+  full_path = Os_normalize(full_path)
+  #s:normalized_paths[l:full_path] = a:original_path
+  return full_path
+enddef
+
+def FullPath(): string
+  var full_path = expand('%:p')
+  if full_path ==# expand('%')
+    full_path = Normalize_path(getbufinfo('%')[0].name)
+  elseif has('win32')
+    full_path = Os_normalize(full_path)
+  endif
+  return full_path
+enddef
+
+def Lsp_file_prefix(): string
+  if has('win32')
+    return 'file:///'
+  else
+    return 'file://'
+  endif
+enddef
+
+def EncodeChar(char: string): string
+  var charcode = char2nr(char)
+  return printf('%%%02x', charcode)
+enddef
+
+def EncodePath(value: string): string
+  return substitute(value, '\([^a-zA-Z0-9-_.~/]\)', '\=EncodeChar(submatch(1))', 'g')
+enddef
+
+def CurrentDocumentUri(): string
+    var file_path = FullPath()
+    return Lsp_file_prefix() .. EncodePath(file_path)
+enddef
+
+
+def CurrentdocumentPosition(): dict<any>
+  #return { 'textDocument': {'uri': CurrentDocumentUri()}, 'position': {'line': line('.') - 1, 'character': col('.') - 1}}
+  return { 'textDocument': {'uri': CurrentDocumentUri()}, 'position': {'line': line('.'), 'character': col('.')}}
+enddef
+
+
+var alternative_last_pos = {}
+def g:Vim9_lsc_alternative(label: string, results: string): void
+    var last_file = ""
+    var last_line = 0
+    var last_col = 0
+    if has_key(alternative_last_pos, 'textDocument')
+        last_file = alternative_last_pos["textDocument"]["uri"]
+        last_line = alternative_last_pos["position"]["line"]
+        last_col = alternative_last_pos["position"]["character"]
+    endif
+    alternative_last_pos =  CurrentdocumentPosition()
+    if !empty(results)
+        if &modified
+            execute "vsplit " .. results
+        else
+            execute "edit " .. results
+        endif
+    endif
+    if results == last_file
+        cursor(last_line, last_col)
+    endif
+enddef
+
+

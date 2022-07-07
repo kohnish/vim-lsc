@@ -81,12 +81,28 @@ endfunction
 
 
 function! lsc#reference#incoming_calls() abort
-  " textDocument/symbolInfo
-  " textDocument/switchSourceHeader
-  " textDocument/typeHierarchy
   call lsc#file#flushChanges()
   let l:params = lsc#params#documentPosition()
   call lsc#server#userCall('textDocument/prepareCallHierarchy', l:params, function('<SID>incoming_call_req', ['prepare incoming']))
+endfunction
+
+
+function! lsc#reference#alternative() abort
+  call lsc#file#flushChanges()
+  let l:params = {'uri': lsc#uri#documentUri()}
+  call lsc#server#userCall('textDocument/switchSourceHeader', l:params, function('g:Vim9_lsc_alternative', ['alternative']))
+endfunction
+
+
+function! s:symbol_info(label, results) abort
+    echom a:results
+endfunction
+
+
+function! lsc#reference#symbol_info() abort
+  call lsc#file#flushChanges()
+  let l:params = lsc#params#documentPosition()
+  call lsc#server#userCall('textDocument/symbolInfo', l:params, function('<SID>symbol_info', ['symbol_info']))
 endfunction
 
 
