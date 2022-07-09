@@ -294,8 +294,7 @@ def g:ShowHelp(signatureHelp: any): void
 
   if !has_key(signature, 'parameters')
       popup_close(popup_id)
-      popup_id = popup_atcursor(signature.label, {})
-      #call lsc#util#displayAsPreview([l:signature.label], &filetype, function('<SID>HighlightCurrentParameter'))
+      popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
       return
   endif
 
@@ -317,12 +316,8 @@ def g:ShowHelp(signatureHelp: any): void
   if active_param_len > 0
       prop_add(1, active_param_start_pos, {'bufnr': popup_win_id, 'type': 'signature', 'length': active_param_len})
   endif
-  #call lsc#util#displayAsPreview([l:signature.label], &filetype,
-  #    \ function('<SID>HighlightCurrentParameter'))
 enddef
 
- # Whether the cursor follows a minimum count of  word characters, and completion isn't already in progress.
- # Minimum length can be configured with `g:lsc_autocomplete_length`.
 def g:IsCompletable(): bool
     var pos = col(".")
     var line = getline(".")
