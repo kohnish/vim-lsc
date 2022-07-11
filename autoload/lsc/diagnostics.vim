@@ -406,7 +406,15 @@ function! lsc#diagnostics#hover() abort
     let l:diag_msg = l:closest_diagnostic
   endif
   if has_key(l:diag_msg,"message")
-    call popup_atcursor(split(l:diag_msg["message"], "\n"), {})
+    let l:diag_popup_arr = split(l:diag_msg["message"], "\n")
+    let l:i = 0
+    for l:d in l:diag_popup_arr
+        let l:diag_popup_arr[l:i] = " " .. l:diag_popup_arr[l:i] .. " "
+        let l:i = l:i + 1
+    endfor
+    call insert(l:diag_popup_arr, '')
+    call add(l:diag_popup_arr, '')
+    call popup_atcursor(l:diag_popup_arr, {})
   endif
 endfunction
 
