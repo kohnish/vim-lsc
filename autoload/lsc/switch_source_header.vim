@@ -4,7 +4,7 @@ import "./common.vim"
 
 var g_alternative_last_pos = {}
 
-export def SwitchToAlternative(label: string, results: string): void
+def SwitchToAlternative(results: string): void
     var last_file = ""
     var last_line = 0
     var last_col = 0
@@ -27,7 +27,7 @@ export def SwitchToAlternative(label: string, results: string): void
 enddef
 
 export def SwitchSourceHeader(): void
-  lsc#file#flushChanges()
-  var params = {'uri': common.Uri()}
-  lsc#server#userCall('textDocument/switchSourceHeader', params, function('lsc#switch_source_header#SwitchToAlternative', ['alternative']))
+    lsc#file#flushChanges()
+    var params = {'uri': common.Uri()}
+    lsc#server#userCall('textDocument/switchSourceHeader', params, SwitchToAlternative)
 enddef
