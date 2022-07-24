@@ -4,12 +4,12 @@ import "./common.vim"
 
 var g_popup_id = -1
 
-def GetSignatureHelp(): void
+export def GetSignatureHelp(): void
   lsc#file#flushChanges()
   var params = common.DocPos()
   var server = lsc#server#forFileType(&filetype)[0]
   try
-    server.request('textDocument/signatureHelp', params, lsc#util#gateResult('SignatureHelp', function('ShowHelp')))
+    server.request('textDocument/signatureHelp', params, lsc#util#gateResult('SignatureHelp', function('lsc#signature_help#ShowHelp')))
   catch
   endtry
 enddef
