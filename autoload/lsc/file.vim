@@ -140,7 +140,7 @@ function! s:FlushIfChanged(file_path, filetype) abort
     unlet s:flush_timers[a:file_path]
 
     let l:server = lsc#server#forFileType(a:filetype)[0]
-    let l:params = g:Vim9_lsc9_did_change_param(s:file_versions, a:file_path, s:file_content, l:server.capabilities.textDocumentSync.incremental)
+    let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:server.capabilities.textDocumentSync.incremental)
     call l:server.notify('textDocument/didChange', l:params)
     doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction
