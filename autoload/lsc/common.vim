@@ -405,7 +405,7 @@ export def DiagHover(): void
     endif
 enddef
 
-def QfResultCb(location: dict<any>): dict<any>
+def IncomingCallQfResultCb(location: dict<any>): dict<any>
     var start = location.from["selectionRange"]["start"]
     var item = {'lnum': start["line"] + 1, 'col': start["character"] + 1}
     var file_path = lsc#uri#documentPath(location["from"].uri)
@@ -416,7 +416,7 @@ enddef
 
 def ShowIncomingCallQf(results: list<any>): void
     if len(results) > 0
-         map(results, (_, ref) => QfResultCb(ref))
+         map(results, (_, ref) => IncomingCallQfResultCb(ref))
          sort(results, lsc#util#compareQuickFixItems)
          setqflist([], ' ', {'title': 'Incoming calls', 'items': results, 'quickfixtextfunc': QflistTrimRoot})
         copen
