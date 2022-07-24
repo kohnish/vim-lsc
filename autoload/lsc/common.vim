@@ -405,3 +405,44 @@ export def DiagHover(): void
   endif
 enddef
 
+def QfResultCb(location: dict<any>): dict<any>
+  var start = location.from["selectionRange"]["start"]
+  var item = {'lnum': start["line"] + 1, 'col': start["character"] + 1}
+  var file_path = lsc#uri#documentPath(location["from"].uri)
+  item.filename = fnamemodify(file_path, ':.')
+  item.text = location["from"].name
+  return item
+enddef
+
+def ShowIncomingCallQf(label: string, results: list<any>): void
+    echom results
+    if len(results) > 0
+         map(results, (_, ref) => QfResultCb(ref))
+         sort(results, 'lsc#util#compareQuickFixItems')
+         setqflist([], ' ', {'title': 'Incoming calls', 'items': results, 'quickfixtextfunc': QflistTrimRoot })
+        copen
+    endif
+enddef
+
+def IncomingCallReq(label: string, results: list<any>): void
+    if len(results) > 0
+        var params = {"item": results[0]}
+        lsc#server#userCall('callHierarchy/incomingCalls', params, function(ShowIncomingCallQf, ['incoming calls']))
+    endif
+enddef
+
+export def IncomingCalls(): void
+    lsc#file#flushChanges()
+    var params = lsc#params#documentPosition()
+    lsc#server#userCall('textDocument/prepareCallHierarchy', params, function(IncomingCallReq, ['prepare incoming']))
+enddef
+
+def ShowSymbolInfo(label: string, results: list<any>): void
+    echom results
+enddef
+
+export def SymbolInfo(): void
+    lsc#file#flushChanges()
+    var params = lsc#params#documentPosition()
+    lsc#server#userCall('textDocument/symbolInfo', params, function('ShowSymbolInfo', ['symbol info']))
+enddef

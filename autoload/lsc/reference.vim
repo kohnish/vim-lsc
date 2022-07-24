@@ -52,60 +52,6 @@ function! lsc#reference#findReferences() abort
       \ function('<SID>setQuickFixLocations', ['references']))
 endfunction
 
-
-function! s:QuickFixItem_from_call_hierarchy(location) abort
-  let l:start = a:location.from["selectionRange"]["start"]
-  let l:item = {'lnum': l:start["line"] + 1, 'col': l:start["character"] + 1}
-  let l:file_path = lsc#uri#documentPath(a:location["from"].uri)
-  let l:item.filename = fnamemodify(l:file_path, ':.')
-  let l:item.text = a:location["from"].name
-  return l:item
-endfunction
-
-function! s:show_incoming_call_qf(label, results) abort
-    if len(a:results) > 0
-        call map(a:results, {_, ref -> s:QuickFixItem_from_call_hierarchy(ref)})
-        call sort(a:results, 'lsc#util#compareQuickFixItems')
-        call setqflist([], ' ', {'title': 'Incoming calls', 'items': a:results, 'quickfixtextfunc': 'lsc#common#QflistTrimRoot' })
-        copen
-    endif
-endfunction
-
-
-function! s:incoming_call_req(label, results) abort
-    if len(a:results) > 0
-        let l:params = {"item" : a:results[0]}
-        call lsc#server#userCall('callHierarchy/incomingCalls', l:params, function('<SID>show_incoming_call_qf', ['incoming calls']))
-    endif
-endfunction
-
-
-function! lsc#reference#incoming_calls() abort
-  call lsc#file#flushChanges()
-  let l:params = lsc#params#documentPosition()
-  call lsc#server#userCall('textDocument/prepareCallHierarchy', l:params, function('<SID>incoming_call_req', ['prepare incoming']))
-endfunction
-
-
-function! lsc#reference#alternative() abort
-  call lsc#file#flushChanges()
-  let l:params = {'uri': lsc#uri#documentUri()}
-  call lsc#server#userCall('textDocument/switchSourceHeader', l:params, function('g:Vim9_lsc_alternative', ['alternative']))
-endfunction
-
-
-function! s:symbol_info(label, results) abort
-    echom a:results
-endfunction
-
-
-function! lsc#reference#symbol_info() abort
-  call lsc#file#flushChanges()
-  let l:params = lsc#params#documentPosition()
-  call lsc#server#userCall('textDocument/symbolInfo', l:params, function('<SID>symbol_info', ['symbol_info']))
-endfunction
-
-
 function! lsc#reference#findImplementations() abort
   call lsc#file#flushChanges()
   call lsc#server#userCall('textDocument/implementation',
