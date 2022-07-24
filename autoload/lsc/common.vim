@@ -435,13 +435,3 @@ export def IncomingCalls(): void
     var params = lsc#params#documentPosition()
     lsc#server#userCall('textDocument/prepareCallHierarchy', params, function(IncomingCallReq, ['prepare incoming']))
 enddef
-
-def ShowSymbolInfo(label: string, results: list<any>): void
-    echom results
-enddef
-
-export def SymbolInfo(): void
-    lsc#file#flushChanges()
-    var params = lsc#params#documentPosition()
-    lsc#server#userCall('textDocument/symbolInfo', params, function('ShowSymbolInfo', ['symbol info']))
-enddef
