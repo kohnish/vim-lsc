@@ -19,7 +19,7 @@ enddef
 
 def OsNormalizePath(path: string): string
     if has('win32')
-            return substitute(path, '\\', '/', 'g')
+        return substitute(path, '\\', '/', 'g')
     endif
     return path
 enddef
@@ -396,8 +396,8 @@ export def DiagHover(): void
         var diag_popup_arr = split(diag_msg["message"], "\n")
         var i = 0
         for d in diag_popup_arr
-                diag_popup_arr[i] = " " .. diag_popup_arr[i] .. " "
-                i = i + 1
+            diag_popup_arr[i] = " " .. diag_popup_arr[i] .. " "
+            i = i + 1
         endfor
         insert(diag_popup_arr, '')
         add(diag_popup_arr, '')
