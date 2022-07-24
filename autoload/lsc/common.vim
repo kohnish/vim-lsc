@@ -48,10 +48,6 @@ export def Uri(): string
     return OsFilePrefix() .. EncodePath(file_path)
 enddef
 
-export def DocPos(): dict<any>
-    return { 'textDocument': {'uri': Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
-enddef
-
 export def IsCompletable(): bool
     var pos = col(".")
     var line = getline(".")
