@@ -66,7 +66,7 @@ function! s:show_incoming_call_qf(label, results) abort
     if len(a:results) > 0
         call map(a:results, {_, ref -> s:QuickFixItem_from_call_hierarchy(ref)})
         call sort(a:results, 'lsc#util#compareQuickFixItems')
-        call setqflist([], ' ', {'title': 'Incoming calls', 'items': a:results, 'quickfixtextfunc': 's:qflistTrimRoot' })
+        call setqflist([], ' ', {'title': 'Incoming calls', 'items': a:results, 'quickfixtextfunc': 'lsc#common#QflistTrimRoot' })
         copen
     endif
 endfunction
@@ -113,23 +113,6 @@ function! lsc#reference#findImplementations() abort
       \ function('<SID>setQuickFixLocations', ['implementations']))
 endfunction
 
-function! s:qflistTrimRoot(info) abort
-  let items = getqflist()
-  let modified_qflist = []
-  if (len(items) > 0 && exists('g:lsc_proj_dir'))
-    for idx in range(a:info.start_idx - 1, a:info.end_idx - 1)
-      let line = ""
-      let file_path = fnamemodify(bufname(items[idx].bufnr), ':p:.')
-      if file_path[0 : len(g:lsc_proj_dir) - 1] ==# g:lsc_proj_dir
-        let file_path = file_path[len(g:lsc_proj_dir) + 1 :]
-      endif
-      let line = line .. file_path .. " || " .. items[idx].lnum .. " || " .. trim(items[idx].text)
-      call add(modified_qflist, line)
-    endfor
-  endif
-  return modified_qflist
-endfunction
-
 function! s:setQuickFixLocations(label, results) abort
   if empty(a:results)
     call lsc#message#show('No '.a:label.' found')
@@ -137,7 +120,7 @@ function! s:setQuickFixLocations(label, results) abort
   endif
   call map(a:results, {_, ref -> s:QuickFixItem(ref)})
   call sort(a:results, 'lsc#util#compareQuickFixItems')
-  call setqflist([], ' ', {'title': 'Symbol Reference', 'items': a:results, 'quickfixtextfunc': 's:qflistTrimRoot' })
+  call setqflist([], ' ', {'title': 'Symbol Reference', 'items': a:results, 'quickfixtextfunc': 'lsc#common#QflistTrimRoot' })
   copen
 endfunction
 
@@ -170,17 +153,10 @@ function! s:QuickFixItem(location) abort
   return l:item
 endfunction
 
-function s:focus_if_open(filename) abort
-    for buf in getbufinfo()
-        if buf.loaded && buf.name == a:filename && len(buf.windows) > 0
-            keepjumps call win_gotoid(buf.windows[0])
-            return
-        endif
-    endfor
-endfunction
-
 function! s:goTo(file, line, character, mods, issplit) abort
-  call s:focus_if_open(a:file)
+  if g:lsc_focus_if_open
+    call lsc#common#FocusIfOpen(a:file)
+  endif
   let l:prev_buf = bufnr('%')
   if a:issplit || a:file !=# lsc#file#fullPath()
     let l:cmd = 'edit'

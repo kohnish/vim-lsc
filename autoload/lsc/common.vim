@@ -330,3 +330,29 @@ export def FinishItem(lsp_item: dict<any>, vim_item: dict<any>): void
     endif
 enddef
 
+export def FocusIfOpen(filename: string): void
+    for buf in getbufinfo()
+        if buf.loaded && buf.name == filename && len(buf.windows) > 0
+            keepjumps win_gotoid(buf.windows[0])
+            return
+        endif
+    endfor
+enddef
+
+export def QflistTrimRoot(info: dict<any>): list<any>
+  var items = getqflist()
+  var modified_qflist = []
+  if (len(items) > 0 && exists('g:lsc_proj_dir'))
+    for idx in range(info.start_idx - 1, info.end_idx - 1)
+      var line = ""
+      var file_path = fnamemodify(bufname(items[idx].bufnr), ':p:.')
+      if file_path[0 : len(g:lsc_proj_dir) - 1] ==# g:lsc_proj_dir
+        file_path = file_path[len(g:lsc_proj_dir) + 1 :]
+      endif
+      line = line .. file_path .. " || " .. items[idx].lnum .. " || " .. trim(items[idx].text)
+      add(modified_qflist, line)
+    endfor
+  endif
+  return modified_qflist
+enddef
+
