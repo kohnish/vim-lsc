@@ -81,7 +81,7 @@ def NumLastDiff(old: list<any>, new: list<any>, offset: number): number
     if length_old > length_new
         length = length_new
     endif
-    for i in range(length - 1) 
+    for i in range(length - 1)
         if old[length_old - i + offset] != new[length_new - i + offset]
             return -1 * i
         endif
@@ -96,7 +96,7 @@ def NumFirstDiff(old: list<any>, new: list<any>, offset: number): number
     if length_old > length_new
         length = length_new
     endif
-    for i in range(length - 1) 
+    for i in range(length - 1)
         if old[i + offset] != new[i + offset]
             return i
         endif
@@ -207,7 +207,7 @@ def ContentsDiff(old: list<any>, new: list<any>): dict<any>
     var adj_end_line = len(old) + end_line
     var adj_end_char = end_line == 0 ? 0 : strchars(old[end_line]) + end_char + 1
 
-    var result = { 
+    var result = {
         'range': {
             'start': {'line': start_line, 'character': start_char},
             'end': {'line': adj_end_line, 'character': adj_end_char}

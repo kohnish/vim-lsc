@@ -22,7 +22,6 @@ function! lsc#complete#textChanged() abort
 endfunction
 
 function! s:typedCharacter() abort
-  "if s:isTrigger(s:next_char) || s:isCompletable()
   if lsc#common#IsCompletable()
     call s:startCompletion(v:true)
   endif
@@ -55,40 +54,6 @@ augroup LscCompletion
   autocmd CompleteDone * let b:lsc_is_completing = v:false
       \ | silent! unlet b:lsc_completion | let s:next_char = ''
 augroup END
-
-"" Whether the cursor follows a minimum count of  word characters, and completion
-"" isn't already in progress.
-""
-"" Minimum length can be configured with `g:lsc_autocomplete_length`.
-"function! s:isCompletable() abort
-"    let l:pos = col(".")
-"    let l:line = getline(".")
-"    let l:surr_chars = ""
-"    if len(l:line) > 2
-"        let l:surr_chars =  l:line[l:pos - 4 : l:pos - 2]
-"    endif
-"    if len(trim(l:surr_chars)) > 2
-"       let l:banned_chars = [';', '{', '}', ',', '(', ')', '+']
-"       for i in l:banned_chars
-"           if l:surr_chars[0] == i || l:surr_chars[1] == i || l:surr_chars[2] == i
-"               return v:false
-"           endif
-"       endfor
-"       return v:true
-"    endif
-"    return v:false
-"  "if exists('b:lsc_is_completing') && b:lsc_is_completing
-"  "  return v:false
-"  "endif
-"  "if s:next_char !~# '\w' | return v:false | endif
-"  "let l:cur_col = col('.')
-"  "let l:min_length = exists('g:lsc_autocomplete_length') ?
-"  "    \ g:lsc_autocomplete_length : 3
-"  "if l:min_length == v:false | return v:false | endif
-"  "if l:cur_col < (l:min_length + 1) | return v:false | endif
-"  "let l:word = getline('.')[l:cur_col - (l:min_length + 1):l:cur_col - 2]
-"  "return l:word =~# '^\w*$'
-"endfunction
 
 function! s:startCompletion(isAuto) abort
   let b:lsc_is_completing = v:true
