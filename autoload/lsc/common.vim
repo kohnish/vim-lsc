@@ -414,24 +414,24 @@ def QfResultCb(location: dict<any>): dict<any>
     return item
 enddef
 
-def ShowIncomingCallQf(label: string, results: list<any>): void
+def ShowIncomingCallQf(results: list<any>): void
     if len(results) > 0
          map(results, (_, ref) => QfResultCb(ref))
          sort(results, 'lsc#util#compareQuickFixItems')
-         setqflist([], ' ', {'title': 'Incoming calls', 'items': results, 'quickfixtextfunc': QflistTrimRoot })
+         setqflist([], ' ', {'title': 'Incoming calls', 'items': results, 'quickfixtextfunc': QflistTrimRoot})
         copen
     endif
 enddef
 
-def IncomingCallReq(label: string, results: list<any>): void
+def IncomingCallReq(results: list<any>): void
     if len(results) > 0
         var params = {"item": results[0]}
-        lsc#server#userCall('callHierarchy/incomingCalls', params, function(ShowIncomingCallQf, ['incoming calls']))
+        lsc#server#userCall('callHierarchy/incomingCalls', params, ShowIncomingCallQf)
     endif
 enddef
 
 export def IncomingCalls(): void
     lsc#file#flushChanges()
     var params = lsc#params#documentPosition()
-    lsc#server#userCall('textDocument/prepareCallHierarchy', params, function(IncomingCallReq, ['prepare incoming']))
+    lsc#server#userCall('textDocument/prepareCallHierarchy', params, IncomingCallReq)
 enddef
