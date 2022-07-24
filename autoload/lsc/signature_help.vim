@@ -6,7 +6,7 @@ var g_popup_id = -1
 
 export def GetSignatureHelp(): void
     lsc#file#flushChanges()
-    var params = common.DocPos()
+    var params = lsc#params#documentPosition()
     var server = lsc#server#forFileType(&filetype)[0]
     try
         server.request('textDocument/signatureHelp', params, lsc#util#gateResult('SignatureHelp', ShowHelp))

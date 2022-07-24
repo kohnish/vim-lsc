@@ -13,7 +13,7 @@ def SwitchToAlternative(results: string): void
         last_line = g_alternative_last_pos["position"]["line"]
         last_col = g_alternative_last_pos["position"]["character"]
     endif
-    g_alternative_last_pos =  common.DocPos()
+    g_alternative_last_pos =  { 'textDocument': {'uri': common.Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
     if !empty(results)
         if &modified
             execute "vsplit " .. results
