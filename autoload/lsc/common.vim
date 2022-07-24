@@ -1,46 +1,46 @@
 vim9script
 
 def EncodeChar(char: string): string
-  var charcode = char2nr(char)
-  return printf('%%%02x', charcode)
+    var charcode = char2nr(char)
+    return printf('%%%02x', charcode)
 enddef
 
 def EncodePath(value: string): string
-  return substitute(value, '\([^a-zA-Z0-9-_.~/]\)', '\=EncodeChar(submatch(1))', 'g')
+    return substitute(value, '\([^a-zA-Z0-9-_.~/]\)', '\=EncodeChar(submatch(1))', 'g')
 enddef
 
 def OsFilePrefix(): string
-  if has('win32')
-    return 'file:///'
-  else
-    return 'file://'
-  endif
+    if has('win32')
+        return 'file:///'
+    else
+        return 'file://'
+    endif
 enddef
 
 def OsNormalizePath(path: string): string
-  if has('win32')
-      return substitute(path, '\\', '/', 'g')
-  endif
-  return path
+    if has('win32')
+            return substitute(path, '\\', '/', 'g')
+    endif
+    return path
 enddef
 
 def NormalizePath(original_path: string): string
-  var full_path = original_path
-  if full_path !~# '^/\|\%([c-zC-Z]:[/\\]\)'
-    full_path = getcwd() .. '/' .. full_path
-  endif
-  full_path = OsNormalizePath(full_path)
-  return full_path
+    var full_path = original_path
+    if full_path !~# '^/\|\%([c-zC-Z]:[/\\]\)'
+        full_path = getcwd() .. '/' .. full_path
+    endif
+    full_path = OsNormalizePath(full_path)
+    return full_path
 enddef
 
 def FullPath(): string
-  var full_path = expand('%:p')
-  if full_path ==# expand('%')
-    full_path = NormalizePath(getbufinfo('%')[0].name)
-  elseif has('win32')
-    full_path = OsNormalizePath(full_path)
-  endif
-  return full_path
+    var full_path = expand('%:p')
+    if full_path ==# expand('%')
+        full_path = NormalizePath(getbufinfo('%')[0].name)
+    elseif has('win32')
+        full_path = OsNormalizePath(full_path)
+    endif
+    return full_path
 enddef
 
 export def Uri(): string
@@ -49,7 +49,7 @@ export def Uri(): string
 enddef
 
 export def DocPos(): dict<any>
-  return { 'textDocument': {'uri': Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
+    return { 'textDocument': {'uri': Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
 enddef
 
 export def IsCompletable(): bool
@@ -127,30 +127,30 @@ def FirstDifference(old: list<any>, new: list<any>): list<any>
 enddef
 
 def LastDifference(old: list<any>, new: list<any>, start_char: number): list<any>
-  var line_count = min([len(old), len(new)])
-  if line_count == 0 | return [0, 0] | endif
-  var i = NumLastDiff(old, new, -1)
-  var old_line = ""
-  var new_line = ""
-  if i <= -1 * line_count
-    i = -1 * line_count
-    old_line = strcharpart(old[i], start_char)
-    new_line = strcharpart(new[i], start_char)
-  else
-    old_line = old[i]
-    new_line = new[i]
-  endif
-  var old_line_length = strchars(old_line)
-  var new_line_length = strchars(new_line)
-  var length = min([old_line_length, new_line_length])
-  var j = -1
-  while j >= -1 * length
-    if strgetchar(old_line, old_line_length + j) != strgetchar(new_line, new_line_length + j)
-      break
+    var line_count = min([len(old), len(new)])
+    if line_count == 0 | return [0, 0] | endif
+    var i = NumLastDiff(old, new, -1)
+    var old_line = ""
+    var new_line = ""
+    if i <= -1 * line_count
+        i = -1 * line_count
+        old_line = strcharpart(old[i], start_char)
+        new_line = strcharpart(new[i], start_char)
+    else
+        old_line = old[i]
+        new_line = new[i]
     endif
-    j -= 1
-  endwhile
-  return [i, j]
+    var old_line_length = strchars(old_line)
+    var new_line_length = strchars(new_line)
+    var length = min([old_line_length, new_line_length])
+    var j = -1
+    while j >= -1 * length
+        if strgetchar(old_line, old_line_length + j) != strgetchar(new_line, new_line_length + j)
+            break
+        endif
+        j -= 1
+    endwhile
+    return [i, j]
 enddef
 
 def ExtractText(lines: list<any>, start_line: number, start_char: number, end_line: number, end_char: number): string
@@ -246,59 +246,59 @@ enddef
 # The `menu` and `info` vim fields are normalized from the `detail` and
 # `documentation` LSP fields.
 def CompletionItemKind(lsp_kind: number): string
-  if lsp_kind == 1
-    return 'Text'
-  elseif lsp_kind == 2
-    return 'Method'
-  elseif lsp_kind == 3
-    return 'Function'
-  elseif lsp_kind == 4
-    return 'Constructor'
-  elseif lsp_kind == 5
-    return 'Field'
-  elseif lsp_kind == 6
-    return 'Variable'
-  elseif lsp_kind == 7
-    return 'Class'
-  elseif lsp_kind == 8
-    return 'Interface'
-  elseif lsp_kind == 9
-    return 'Module'
-  elseif lsp_kind == 10
-    return 'Property'
-  elseif lsp_kind == 11
-    return 'Unit'
-  elseif lsp_kind == 12
-    return 'Value'
-  elseif lsp_kind == 13
-    return 'Enum'
-  elseif lsp_kind == 14
-    return 'Keyword'
-  elseif lsp_kind == 15
-    return 'Snippet'
-  elseif lsp_kind == 16
-    return 'Color'
-  elseif lsp_kind == 17
-    return 'File'
-  elseif lsp_kind == 18
-    return 'Reference'
-  elseif lsp_kind == 19
-    return 'Folder'
-  elseif lsp_kind == 20
-    return 'EnumMember'
-  elseif lsp_kind == 21
-    return 'Constant'
-  elseif lsp_kind == 22
-    return 'Struct'
-  elseif lsp_kind == 23
-    return 'Event'
-  elseif lsp_kind == 24
-    return 'Operator'
-  elseif lsp_kind == 25
-    return 'TypeParameter'
-  else
-    return ''
-  endif
+    if lsp_kind == 1
+        return 'Text'
+    elseif lsp_kind == 2
+        return 'Method'
+    elseif lsp_kind == 3
+        return 'Function'
+    elseif lsp_kind == 4
+        return 'Constructor'
+    elseif lsp_kind == 5
+        return 'Field'
+    elseif lsp_kind == 6
+        return 'Variable'
+    elseif lsp_kind == 7
+        return 'Class'
+    elseif lsp_kind == 8
+        return 'Interface'
+    elseif lsp_kind == 9
+        return 'Module'
+    elseif lsp_kind == 10
+        return 'Property'
+    elseif lsp_kind == 11
+        return 'Unit'
+    elseif lsp_kind == 12
+        return 'Value'
+    elseif lsp_kind == 13
+        return 'Enum'
+    elseif lsp_kind == 14
+        return 'Keyword'
+    elseif lsp_kind == 15
+        return 'Snippet'
+    elseif lsp_kind == 16
+        return 'Color'
+    elseif lsp_kind == 17
+        return 'File'
+    elseif lsp_kind == 18
+        return 'Reference'
+    elseif lsp_kind == 19
+        return 'Folder'
+    elseif lsp_kind == 20
+        return 'EnumMember'
+    elseif lsp_kind == 21
+        return 'Constant'
+    elseif lsp_kind == 22
+        return 'Struct'
+    elseif lsp_kind == 23
+        return 'Event'
+    elseif lsp_kind == 24
+        return 'Operator'
+    elseif lsp_kind == 25
+        return 'TypeParameter'
+    else
+        return ''
+    endif
 enddef
 
 export def FinishItem(lsp_item: dict<any>, vim_item: dict<any>): void
@@ -340,78 +340,78 @@ export def FocusIfOpen(filename: string): void
 enddef
 
 export def QflistTrimRoot(info: dict<any>): list<any>
-  var items = getqflist()
-  var modified_qflist = []
-  if (len(items) > 0 && exists('g:lsc_proj_dir'))
-    for idx in range(info.start_idx - 1, info.end_idx - 1)
-      var line = ""
-      var file_path = fnamemodify(bufname(items[idx].bufnr), ':p:.')
-      if file_path[0 : len(g:lsc_proj_dir) - 1] ==# g:lsc_proj_dir
-        file_path = file_path[len(g:lsc_proj_dir) + 1 :]
-      endif
-      line = line .. file_path .. " || " .. items[idx].lnum .. " || " .. trim(items[idx].text)
-      add(modified_qflist, line)
-    endfor
-  endif
-  return modified_qflist
+    var items = getqflist()
+    var modified_qflist = []
+    if (len(items) > 0 && exists('g:lsc_proj_dir'))
+        for idx in range(info.start_idx - 1, info.end_idx - 1)
+            var line = ""
+            var file_path = fnamemodify(bufname(items[idx].bufnr), ':p:.')
+            if file_path[0 : len(g:lsc_proj_dir) - 1] ==# g:lsc_proj_dir
+                file_path = file_path[len(g:lsc_proj_dir) + 1 :]
+            endif
+            line = line .. file_path .. " || " .. items[idx].lnum .. " || " .. trim(items[idx].text)
+            add(modified_qflist, line)
+        endfor
+    endif
+    return modified_qflist
 enddef
 
 export def DiagHover(): void
-  var file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
-  var line = line('.')
-  var diag_msg = {}
+    var file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
+    var line = line('.')
+    var diag_msg = {}
 
-  if !has_key(file_diagnostics, line)
-    if line != line('$') | return | endif
-    for diagnostic_line in keys(file_diagnostics)
-      if len(diagnostic_line) > line
-        diag_msg = file_diagnostics[diagnostic_line][0]
-      endif
-    endfor
-    return
-  endif
+    if !has_key(file_diagnostics, line)
+        if line != line('$') | return | endif
+        for diagnostic_line in keys(file_diagnostics)
+            if len(diagnostic_line) > line
+                diag_msg = file_diagnostics[diagnostic_line][0]
+            endif
+        endfor
+        return
+    endif
 
-  var diagnostics = file_diagnostics[line]
-  var col = col('.')
-  var closest_diagnostic = {}
-  var closest_distance = -1
-  var closest_is_within = v:false
-  for diagnostic in file_diagnostics[line]
-    var range = diagnostic.range
-    var is_within = range.start.character < col && (range.end.line >= line || range.end.character > col)
-    if closest_is_within && !is_within
-      continue
-    endif
-    var distance = abs(range.start.character - col)
-    if closest_distance < 0 || distance < closest_distance
-      closest_diagnostic = diagnostic
-      closest_distance = distance
-      closest_is_within = is_within
-    endif
-  endfor
-  if len(closest_distance) > 0
-    diag_msg = closest_diagnostic
-  endif
-  if has_key(diag_msg, "message")
-    var diag_popup_arr = split(diag_msg["message"], "\n")
-    var i = 0
-    for d in diag_popup_arr
-        diag_popup_arr[i] = " " .. diag_popup_arr[i] .. " "
-        i = i + 1
+    var diagnostics = file_diagnostics[line]
+    var col = col('.')
+    var closest_diagnostic = {}
+    var closest_distance = -1
+    var closest_is_within = v:false
+    for diagnostic in file_diagnostics[line]
+        var range = diagnostic.range
+        var is_within = range.start.character < col && (range.end.line >= line || range.end.character > col)
+        if closest_is_within && !is_within
+            continue
+        endif
+        var distance = abs(range.start.character - col)
+        if closest_distance < 0 || distance < closest_distance
+            closest_diagnostic = diagnostic
+            closest_distance = distance
+            closest_is_within = is_within
+        endif
     endfor
-    insert(diag_popup_arr, '')
-    add(diag_popup_arr, '')
-    popup_atcursor(diag_popup_arr, {})
-  endif
+    if len(closest_distance) > 0
+        diag_msg = closest_diagnostic
+    endif
+    if has_key(diag_msg, "message")
+        var diag_popup_arr = split(diag_msg["message"], "\n")
+        var i = 0
+        for d in diag_popup_arr
+                diag_popup_arr[i] = " " .. diag_popup_arr[i] .. " "
+                i = i + 1
+        endfor
+        insert(diag_popup_arr, '')
+        add(diag_popup_arr, '')
+        popup_atcursor(diag_popup_arr, {})
+    endif
 enddef
 
 def QfResultCb(location: dict<any>): dict<any>
-  var start = location.from["selectionRange"]["start"]
-  var item = {'lnum': start["line"] + 1, 'col': start["character"] + 1}
-  var file_path = lsc#uri#documentPath(location["from"].uri)
-  item.filename = fnamemodify(file_path, ':.')
-  item.text = location["from"].name
-  return item
+    var start = location.from["selectionRange"]["start"]
+    var item = {'lnum': start["line"] + 1, 'col': start["character"] + 1}
+    var file_path = lsc#uri#documentPath(location["from"].uri)
+    item.filename = fnamemodify(file_path, ':.')
+    item.text = location["from"].name
+    return item
 enddef
 
 def ShowIncomingCallQf(label: string, results: list<any>): void
