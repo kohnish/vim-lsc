@@ -245,60 +245,19 @@ enddef
 # vim kind identifier.
 # The `menu` and `info` vim fields are normalized from the `detail` and
 # `documentation` LSP fields.
+const g_lsp_dict = {
+    1: "Text", 2: "Method", 3: "Function", 4: "Constructor", 5: "Field",
+    6: "Variable", 7: "Class", 8: "Interface", 9: "Module", 10: "Property",
+    11: "Unit", 12: "Value", 13: "Enum", 14: "Keyword", 15: "Snippet",
+    16: "Color", 17: "File", 18: "Reference", 19: "Folder", 20: "EnumMember",
+    21: "Constant", 22: "Struct", 23: "Event", 24: "Operator", 25: "TypeParameter"
+    }
 def CompletionItemKind(lsp_kind: number): string
-    if lsp_kind == 1
-        return 'Text'
-    elseif lsp_kind == 2
-        return 'Method'
-    elseif lsp_kind == 3
-        return 'Function'
-    elseif lsp_kind == 4
-        return 'Constructor'
-    elseif lsp_kind == 5
-        return 'Field'
-    elseif lsp_kind == 6
-        return 'Variable'
-    elseif lsp_kind == 7
-        return 'Class'
-    elseif lsp_kind == 8
-        return 'Interface'
-    elseif lsp_kind == 9
-        return 'Module'
-    elseif lsp_kind == 10
-        return 'Property'
-    elseif lsp_kind == 11
-        return 'Unit'
-    elseif lsp_kind == 12
-        return 'Value'
-    elseif lsp_kind == 13
-        return 'Enum'
-    elseif lsp_kind == 14
-        return 'Keyword'
-    elseif lsp_kind == 15
-        return 'Snippet'
-    elseif lsp_kind == 16
-        return 'Color'
-    elseif lsp_kind == 17
-        return 'File'
-    elseif lsp_kind == 18
-        return 'Reference'
-    elseif lsp_kind == 19
-        return 'Folder'
-    elseif lsp_kind == 20
-        return 'EnumMember'
-    elseif lsp_kind == 21
-        return 'Constant'
-    elseif lsp_kind == 22
-        return 'Struct'
-    elseif lsp_kind == 23
-        return 'Event'
-    elseif lsp_kind == 24
-        return 'Operator'
-    elseif lsp_kind == 25
-        return 'TypeParameter'
-    else
-        return ''
-    endif
+    try
+        return g_lsp_dict[lsp_kind]
+    catch
+    endtry
+    return ''
 enddef
 
 export def FinishItem(lsp_item: dict<any>, vim_item: dict<any>): void
