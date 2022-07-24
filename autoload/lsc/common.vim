@@ -415,7 +415,6 @@ def QfResultCb(location: dict<any>): dict<any>
 enddef
 
 def ShowIncomingCallQf(label: string, results: list<any>): void
-    echom results
     if len(results) > 0
          map(results, (_, ref) => QfResultCb(ref))
          sort(results, 'lsc#util#compareQuickFixItems')
