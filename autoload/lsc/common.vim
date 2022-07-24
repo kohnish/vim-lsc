@@ -417,7 +417,7 @@ enddef
 def ShowIncomingCallQf(results: list<any>): void
     if len(results) > 0
          map(results, (_, ref) => QfResultCb(ref))
-         sort(results, 'lsc#util#compareQuickFixItems')
+         sort(results, lsc#util#compareQuickFixItems)
          setqflist([], ' ', {'title': 'Incoming calls', 'items': results, 'quickfixtextfunc': QflistTrimRoot})
         copen
     endif
