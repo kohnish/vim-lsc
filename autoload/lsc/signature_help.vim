@@ -9,7 +9,7 @@ export def GetSignatureHelp(): void
     var params = common.DocPos()
     var server = lsc#server#forFileType(&filetype)[0]
     try
-        server.request('textDocument/signatureHelp', params, lsc#util#gateResult('SignatureHelp', function('lsc#signature_help#ShowHelp')))
+        server.request('textDocument/signatureHelp', params, lsc#util#gateResult('SignatureHelp', ShowHelp))
     catch
     endtry
 enddef
