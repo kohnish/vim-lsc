@@ -100,7 +100,7 @@ function! s:QuickFixItem(location) abort
 endfunction
 
 function! s:goTo(file, line, character, mods, issplit) abort
-  if g:lsc_focus_if_open
+  if exists('g:lsc_focus_if_open') && g:lsc_focus_if_open
     call lsc#common#FocusIfOpen(a:file)
   endif
   let l:prev_buf = bufnr('%')
