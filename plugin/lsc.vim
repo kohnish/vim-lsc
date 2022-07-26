@@ -26,7 +26,7 @@ command! LSClientGoToDefinitionSplit
 command! LSClientGoToDefinition
     \ call lsc#reference#goToDefinition(<q-mods>, 0)
 command! LSClientFindReferences call lsc#reference#findReferences()
-command! LSClientIncomingCalls call lsc#common#IncomingCalls()
+command! LSClientIncomingCalls call lsc#hierarchy#PrepCallHierarchy()
 command! LSClientSwitchSourceHeader call lsc#switch_source_header#SwitchSourceHeader()
 command! LSClientNextReference call lsc#reference#findNext(1)
 command! LSClientPreviousReference call lsc#reference#findNext(-1)
