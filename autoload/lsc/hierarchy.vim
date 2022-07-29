@@ -168,6 +168,14 @@ def Filetype_syntax(): void
     highlight def link YggdrasilMarkCollapsed   Macro
 enddef
 
+def DeleteBufByPrefix(name: string): void
+    for i in tabpagebuflist()
+        if buffer_name(i)[0 : len(name) - 1] ==# name
+            execute "bdelete " .. i
+            break
+        endif
+    endfor
+enddef
 
 export def Window(ignition: dict<any>): void
     var provider = {
@@ -176,7 +184,12 @@ export def Window(ignition: dict<any>): void
         'getTreeItem': GetTreeItem,
         }
 
+    var buf_name = "Incoming call hierarchy"
+    if !has('g:lsc_multi_hierarchy_buf') || !g:lsc_multi_hierarchy_buf
+        DeleteBufByPrefix(buf_name)
+    endif
     topleft vnew
+    execute "file " .. buf_name .. " [" .. bufnr('') .. "]"
     vertical resize 45
     b:handle = tree.New(provider, ignition)
     augroup vim_yggdrasil
