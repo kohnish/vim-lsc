@@ -359,34 +359,3 @@ export def DiagHover(): void
         popup_atcursor(diag_popup_arr, {})
     endif
 enddef
-
-def IncomingCallQfResultCb(location: dict<any>): dict<any>
-    var start = location.from["selectionRange"]["start"]
-    var item = {'lnum': start["line"] + 1, 'col': start["character"] + 1}
-    var file_path = lsc#uri#documentPath(location["from"].uri)
-    item.filename = fnamemodify(file_path, ':.')
-    item.text = location["from"].name
-    return item
-enddef
-
-def ShowIncomingCallQf(results: list<any>): void
-    if len(results) > 0
-         map(results, (_, ref) => IncomingCallQfResultCb(ref))
-         sort(results, lsc#util#compareQuickFixItems)
-         setqflist([], ' ', {'title': 'Incoming calls', 'items': results, 'quickfixtextfunc': QflistTrimRoot})
-        copen
-    endif
-enddef
-
-def IncomingCallReq(results: list<any>): void
-    if len(results) > 0
-        var params = {"item": results[0]}
-        lsc#server#userCall('callHierarchy/incomingCalls', params, ShowIncomingCallQf)
-    endif
-enddef
-
-export def IncomingCalls(): void
-    lsc#file#flushChanges()
-    var params = lsc#params#documentPosition()
-    lsc#server#userCall('textDocument/prepareCallHierarchy', params, IncomingCallReq)
-enddef

@@ -2,7 +2,7 @@ vim9script
 
 import autoload "../../lazyload/tree.vim"
 
-def OpenIncomingCallNode(current_node_num: number, params: dict<any>, results: list<any>): void
+def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: list<any>): void
     if len(results) == 0
         return
     endif
@@ -12,7 +12,7 @@ def OpenIncomingCallNode(current_node_num: number, params: dict<any>, results: l
     var counter = 0
     for i in b:tree[current_node_num]
         b:tree[i] = []
-        b:nodes[i] = { "query": {"item": results[counter]["from"] } }
+        b:nodes[i] = { "query": {"item": results[counter][b:ctx["hierarchy_result_key"]] } }
         counter = counter + 1
     endfor
     b:handle.update(b:handle, range(current_node_num, current_node_num + len(b:tree[current_node_num]) - 1))
@@ -27,7 +27,6 @@ def ShowFuncOnBuffer(info: dict<any>): void
     win_gotoid(cur)
 enddef
 
-# Action to be performed when executing an object in the tree.
 def Command_callback(id: number): void
     tree.Tree_set_collapsed_under_cursor(b:handle, 0)
     if has_key(b:nodes, id)
@@ -37,11 +36,9 @@ def Command_callback(id: number): void
         return
     endif
     var param = b:nodes[id]["query"]
-    lsc#server#userCall_with_server(b:ctx["server"], 'callHierarchy/incomingCalls', param, function(OpenIncomingCallNode, [id, param]))
+    lsc#server#userCall_with_server(b:ctx["server"], b:ctx["hierarchy_call"], param, function(OpenHierarchyCallNode, [id, param]))
 enddef
 
-# Auxiliary function to map each object to its parent in the tree.
-# return type????
 def Number_to_parent(id: number): dict<any>
     for [parent, children] in items(b:tree)
         if index(children, id) > 0
@@ -51,18 +48,6 @@ def Number_to_parent(id: number): dict<any>
     return {}
 enddef
 
-# Auxiliary function to produce a minimal tree item representation for a given
-# object (i.e. a given integer number).
-#
-# The four mandatory fields for the tree item representation are:
-#  * id: unique string identifier for the node in the tree
-#  * collapsibleState: string value, equal to:
-#     + 'collapsed' for an inner node initially collapsed
-#     + 'expanded' for an inner node initially expanded
-#     + 'none' for a leaf node that cannot be expanded nor collapsed
-#  * command: function object that takes no arguments, it runs when a node is
-#    executed by the user
-#  * labe string representing the node in the view
 def Number_to_treeitem(id: number): dict<any>
     var label = b:nodes[id]["query"]["item"]["name"]
     return {
@@ -73,15 +58,18 @@ def Number_to_treeitem(id: number): dict<any>
     \ }
 enddef
 
-# The getChildren method can be called with no object argument, in that case it
-# returns the root of the tree, or with one object as second argument, in that
-# case it returns a list of objects that are children to the given object.
-#def GetChildren(Callback: func, args: list<any>): void
 def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
     if !empty(ignition)
+        var hierarchy_call = 'callHierarchy/' .. ignition["mode"] .. "Calls"
+        var hierarchy_result_key = "from"
+        if ignition["mode"] == "outgoing"
+            hierarchy_result_key = "to"
+        endif
         b:ctx = {
             "server": ignition["server"],
-            "original_win_id": ignition["original_win_id"]
+            "original_win_id": ignition["original_win_id"],
+            "hierarchy_call": hierarchy_call,
+            "hierarchy_result_key": hierarchy_result_key,
             }
         b:nodes = {
             0: { "query": ignition["query"] }
@@ -91,7 +79,6 @@ def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
             }
     endif
     var children = [0]
-    #if has_key(current_tree, 'object')
     if object_id != -1
         if has_key(b:tree, object_id)
             children = b:tree[object_id]
@@ -102,31 +89,14 @@ def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
     Callback('success', children)
 enddef
 
-# The getParent method returns the parent of a given object.
 def GetParent(Callback: func, object_id: number): void
     Callback('success', Number_to_parent(object_id))
 enddef
 
-# The getTreeItem returns the tree item representation of a given object.
 def GetTreeItem(Callback: func, object_id: number): void
     Callback('success', Number_to_treeitem(object_id))
 enddef
 
-export def MutateNode(mode: string): void
-    if mode == "toggle"
-        tree.Tree_set_collapsed_under_cursor(b:handle, -1)
-    elseif mode == "wipe"
-        tree.Tree_wipe(b:handle)
-    elseif mode == "open"
-        tree.Tree_set_collapsed_under_cursor(b:handle, 0)
-    elseif mode == "close"
-        tree.Tree_set_collapsed_under_cursor(b:handle, 1)
-    elseif mode == "exec"
-        tree.Tree_exec_node_under_cursor(b:handle)
-    endif
-enddef
-
-# Apply local settings to an Yggdrasil buffer
 def Filetype_settings(): void 
     setlocal bufhidden=wipe
     setlocal buftype=nofile
@@ -142,16 +112,15 @@ def Filetype_settings(): void
     setlocal noswapfile
     setlocal nowrap
 
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-toggle-node) <ScriptCmd>MutateNode("toggle")<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-open-node) <ScriptCmd>MutateNode("open")<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-close-node) <ScriptCmd>MutateNode("close")<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-execute-node) <ScriptCmd>MutateNode("exec")<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-wipe-tree) <ScriptCmd>MutateNode("wipe")<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-toggle-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:handle, -1)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-open-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:handle, 0)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-close-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:handle, 1)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-execute-node) <ScriptCmd>tree.Tree_exec_node_under_cursor(b:handle)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-wipe-tree) <ScriptCmd>tree.Tree_wipe(b:handle)<CR>
 
     if !exists('g:yggdrasil_no_default_maps')
         nmap <silent> <buffer> o    <Plug>(yggdrasil-toggle-node)
         nmap <silent> <buffer> <CR> <Plug>(yggdrasil-execute-node)
-        nmap <silent> <buffer> p <Plug>(yggdrasil-execute-node)
         nmap <silent> <buffer> q    <Plug>(yggdrasil-wipe-tree)
     endif
 enddef
@@ -177,16 +146,17 @@ def DeleteBufByPrefix(name: string): void
     endfor
 enddef
 
-export def Window(ignition: dict<any>): void
+def OpenTreeWindow(ignition: dict<any>): void
     var provider = {
         'getChildren': GetChildren,
         'getParent': GetParent,
         'getTreeItem': GetTreeItem,
         }
 
-    var buf_name = "Incoming call hierarchy"
-    if !has('g:lsc_multi_hierarchy_buf') || !g:lsc_multi_hierarchy_buf
-        DeleteBufByPrefix(buf_name)
+    var buf_name_prefix = "Call hierarchy ("
+    var buf_name = buf_name_prefix .. ignition["mode"] .. ")"
+    if !exists("g:lsc_allow_multi_call_hierarchy_buf") || !g:lsc_allow_multi_call_hierarchy_buf
+        DeleteBufByPrefix(buf_name_prefix)
     endif
     topleft vnew
     execute "file " .. buf_name .. " [" .. bufnr('') .. "]"
@@ -203,20 +173,20 @@ export def Window(ignition: dict<any>): void
     b:handle.update(b:handle, [])
 enddef
 
-def IncomingCallReq(results: list<any>): void
+def PrepHierarchyCb(mode: string, results: list<any>): void
     if len(results) > 0
         var params = {"item": results[0]}
         var ignition = {
             "server": lsc#server#forFileType(&filetype)[0],
             "original_win_id": win_getid(),
             "query": params,
+            "mode": mode,
             }
-        Window(ignition)
+        OpenTreeWindow(ignition)
     endif
 enddef
 
-export def PrepCallHierarchy(): void
+export def PrepCallHierarchy(mode: string): void
     lsc#file#flushChanges()
-    var params = lsc#params#documentPosition()
-    lsc#server#userCall('textDocument/prepareCallHierarchy', params, IncomingCallReq)
+    lsc#server#userCall('textDocument/prepareCallHierarchy', lsc#params#documentPosition(), function(PrepHierarchyCb, [mode]))
 enddef
