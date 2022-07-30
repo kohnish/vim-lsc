@@ -14,16 +14,11 @@ def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>, parent: d
         }
 enddef
 
-def Render_node(node: dict<any>, object_id: number, tree_item: dict<any>): void
-    var new_node = Node_new(node.tree, object_id, tree_item, node)
-    add(node.children, new_node)
-    Render(new_node.tree)
-enddef
-
 def Render_children_nodes(node: dict<any>, children_list: list<number>): void
     for object_id in children_list
-        node.tree.provider.getTreeItem((tree_item: dict<any>) => Render_node(node, object_id, tree_item), object_id)
+        node.tree.provider.getTreeItem((tree_item: dict<any>) => add(node.children, Node_new(node.tree, object_id, tree_item, node)), object_id)
     endfor
+    Write_tree(node.tree)
 enddef
 
 def Node_set_collapsed(node: dict<any>, collapsed: number): void
@@ -50,10 +45,7 @@ def Node_exec(node: dict<any>): void
     endif
 enddef
 
-# Return the string representation of the node. The {level} argument represents
-# the depth level of the node in the tree and it is passed for convenience, to
-# simplify the implementation and to avoid re-computing the depth.
-def Node_render(node: dict<any>, level: number): string
+def Node_to_str(node: dict<any>, level: number): string
     var indent = repeat(' ', 2 * level)
     var mark = '• '
 
@@ -63,9 +55,7 @@ def Node_render(node: dict<any>, level: number): string
 
     var label = split(node.tree_item.label, "\n")
     extend(node.tree.index, map(range(len(label)), (i, v) => node))
-
     var repr = indent .. mark .. label[0] .. join(map(label[1 : ], (_, l) => "\n" .. indent .. '  ' .. l))
-
     var lines = [repr]
     if !node.collapsed
         if node.lazy_open
@@ -73,7 +63,7 @@ def Node_render(node: dict<any>, level: number): string
             node.tree.provider.getChildren((children) => Render_children_nodes(node, children), {}, node.object)
         endif
         for child in node.children
-            add(lines, Node_render(child, level + 1))
+            add(lines, Node_to_str(child, level + 1))
         endfor
     endif
 
@@ -83,41 +73,12 @@ enddef
 def Render_root_node(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     tree.maxid = -1
     tree.root = Node_new(tree, object_id, tree_item, {})
-    Render(tree)
+    Write_tree(tree)
 enddef
 
 def Get_node_under_cursor(tree: dict<any>): dict<any>
     var index = min([line('.'), len(tree.index) - 1])
     return tree.index[index]
-enddef
-
-export def Tree_set_collapsed_under_cursor(node: dict<any>, collapsed: number): void
-    var current_node = Get_node_under_cursor(node)
-    Node_set_collapsed(current_node, collapsed)
-    Render(node)
-enddef
-
-export def Tree_exec_node_under_cursor(node: dict<any>): void
-    var current_node = Get_node_under_cursor(node)
-    Node_exec(current_node)
-enddef
-
-export def Render(tree: dict<any>): void
-    if &filetype !=# 'yggdrasil'
-        return
-    endif
-
-    var cursor = getpos('.')
-    tree.index = [-1]
-    var text = Node_render(tree.root, 0)
-
-    setlocal modifiable
-    deletebufline(tree.bufnr, 1, "$")
-    map(split(text, "\n"), (i, v) => append(i, [v]))
-
-    setlocal nomodifiable
-
-    setpos('.', cursor)
 enddef
 
 def Node_update(tree: dict<any>, object_id: number, tree_item: dict<any>): void
@@ -126,7 +87,33 @@ def Node_update(tree: dict<any>, object_id: number, tree_item: dict<any>): void
         node.children = []
         node.lazy_open = tree_item.collapsibleState !=? 'none'
     endfor
-    Render(tree)
+    Write_tree(tree)
+enddef
+
+export def Tree_set_collapsed_under_cursor(node: dict<any>, collapsed: number): void
+    Node_set_collapsed(Get_node_under_cursor(node), collapsed)
+    Write_tree(node)
+enddef
+
+export def Tree_exec_node_under_cursor(node: dict<any>): void
+    Node_exec(Get_node_under_cursor(node))
+enddef
+
+export def Write_tree(node: dict<any>): void
+    if &filetype !=# 'yggdrasil'
+        return
+    endif
+
+    var cursor = getpos('.')
+    node.index = [-1]
+    var text = Node_to_str(node.root, 0)
+
+    setlocal modifiable
+    deletebufline(node.bufnr, 1, "$")
+    map(split(text, "\n"), (i, v) => append(i, [v]))
+    setlocal nomodifiable
+
+    setpos('.', cursor)
 enddef
 
 export def Tree_update(node: dict<any>, node_entries: list<number>): void

@@ -82,8 +82,8 @@ def GetChildren(Render_children_nodes: func, ignition: dict<any>, object_id: num
     Render_children_nodes(children)
 enddef
 
-def GetTreeItem(Render_node: func, object_id: number): void
-    Render_node(Number_to_treeitem(object_id))
+def GetTreeItem(Append_node: func, object_id: number): void
+    Append_node(Number_to_treeitem(object_id))
 enddef
 
 def Filetype_settings(): void 
@@ -153,7 +153,7 @@ def OpenTreeWindow(ignition: dict<any>): void
     augroup vim_yggdrasil
         autocmd!
         autocmd FileType yggdrasil Filetype_syntax() | Filetype_settings()
-        autocmd BufEnter <buffer> tree.Render(b:handle)
+        autocmd BufEnter <buffer> tree.Write_tree(b:handle)
     augroup END
 
     setlocal filetype=yggdrasil
