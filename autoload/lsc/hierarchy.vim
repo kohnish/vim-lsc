@@ -51,11 +51,11 @@ enddef
 def Number_to_treeitem(id: number): dict<any>
     var label = b:nodes[id]["query"]["item"]["name"]
     return {
-    \   'id': string(id),
-    \   'command': () => Command_callback(id),
-    \   'collapsibleState': len(b:tree[id]) > 0 ? 'collapsed' : 'none',
-    \   'label': label,
-    \ }
+        'id': string(id),
+        'command': () => Command_callback(id),
+        'collapsibleState': len(b:tree[id]) > 0 ? 'collapsed' : 'none',
+        'label': label,
+        }
 enddef
 
 def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
@@ -154,7 +154,7 @@ def OpenTreeWindow(ignition: dict<any>): void
     topleft vnew
     execute "file " .. buf_name .. " [" .. bufnr('') .. "]"
     vertical resize 45
-    b:handle = tree.New(provider, ignition)
+    b:handle = tree.New_handle(provider, ignition)
     augroup vim_yggdrasil
         autocmd!
         autocmd FileType yggdrasil Filetype_syntax() | Filetype_settings()
@@ -168,11 +168,10 @@ enddef
 
 def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
     if len(results) > 0
-        var params = {"item": results[0]}
         var ignition = {
             "server": lsc#server#forFileType(&filetype)[0],
             "original_win_id": win_getid(),
-            "query": params,
+            "query": {"item": results[0]},
             "mode": mode_info["name"],
             "hierarchy_call": mode_info["call_name"],
             "hierarchy_result_key": mode_info["result_key"],
