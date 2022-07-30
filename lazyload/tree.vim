@@ -46,13 +46,11 @@ def Node_exec(node: dict<any>): void
 enddef
 
 def Node_to_str(node: dict<any>, level: number): string
-    var indent = repeat(' ', 2 * level)
     var mark = '• '
-
     if len(node.children) > 0 || node.lazy_open != false
         mark = node.collapsed ? '▸ ' : '▾ '
     endif
-
+    var indent = repeat(' ', 2 * level)
     var label = split(node.tree_item.label, "\n")
     extend(node.tree.index, map(range(len(label)), (i, v) => node))
     var repr = indent .. mark .. label[0] .. join(map(label[1 : ], (_, l) => "\n" .. indent .. '  ' .. l))
@@ -66,7 +64,6 @@ def Node_to_str(node: dict<any>, level: number): string
             add(lines, Node_to_str(child, level + 1))
         endfor
     endif
-
     return join(lines, "\n")
 enddef
 
@@ -90,44 +87,44 @@ def Node_update(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     Write_tree(tree)
 enddef
 
-export def Tree_set_collapsed_under_cursor(node: dict<any>, collapsed: number): void
-    Node_set_collapsed(Get_node_under_cursor(node), collapsed)
-    Write_tree(node)
+export def Tree_set_collapsed_under_cursor(tree: dict<any>, collapsed: number): void
+    Node_set_collapsed(Get_node_under_cursor(tree), collapsed)
+    Write_tree(tree)
 enddef
 
-export def Tree_exec_node_under_cursor(node: dict<any>): void
-    Node_exec(Get_node_under_cursor(node))
+export def Tree_exec_node_under_cursor(tree: dict<any>): void
+    Node_exec(Get_node_under_cursor(tree))
 enddef
 
-export def Write_tree(node: dict<any>): void
+export def Write_tree(tree: dict<any>): void
     if &filetype !=# 'yggdrasil'
         return
     endif
 
     var cursor = getpos('.')
-    node.index = [-1]
-    var text = Node_to_str(node.root, 0)
+    tree.index = [-1]
+    var text = Node_to_str(tree.root, 0)
 
     setlocal modifiable
-    deletebufline(node.bufnr, 1, "$")
+    deletebufline(tree.bufnr, 1, "$")
     map(split(text, "\n"), (i, v) => append(i, [v]))
     setlocal nomodifiable
 
     setpos('.', cursor)
 enddef
 
-export def Tree_update(node: dict<any>, node_entries: list<number>): void
+export def Tree_update(tree: dict<any>, node_entries: list<number>): void
     if len(node_entries) == 0 
-        node.provider.getChildren((children_list: list<number>) => node.provider.getTreeItem(
-                    \ (tree_item: dict<any>) => Render_root_node(node, children_list[0], tree_item), children_list[0]),
-                    \ node.ignition, -1)
+        tree.provider.getChildren((children_list: list<number>) => tree.provider.getTreeItem(
+                    \ (tree_item: dict<any>) => Render_root_node(tree, children_list[0], tree_item), children_list[0]),
+                    \ tree.ignition, -1)
     else
-        node.provider.getTreeItem((item) => Node_update(node, node_entries[0], item), node_entries[0])
+        tree.provider.getTreeItem((item) => Node_update(tree, node_entries[0], item), node_entries[0])
     endif
 enddef
 
-export def Tree_wipe(self: dict<any>): void
-    execute 'bwipeout ' .. self.bufnr
+export def Tree_wipe(tree: dict<any>): void
+    execute 'bwipeout ' .. tree.bufnr
 enddef
 
 export def New_handle(provider: dict<any>, ignition: dict<any>): dict<any>
