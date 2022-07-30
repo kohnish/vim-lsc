@@ -79,15 +79,15 @@ def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
             children = b:tree[object_id]
         endif
     endif
-    Callback('success', children)
+    Callback(children)
 enddef
 
 def GetParent(Callback: func, object_id: number): void
-    Callback('success', Number_to_parent(object_id))
+    Callback(Number_to_parent(object_id))
 enddef
 
 def GetTreeItem(Callback: func, object_id: number): void
-    Callback('success', Number_to_treeitem(object_id))
+    Callback(Number_to_treeitem(object_id))
 enddef
 
 def Filetype_settings(): void 
