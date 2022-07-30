@@ -14,7 +14,7 @@ def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>, parent: d
         }
 enddef
 
-def Render_new_node(node: dict<any>, object_id: number, tree_item: dict<any>): void
+def Render_node(node: dict<any>, object_id: number, tree_item: dict<any>): void
     var new_node = Node_new(node.tree, object_id, tree_item, node)
     add(node.children, new_node)
     Render(new_node.tree)
@@ -22,7 +22,7 @@ enddef
 
 def Render_children_nodes(node: dict<any>, children_list: list<number>): void
     for object_id in children_list
-        node.tree.provider.getTreeItem((tree_item: dict<any>) => Render_new_node(node, object_id, tree_item), object_id)
+        node.tree.provider.getTreeItem((tree_item: dict<any>) => Render_node(node, object_id, tree_item), object_id)
     endfor
 enddef
 
@@ -80,7 +80,7 @@ def Node_render(node: dict<any>, level: number): string
     return join(lines, "\n")
 enddef
 
-def Render_new_root_node(tree: dict<any>, object_id: number, tree_item: dict<any>): void
+def Render_root_node(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     tree.maxid = -1
     tree.root = Node_new(tree, object_id, tree_item, {})
     Render(tree)
@@ -132,7 +132,7 @@ enddef
 export def Tree_update(node: dict<any>, node_entries: list<number>): void
     if len(node_entries) == 0 
         node.provider.getChildren((children_list: list<number>) => node.provider.getTreeItem(
-                    \ (tree_item: dict<any>) => Render_new_root_node(node, children_list[0], tree_item), children_list[0]),
+                    \ (tree_item: dict<any>) => Render_root_node(node, children_list[0], tree_item), children_list[0]),
                     \ node.ignition, -1)
     else
         node.provider.getTreeItem((item) => Node_update(node, node_entries[0], item), node_entries[0])
