@@ -60,16 +60,11 @@ enddef
 
 def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
     if !empty(ignition)
-        var hierarchy_call = 'callHierarchy/' .. ignition["mode"] .. "Calls"
-        var hierarchy_result_key = "from"
-        if ignition["mode"] == "outgoing"
-            hierarchy_result_key = "to"
-        endif
         b:ctx = {
             "server": ignition["server"],
             "original_win_id": ignition["original_win_id"],
-            "hierarchy_call": hierarchy_call,
-            "hierarchy_result_key": hierarchy_result_key,
+            "hierarchy_call": ignition["hierarchy_call"],
+            "hierarchy_result_key": ignition["hierarchy_result_key"],
             }
         b:nodes = {
             0: { "query": ignition["query"] }
@@ -173,14 +168,16 @@ def OpenTreeWindow(ignition: dict<any>): void
     b:handle.update(b:handle, [])
 enddef
 
-def PrepHierarchyCb(mode: string, results: list<any>): void
+def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
     if len(results) > 0
         var params = {"item": results[0]}
         var ignition = {
             "server": lsc#server#forFileType(&filetype)[0],
             "original_win_id": win_getid(),
             "query": params,
-            "mode": mode,
+            "mode": mode_info["name"],
+            "hierarchy_call": mode_info["call_name"],
+            "hierarchy_result_key": mode_info["result_key"],
             }
         OpenTreeWindow(ignition)
     endif
@@ -188,5 +185,17 @@ enddef
 
 export def PrepCallHierarchy(mode: string): void
     lsc#file#flushChanges()
-    lsc#server#userCall('textDocument/prepareCallHierarchy', lsc#params#documentPosition(), function(PrepHierarchyCb, [mode]))
+    var prep_req = "textDocument/prepareCallHierarchy"
+    var hierarchy_call = "callHierarchy/incomingCalls"
+    var result_key = "from"
+    if mode == "outgoing"
+        hierarchy_call = "callHierarchy/outgoingCalls"
+        result_key = "to"
+    endif
+    var mode_info = {
+        "name": mode,
+        "call_name": hierarchy_call,
+        "result_key": result_key
+        }
+    lsc#server#userCall(prep_req, lsc#params#documentPosition(), function(PrepHierarchyCb, [mode_info]))
 enddef
