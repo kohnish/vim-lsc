@@ -7,16 +7,16 @@ def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: 
         return
     endif
     var len_results = len(results)
-    var len_tree = len(b:tree)
-    b:tree[current_node_num] = range(len_tree, len_tree + len_results - 1)
+    var len_tree = len(b:integer_tree)
+    b:integer_tree[current_node_num] = range(len_tree, len_tree + len_results - 1)
     var counter = 0
-    for i in b:tree[current_node_num]
-        b:tree[i] = []
+    for i in b:integer_tree[current_node_num]
+        b:integer_tree[i] = []
         b:nodes[i] = { "query": {"item": results[counter][b:ctx["hierarchy_result_key"]] } }
         counter = counter + 1
     endfor
-    tree.Tree_update(b:handle, range(current_node_num, current_node_num + len(b:tree[current_node_num]) - 1))
-    tree.Tree_set_collapsed_under_cursor(b:handle, 0)
+    tree.Tree_update(b:tree, range(current_node_num, current_node_num + len(b:integer_tree[current_node_num]) - 1))
+    tree.Tree_set_collapsed_under_cursor(b:tree, 0)
 enddef
 
 def ShowFuncOnBuffer(info: dict<any>): void
@@ -28,11 +28,11 @@ def ShowFuncOnBuffer(info: dict<any>): void
 enddef
 
 def Command_callback(id: number): void
-    tree.Tree_set_collapsed_under_cursor(b:handle, 0)
+    tree.Tree_set_collapsed_under_cursor(b:tree, 0)
     if has_key(b:nodes, id)
         ShowFuncOnBuffer(b:nodes[id]["query"]["item"])
     endif
-    if has_key(b:tree, id) && len(b:tree[id]) != 0
+    if has_key(b:integer_tree, id) && len(b:integer_tree[id]) != 0
         return
     endif
     var param = b:nodes[id]["query"]
@@ -40,7 +40,7 @@ def Command_callback(id: number): void
 enddef
 
 def Number_to_parent(id: number): dict<any>
-    for [parent, children] in items(b:tree)
+    for [parent, children] in items(b:integer_tree)
         if index(children, id) > 0
             return parent
         endif
@@ -53,7 +53,7 @@ def Number_to_treeitem(id: number): dict<any>
     return {
         'id': string(id),
         'command': () => Command_callback(id),
-        'collapsibleState': len(b:tree[id]) > 0 ? 'collapsed' : 'none',
+        'collapsibleState': len(b:integer_tree[id]) > 0 ? 'collapsed' : 'none',
         'label': label,
         }
 enddef
@@ -69,14 +69,14 @@ def GetChildren(Render_children_nodes: func, ignition: dict<any>, object_id: num
         b:nodes = {
             0: { "query": ignition["query"] }
             }
-        b:tree = {
+        b:integer_tree = {
             0: [],
             }
     endif
     var children = [0]
     if object_id != -1
-        if has_key(b:tree, object_id)
-            children = b:tree[object_id]
+        if has_key(b:integer_tree, object_id)
+            children = b:integer_tree[object_id]
         endif
     endif
     Render_children_nodes(children)
@@ -101,11 +101,11 @@ def Filetype_settings(): void
     setlocal noswapfile
     setlocal nowrap
 
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-toggle-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:handle, -1)<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-open-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:handle, 0)<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-close-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:handle, 1)<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-execute-node) <ScriptCmd>tree.Tree_exec_node_under_cursor(b:handle)<CR>
-    nnoremap <silent> <buffer> <Plug>(yggdrasil-wipe-tree) <ScriptCmd>tree.Tree_wipe(b:handle)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-toggle-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:tree, -1)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-open-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:tree, 0)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-close-node) <ScriptCmd>tree.Tree_set_collapsed_under_cursor(b:tree, 1)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-execute-node) <ScriptCmd>tree.Tree_exec_node_under_cursor(b:tree)<CR>
+    nnoremap <silent> <buffer> <Plug>(yggdrasil-wipe-tree) <ScriptCmd>tree.Tree_wipe(b:tree)<CR>
 
     if !exists('g:yggdrasil_no_default_maps')
         nmap <silent> <buffer> o    <Plug>(yggdrasil-toggle-node)
@@ -149,16 +149,16 @@ def OpenTreeWindow(ignition: dict<any>): void
     topleft vnew
     execute "file " .. buf_name .. " [" .. bufnr('') .. "]"
     vertical resize 45
-    b:handle = tree.New_handle(provider, ignition)
+    b:tree = tree.New_tree(provider, ignition)
     augroup vim_yggdrasil
         autocmd!
         autocmd FileType yggdrasil Filetype_syntax() | Filetype_settings()
-        autocmd BufEnter <buffer> tree.Write_tree(b:handle)
+        autocmd BufEnter <buffer> tree.Write_tree(b:tree)
     augroup END
 
     setlocal filetype=yggdrasil
 
-    tree.Tree_update(b:handle, [])
+    tree.Tree_update(b:tree, [])
 enddef
 
 def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void

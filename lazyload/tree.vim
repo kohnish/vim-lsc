@@ -127,7 +127,7 @@ export def Tree_wipe(tree: dict<any>): void
     execute 'bwipeout ' .. tree.bufnr
 enddef
 
-export def New_handle(provider: dict<any>, ignition: dict<any>): dict<any>
+export def New_tree(provider: dict<any>, ignition: dict<any>): dict<any>
     return {
         'bufnr': bufnr('%'),
         'maxid': -1,
