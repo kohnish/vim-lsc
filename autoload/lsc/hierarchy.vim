@@ -77,9 +77,6 @@ def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
     if object_id != -1
         if has_key(b:tree, object_id)
             children = b:tree[object_id]
-        else
-            Callback('failure')
-            return
         endif
     endif
     Callback('success', children)
