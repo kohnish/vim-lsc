@@ -1,18 +1,16 @@
 vim9script
 
 # Callback to retrieve the tree item representation of an object.
-def Node_get_tree_item_cb(node: dict<any>, object_id: number, status: string, tree_item: dict<any>): void
-    if status ==? 'success'
-        var new_node = Node_new(node.tree, object_id, tree_item, node)
-        add(node.children, new_node)
-        Render(new_node.tree)
-    endif
+def Node_get_tree_item_cb(node: dict<any>, object_id: number, tree_item: dict<any>): void
+    var new_node = Node_new(node.tree, object_id, tree_item, node)
+    add(node.children, new_node)
+    Render(new_node.tree)
 enddef
 
 # Callback to retrieve the children objects of a node.
-def Node_get_children_cb(node: dict<any>, status: string, childObjectList: list<any>): void
+def Node_get_children_cb(node: dict<any>, childObjectList: list<any>): void
     for childObject in childObjectList
-        node.tree.provider.getTreeItem((result: string, tree_item: dict<any>) => Node_get_tree_item_cb(node, childObject, result, tree_item), childObject)
+        node.tree.provider.getTreeItem((tree_item: dict<any>) => Node_get_tree_item_cb(node, childObject, tree_item), childObject)
     endfor
 enddef
 
@@ -78,7 +76,7 @@ def Node_render(self: dict<any>, level: number): string
     if !self.collapsed
         if self.lazy_open
             self.lazy_open = false
-            self.tree.provider.getChildren((result, children) => Node_get_children_cb(self, result, children), {}, self.object)
+            self.tree.provider.getChildren((children) => Node_get_children_cb(self, children), {}, self.object)
         endif
         for child in self.children
             add(lines, child.render(child, level + 1))
@@ -117,12 +115,10 @@ enddef
 # with a {tree_item} representation for the given {object}. If {status} is
 # equal to 'success', the root node is set and the tree view is updated
 # accordingly, otherwise nothing happens.
-def Tree_set_root_cb(tree: dict<any>, object_id: number, status: string, tree_item: dict<any>): void
-    if status ==? 'success'
+def Tree_set_root_cb(tree: dict<any>, object_id: number, tree_item: dict<any>): void
         tree.maxid = -1
         tree.root = Node_new(tree, object_id, tree_item, {})
         Render(tree)
-    endif
 enddef
 
 # Return the node currently under the cursor from the given {tree}.
@@ -176,10 +172,7 @@ enddef
 
 # If {status} equals 'success', update all nodes of {tree} representing
 # an {obect} with given {tree_item} representation.
-def Node_update(tree: dict<any>, object_id: number, status: string, tree_item: dict<any>): void
-    if status !=? 'success'
-        return
-    endif
+def Node_update(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     for node in Search_subtree(tree.root, (n) => n.object == object_id)
         node.tree_item = tree_item
         node.children = []
@@ -193,11 +186,11 @@ enddef
 # all the subtrees of nodes corresponding to {object}.
 def Tree_update(self: dict<any>, args: list<any>): void
     if len(args) == 0 
-        self.provider.getChildren((child_status: string, children_list: list<any>) => self.provider.getTreeItem( 
-                    \ (tree_status: string, tree_item: dict<any>) => Tree_set_root_cb(self, children_list[0], tree_status, tree_item), children_list[0]),
+        self.provider.getChildren((children_list: list<any>) => self.provider.getTreeItem( 
+                    \ (tree_item: dict<any>) => Tree_set_root_cb(self, children_list[0], tree_item), children_list[0]),
                     \ self.ignition, -1)
     else
-        self.provider.getTreeItem((result, item) => Node_update(self, args[0], result, item), args[0])
+        self.provider.getTreeItem((item) => Node_update(self, args[0], item), args[0])
     endif
 enddef
 
