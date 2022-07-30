@@ -58,7 +58,7 @@ def Number_to_treeitem(id: number): dict<any>
         }
 enddef
 
-def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
+def GetChildren(Render_children_nodes: func, ignition: dict<any>, object_id: number): void
     if !empty(ignition)
         b:ctx = {
             "server": ignition["server"],
@@ -79,15 +79,11 @@ def GetChildren(Callback: func, ignition: dict<any>, object_id: number): void
             children = b:tree[object_id]
         endif
     endif
-    Callback(children)
+    Render_children_nodes(children)
 enddef
 
-def GetParent(Callback: func, object_id: number): void
-    Callback(Number_to_parent(object_id))
-enddef
-
-def GetTreeItem(Callback: func, object_id: number): void
-    Callback(Number_to_treeitem(object_id))
+def GetTreeItem(Render_new_node: func, object_id: number): void
+    Render_new_node(Number_to_treeitem(object_id))
 enddef
 
 def Filetype_settings(): void 
@@ -142,7 +138,6 @@ enddef
 def OpenTreeWindow(ignition: dict<any>): void
     var provider = {
         'getChildren': GetChildren,
-        'getParent': GetParent,
         'getTreeItem': GetTreeItem,
         }
 
