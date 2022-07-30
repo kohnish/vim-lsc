@@ -15,7 +15,7 @@ def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: 
         b:nodes[i] = { "query": {"item": results[counter][b:ctx["hierarchy_result_key"]] } }
         counter = counter + 1
     endfor
-    b:handle.update(b:handle, range(current_node_num, current_node_num + len(b:tree[current_node_num]) - 1))
+    tree.Tree_update(b:handle, range(current_node_num, current_node_num + len(b:tree[current_node_num]) - 1))
     tree.Tree_set_collapsed_under_cursor(b:handle, 0)
 enddef
 
@@ -163,7 +163,7 @@ def OpenTreeWindow(ignition: dict<any>): void
 
     setlocal filetype=yggdrasil
 
-    b:handle.update(b:handle, [])
+    tree.Tree_update(b:handle, [])
 enddef
 
 def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
