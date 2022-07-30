@@ -11,10 +11,6 @@ def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>, parent: d
         'collapsed': tree_item.collapsibleState ==? 'collapsed',
         'lazy_open': tree_item.collapsibleState !=? 'none',
         'children': [],
-        'level': Node_level,
-        'exec': Node_exec,
-        'set_collapsed': Node_set_collapsed,
-        'render': Node_render
         }
 enddef
 
@@ -30,8 +26,8 @@ def Node_get_children_cb(node: dict<any>, childObjectList: list<number>): void
     endfor
 enddef
 
-def Node_set_collapsed(self: dict<any>, collapsed: number): void
-    self.collapsed = collapsed < 0 ? !self.collapsed : !!collapsed
+def Node_set_collapsed(node: dict<any>, collapsed: number): void
+    node.collapsed = collapsed < 0 ? !node.collapsed : !!collapsed
 enddef
 
 def Search_subtree(node: dict<any>, Condition: func): list<dict<any>>
@@ -48,43 +44,36 @@ def Search_subtree(node: dict<any>, Condition: func): list<dict<any>>
     return result
 enddef
 
-def Node_exec(self: dict<any>): void
-    if has_key(self.tree_item, 'command')
-        self.tree_item.command()
+def Node_exec(node: dict<any>): void
+    if has_key(node.tree_item, 'command')
+        node.tree_item.command()
     endif
-enddef
-
-def Node_level(self: dict<any>): number
-    if self.parent == {}
-        return 0
-    endif
-    return 1 + self.parent.level(self)
 enddef
 
 # Return the string representation of the node. The {level} argument represents
 # the depth level of the node in the tree and it is passed for convenience, to
 # simplify the implementation and to avoid re-computing the depth.
-def Node_render(self: dict<any>, level: number): string
+def Node_render(node: dict<any>, level: number): string
     var indent = repeat(' ', 2 * level)
     var mark = '• '
 
-    if len(self.children) > 0 || self.lazy_open != false
-        mark = self.collapsed ? '▸ ' : '▾ '
+    if len(node.children) > 0 || node.lazy_open != false
+        mark = node.collapsed ? '▸ ' : '▾ '
     endif
 
-    var label = split(self.tree_item.label, "\n")
-    extend(self.tree.index, map(range(len(label)), (i, v) => self))
+    var label = split(node.tree_item.label, "\n")
+    extend(node.tree.index, map(range(len(label)), (i, v) => node))
 
     var repr = indent .. mark .. label[0] .. join(map(label[1 : ], (_, l) => "\n" .. indent .. '  ' .. l))
 
     var lines = [repr]
-    if !self.collapsed
-        if self.lazy_open
-            self.lazy_open = false
-            self.tree.provider.getChildren((children) => Node_get_children_cb(self, children), {}, self.object)
+    if !node.collapsed
+        if node.lazy_open
+            node.lazy_open = false
+            node.tree.provider.getChildren((children) => Node_get_children_cb(node, children), {}, node.object)
         endif
-        for child in self.children
-            add(lines, child.render(child, level + 1))
+        for child in node.children
+            add(lines, Node_render(child, level + 1))
         endfor
     endif
 
@@ -102,15 +91,15 @@ def Get_node_under_cursor(tree: dict<any>): dict<any>
     return tree.index[index]
 enddef
 
-export def Tree_set_collapsed_under_cursor(self: dict<any>, collapsed: number): void
-    var node = Get_node_under_cursor(self)
-    node.set_collapsed(node, collapsed)
-    Render(self)
+export def Tree_set_collapsed_under_cursor(node: dict<any>, collapsed: number): void
+    var current_node = Get_node_under_cursor(node)
+    Node_set_collapsed(current_node, collapsed)
+    Render(node)
 enddef
 
-export def Tree_exec_node_under_cursor(self: dict<any>): void
-    var node = Get_node_under_cursor(self)
-    node.exec(node)
+export def Tree_exec_node_under_cursor(node: dict<any>): void
+    var current_node = Get_node_under_cursor(node)
+    Node_exec(current_node)
 enddef
 
 export def Render(tree: dict<any>): void
@@ -120,7 +109,7 @@ export def Render(tree: dict<any>): void
 
     var cursor = getpos('.')
     tree.index = [-1]
-    var text = tree.root.render(tree.root, 0)
+    var text = Node_render(tree.root, 0)
 
     setlocal modifiable
     deletebufline(tree.bufnr, 1, "$")
@@ -140,13 +129,13 @@ def Node_update(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     Render(tree)
 enddef
 
-def Tree_update(self: dict<any>, node_entries: list<number>): void
+def Tree_update(node: dict<any>, node_entries: list<number>): void
     if len(node_entries) == 0 
-        self.provider.getChildren((children_list: list<number>) => self.provider.getTreeItem(
-                    \ (tree_item: dict<any>) => Tree_set_root_cb(self, children_list[0], tree_item), children_list[0]),
-                    \ self.ignition, -1)
+        node.provider.getChildren((children_list: list<number>) => node.provider.getTreeItem(
+                    \ (tree_item: dict<any>) => Tree_set_root_cb(node, children_list[0], tree_item), children_list[0]),
+                    \ node.ignition, -1)
     else
-        self.provider.getTreeItem((item) => Node_update(self, node_entries[0], item), node_entries[0])
+        node.provider.getTreeItem((item) => Node_update(node, node_entries[0], item), node_entries[0])
     endif
 enddef
 
