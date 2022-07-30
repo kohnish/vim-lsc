@@ -129,7 +129,7 @@ def Node_update(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     Render(tree)
 enddef
 
-def Tree_update(node: dict<any>, node_entries: list<number>): void
+export def Tree_update(node: dict<any>, node_entries: list<number>): void
     if len(node_entries) == 0 
         node.provider.getChildren((children_list: list<number>) => node.provider.getTreeItem(
                     \ (tree_item: dict<any>) => Tree_set_root_cb(node, children_list[0], tree_item), children_list[0]),
@@ -150,10 +150,6 @@ export def New_handle(provider: dict<any>, ignition: dict<any>): dict<any>
         'root': {},
         'index': [],
         'provider': provider,
-        'set_collapsed_under_cursor': Tree_set_collapsed_under_cursor,
-        'exec_node_under_cursor': Tree_exec_node_under_cursor,
-        'update': Tree_update,
-        'wipe': Tree_wipe,
         'ignition': ignition,
         }
 enddef
