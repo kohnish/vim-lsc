@@ -82,8 +82,8 @@ def GetChildren(Render_children_nodes: func, ignition: dict<any>, object_id: num
     Render_children_nodes(children)
 enddef
 
-def GetTreeItem(Render_new_node: func, object_id: number): void
-    Render_new_node(Number_to_treeitem(object_id))
+def GetTreeItem(Render_node: func, object_id: number): void
+    Render_node(Number_to_treeitem(object_id))
 enddef
 
 def Filetype_settings(): void 
