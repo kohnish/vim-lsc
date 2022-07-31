@@ -96,7 +96,7 @@ export def Tree_exec_node_under_cursor(tree: dict<any>): void
 enddef
 
 export def Write_tree(tree: dict<any>): void
-    if &filetype !=# 'yggdrasil'
+    if bufnr('') != tree.bufnr
         return
     endif
 
