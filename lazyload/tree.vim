@@ -1,13 +1,12 @@
 vim9script
 
-def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>, parent: dict<any>): dict<any>
+def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>): dict<any>
     tree.maxid += 1
     return {
         'id': tree.maxid,
         'tree': tree,
         'object': object_id,
         'tree_item': tree_item,
-        'parent': parent,
         'collapsed': tree_item.collapsibleState ==? 'collapsed',
         'lazy_open': tree_item.collapsibleState !=? 'none',
         'children': [],
@@ -16,7 +15,7 @@ enddef
 
 def Render_children_nodes(node: dict<any>, children_list: list<number>): void
     for object_id in children_list
-        node.tree.provider.getTreeItem((tree_item: dict<any>) => add(node.children, Node_new(node.tree, object_id, tree_item, node)), object_id)
+        node.tree.provider.getTreeItem((tree_item: dict<any>) => add(node.children, Node_new(node.tree, object_id, tree_item)), object_id)
     endfor
     Write_tree(node.tree)
 enddef
@@ -69,7 +68,7 @@ enddef
 
 def Render_root_node(tree: dict<any>, object_id: number, tree_item: dict<any>): void
     tree.maxid = -1
-    tree.root = Node_new(tree, object_id, tree_item, {})
+    tree.root = Node_new(tree, object_id, tree_item)
     Write_tree(tree)
 enddef
 
