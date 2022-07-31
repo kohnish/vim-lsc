@@ -39,15 +39,6 @@ def Command_callback(id: number): void
     lsc#server#userCall_with_server(b:ctx["server"], b:ctx["hierarchy_call"], param, function(OpenHierarchyCallNode, [id, param]))
 enddef
 
-def Number_to_parent(id: number): dict<any>
-    for [parent, children] in items(b:integer_tree)
-        if index(children, id) > 0
-            return parent
-        endif
-    endfor
-    return {}
-enddef
-
 def Number_to_treeitem(id: number): dict<any>
     var label = b:nodes[id]["query"]["item"]["name"]
     return {
