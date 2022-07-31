@@ -15,7 +15,7 @@ def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: 
         b:nodes[i] = { "query": {"item": results[counter][b:ctx["hierarchy_result_key"]] } }
         counter = counter + 1
     endfor
-    tree.Tree_update(b:tree, range(current_node_num, current_node_num + len(b:integer_tree[current_node_num]) - 1))
+    tree.Tree_update(b:tree, [current_node_num])
     tree.Tree_set_collapsed_under_cursor(b:tree, 0)
 enddef
 
