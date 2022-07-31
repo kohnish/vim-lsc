@@ -360,6 +360,17 @@ export def DiagHover(): void
     endif
 enddef
 
+def Get_fixendofline(buf: number): bool 
+    var eol = getbufvar(buf, '&endofline')
+    var binary = getbufvar(buf, '&binary')
+    var fixeol = getbufvar(buf, '&fixendofline')
+    if !binary
+        return fixeol || eol
+    else
+        return eol
+    endif
+enddef
+
 def FormatCb(bufnr: number, results: list<dict<any>>): void
     for text_edit in results
         var start_line = getline(text_edit['range']['start']['line'] + 1)
@@ -374,6 +385,15 @@ def FormatCb(bufnr: number, results: list<dict<any>>): void
         var new_lines_len = len(new_lines)
         var range_len = (text_edit['range']['end']['line'] - text_edit['range']['start']['line']) + 1
 
+        var buffer_length = len(getbufline(bufnr, 0, '$'))
+        var should_fixendofline = Get_fixendofline(bufnr)
+        should_fixendofline = should_fixendofline && new_lines[-1] ==# ''
+        should_fixendofline = should_fixendofline && buffer_length <= text_edit['range']['end']['line']
+        should_fixendofline = should_fixendofline && text_edit['range']['end']['character'] == 0
+        if should_fixendofline
+            remove(new_lines, -1)
+        endif
+
         if new_lines_len > range_len
             append(text_edit['range']['start']['line'], repeat([''], new_lines_len - range_len))
         elseif new_lines_len < range_len
@@ -386,6 +406,10 @@ enddef
 
 export def Format(): void
     lsc#file#flushChanges()
-    var params = { 'textDocument': {'uri': Uri()}}
+    var params: dict<any>
+    params = { 'textDocument': { 'uri': Uri() } }
+    if exists('g:lsc_format_options')
+        params['options'] = g:lsc_format_options
+    endif
     lsc#server#userCall('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
 enddef
