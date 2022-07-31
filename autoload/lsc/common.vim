@@ -359,3 +359,33 @@ export def DiagHover(): void
         popup_atcursor(diag_popup_arr, {})
     endif
 enddef
+
+def FormatCb(bufnr: number, results: list<dict<any>>): void
+    for text_edit in results
+        var start_line = getline(text_edit['range']['start']['line'] + 1)
+        var end_line = getline(text_edit['range']['end']['line'] + 1)
+        var before_line = strcharpart(start_line, 0, text_edit['range']['start']['character'])
+        var after_line = strcharpart(end_line, text_edit['range']['end']['character'], strchars(end_line) - text_edit['range']['end']['character'])
+
+        var new_lines = split(text_edit['newText'], '\r\n\|\r\|\n', true)
+        new_lines[0] = before_line .. new_lines[0]
+        new_lines[-1] = new_lines[-1] .. after_line
+
+        var new_lines_len = len(new_lines)
+        var range_len = (text_edit['range']['end']['line'] - text_edit['range']['start']['line']) + 1
+
+        if new_lines_len > range_len
+            append(text_edit['range']['start']['line'], repeat([''], new_lines_len - range_len))
+        elseif new_lines_len < range_len
+            var offset = range_len - new_lines_len
+            deletebufline(bufnr, text_edit['range']['start']['line'] + 1, text_edit['range']['start']['line'] + offset)
+        endif
+        setline(text_edit['range']['start']['line'] + 1, new_lines)
+    endfor
+enddef
+
+export def Format(): void
+    lsc#file#flushChanges()
+    var params = { 'textDocument': {'uri': Uri()}}
+    lsc#server#userCall('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
+enddef
