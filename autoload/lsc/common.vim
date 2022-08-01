@@ -483,9 +483,13 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     updated_edits->sort(Edit_sort_func)
 
     var lines: list<string> = bnr->getbufline(start_line + 1, finish_line + 1)
-    var fix_eol: bool = bnr->getbufvar('&fixeol')
-    var set_eol = fix_eol && bnr->getbufinfo()[0].linecount <= finish_line + 1
-    if set_eol && lines[-1]->len() != 0
+    # This causes issues with haskell-language-server sometimes so just add lines without checking eol stuff
+    # var fix_eol: bool = bnr->getbufvar('&fixeol')
+    # var set_eol = fix_eol && bnr->getbufinfo()[0].linecount <= finish_line + 1
+    # if set_eol && lines[-1]->len() != 0
+    #     lines->add('')
+    # endif
+    if bnr->getbufinfo()[0].linecount <= finish_line + 1
         lines->add('')
     endif
 
@@ -496,9 +500,9 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     endfor
 
     # If the last line is empty and we need to set EOL, then remove it.
-    if set_eol && lines[-1]->len() == 0
-        lines->remove(-1)
-    endif
+    # if set_eol && lines[-1]->len() == 0
+    #     lines->remove(-1)
+    # endif
 
     # Delete all the lines that need to be modified
     bnr->deletebufline(start_line + 1, finish_line + 1)
@@ -514,9 +518,10 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     # Append the updated lines
     appendbufline(bnr, start_line, lines)
 
-    if dellastline
-        bnr->deletebufline(bnr->getbufinfo()[0].linecount)
-    endif
+    # This causes issues with haskell-language-server
+    # if dellastline
+    # bnr->deletebufline(bnr->getbufinfo()[0].linecount)
+    # endif
 enddef
 
 export def Format(): void
