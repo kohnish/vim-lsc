@@ -42,7 +42,6 @@ enddef
 def Number_to_treeitem(id: number): dict<any>
     var label = b:nodes[id]["query"]["item"]["name"]
     return {
-        'id': string(id),
         'command': () => Command_callback(id),
         'collapsibleState': len(b:integer_tree[id]) > 0 ? 'collapsed' : 'none',
         'label': label,
