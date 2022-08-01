@@ -1,9 +1,7 @@
 vim9script
 
 def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>): dict<any>
-    tree.maxid += 1
     return {
-        'id': tree.maxid,
         'tree': tree,
         'object': object_id,
         'tree_item': tree_item,
@@ -67,7 +65,6 @@ def Node_to_str(node: dict<any>, level: number): string
 enddef
 
 def Render_root_node(tree: dict<any>, object_id: number, tree_item: dict<any>): void
-    tree.maxid = -1
     tree.root = Node_new(tree, object_id, tree_item)
     Write_tree(tree)
 enddef
@@ -129,7 +126,6 @@ enddef
 export def New_tree(provider: dict<any>, ignition: dict<any>): dict<any>
     return {
         'bufnr': bufnr('%'),
-        'maxid': -1,
         'root': {},
         'index': [],
         'provider': provider,
