@@ -452,6 +452,7 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
         return
     endif
 
+    var orig_cursor_pos = getcurpos()
     # if the buffer is not loaded, load it and make it a listed buffer
     if !bnr->bufloaded()
         bnr->bufload()
@@ -522,6 +523,7 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     # if dellastline
     # bnr->deletebufline(bnr->getbufinfo()[0].linecount)
     # endif
+    setpos('.', orig_cursor_pos)
 enddef
 
 export def Format(): void
