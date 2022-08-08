@@ -144,6 +144,10 @@ augroup LSC
   endif
 
   autocmd BufWinLeave * call lsc#inlayhint#ClearInlayHint(bufnr(''))
+  if exists("g:lsc_enable_inlayhint_auto_toggle") && g:lsc_enable_inlayhint_auto_toggle
+    autocmd InsertEnter * call lsc#inlayhint#ClearInlayHint(bufnr(''))
+    autocmd InsertLeave * call lsc#inlayhint#InlayHint()
+  endif
 augroup END
 
 " Set window local state only if this is a brand new window which has not
