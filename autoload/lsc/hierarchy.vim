@@ -12,7 +12,10 @@ def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: 
     var counter = 0
     for i in b:integer_tree[current_node_num]
         b:integer_tree[i] = []
-        b:nodes[i] = { "query": {"item": results[counter][b:ctx["hierarchy_result_key"]] } }
+        b:nodes[i] = {}
+        b:nodes[i]["query"] = {"item": results[counter][b:ctx["hierarchy_result_key"]] }
+        b:nodes[i]["info"] = {"item": results[counter]["fromRanges"][0] }
+        b:nodes[i]["info"]["item"]["uri"] = results[counter]["from"]["uri"]
         counter = counter + 1
     endfor
     tree.Tree_update(b:tree, [current_node_num])
@@ -27,10 +30,22 @@ def ShowFuncOnBuffer(info: dict<any>): void
     win_gotoid(cur)
 enddef
 
+def ShowRefOnBuffer(info: dict<any>): void
+    var cur = win_findbuf(bufnr(''))[0]
+    win_gotoid(b:ctx["original_win_id"])
+    execute "edit " .. info["uri"]
+    cursor(info["start"]["line"] + 1, info["start"]["character"] + 1)
+    win_gotoid(cur)
+enddef
+
 def Command_callback(id: number): void
     tree.Tree_set_collapsed_under_cursor(b:tree, 0)
     if has_key(b:nodes, id)
-        ShowFuncOnBuffer(b:nodes[id]["query"]["item"])
+        if has_key(b:nodes[id], "info")
+            ShowRefOnBuffer(b:nodes[id]["info"]["item"])
+        else
+            ShowFuncOnBuffer(b:nodes[id]["query"]["item"])
+        endif
     endif
     if has_key(b:integer_tree, id) && len(b:integer_tree[id]) != 0
         return
