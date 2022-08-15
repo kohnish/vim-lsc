@@ -14,8 +14,10 @@ def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: 
         b:integer_tree[i] = []
         b:nodes[i] = {}
         b:nodes[i]["query"] = {"item": results[counter][b:ctx["hierarchy_result_key"]] }
-        b:nodes[i]["info"] = {"item": results[counter]["fromRanges"][0] }
-        b:nodes[i]["info"]["item"]["uri"] = results[counter]["from"]["uri"]
+        if has_key(results[counter], "fromRanges")
+            b:nodes[i]["info"] = {"item": results[counter]["fromRanges"][0] }
+            b:nodes[i]["info"]["item"]["uri"] = results[counter]["from"]["uri"]
+        endif
         counter = counter + 1
     endfor
     tree.Tree_update(b:tree, [current_node_num])
