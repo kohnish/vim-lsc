@@ -2,8 +2,6 @@ vim9script
 
 import "./common.vim"
 
-var g_popup_id = -1
-
 export def GetSignatureHelp(): void
     lsc#file#flushChanges()
     var params = lsc#params#documentPosition()
@@ -46,8 +44,10 @@ export def ShowHelp(signatureHelp: any): void
     endif
 
     if !has_key(signature, 'parameters')
-        popup_close(g_popup_id)
-        g_popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
+        if exists("b:sig_popup_id")
+            popup_close(b:sig_popup_id)
+        endif
+        b:sig_popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
         return
     endif
 
@@ -61,10 +61,14 @@ export def ShowHelp(signatureHelp: any): void
             active_param_start_pos = stridx(signature.label, current_parameter) + 1
         endif
     endif
-    popup_close(g_popup_id)
-    g_popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
-    var popup_win_id = winbufnr(g_popup_id)
-    prop_type_delete('signature')
+    if exists("b:sig_popup_id")
+       popup_close(b:sig_popup_id)
+    endif
+    b:sig_popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
+    var popup_win_id = winbufnr(b:sig_popup_id)
+    if !empty(prop_type_get('signature'))
+        prop_type_delete('signature')
+    endif
     prop_type_add('signature', {'bufnr': popup_win_id, 'highlight': 'PmenuSel'})
     if active_param_len > 0
         prop_add(1, active_param_start_pos, {'bufnr': popup_win_id, 'type': 'signature', 'length': active_param_len})
