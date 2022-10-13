@@ -6,8 +6,6 @@ if !exists('s:initialized')
       \ 'FindReferences': 'gr',
       \ 'IncomingCalls': 'gi',
       \ 'OutgoingCalls': 'gn',
-      \ 'NextReference': '<C-n>',
-      \ 'PreviousReference': '<C-p>',
       \ 'FindImplementations': 'gI',
       \ 'FindCodeActions': 'ga',
       \ 'Rename': 'gR',
