@@ -23,7 +23,16 @@ if !exists('s:initialized')
 endif
 
 function! lsc#server#start(server) abort
-  call s:Start(a:server)
+  let lang_proj_root_var_str = "g:lsc_" .. &filetype .. "_project_root"
+  if exists(lang_proj_root_var_str)
+    let orig_dir = getcwd()
+    execute "let lang_proj_root = " .. lang_proj_root_var_str
+    execute "cd " .. lang_proj_root
+    call s:Start(a:server)
+    execute "cd " .. orig_dir
+  else
+    call s:Start(a:server)
+  endif
 endfunction
 
 function! lsc#server#status(filetype) abort
