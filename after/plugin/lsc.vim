@@ -1,10 +1,17 @@
-if exists('g:lsc_registered_commands') | finish | endif
-let g:lsc_registered_commands = 1
-
-if !exists('g:lsc_server_commands') | finish | endif
-
-for [s:filetype, s:config] in items(g:lsc_server_commands)
-    if executable(split(s:config)[0])
-        call RegisterLanguageServer(s:filetype, s:config)
+function! g:LSCServerRegister()
+    let cfg = {}
+    if exists('g:lsc_server_commands')
+      let cfg = g:lsc_server_commands
+    else
+      if exists('*LSClientServerCommandsFunc')
+        let cfg = LSClientServerCommandsFunc()
+      endif
     endif
-endfor
+    for [s:filetype, s:config] in items(cfg)
+        if executable(split(s:config)[0])
+            call RegisterLanguageServer(s:filetype, s:config)
+        endif
+    endfor
+endfunction
+
+call LSCServerRegister()

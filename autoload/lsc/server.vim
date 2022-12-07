@@ -105,15 +105,21 @@ function! s:HandleShutdownResponse(server, status, OnExit, result) abort
   if a:OnExit != v:null | call a:OnExit() | endif
 endfunction
 
+function! lsc#server#clear() abort
+  let s:servers = {}
+  let s:initialized = v:false
+endfunction
+
 function! lsc#server#restart() abort
   let l:server_name = g:lsc_servers_by_filetype[&filetype]
   let l:server = s:servers[l:server_name]
   let l:old_status = l:server.status
-  if l:old_status ==# 'starting' || l:old_status ==# 'running'
-    call s:Kill(l:server, 'restarting', v:null)
-  else
-    call s:Start(l:server)
-  endif
+  try
+    call lsc#server#disable()
+  catch
+  endtry
+  call lsc#server#clear()
+  call LSCServerRegister()
 endfunction
 
 " A server call explicitly initiated by the user for the current buffer.
@@ -228,26 +234,35 @@ function! s:ClientCapabilities() abort
 endfunction
 
 function! lsc#server#filetypeActive(filetype) abort
-  let l:server = s:servers[g:lsc_servers_by_filetype[a:filetype]]
-  return get(l:server.config, 'enabled', v:true)
+  try
+    let l:server = s:servers[g:lsc_servers_by_filetype[a:filetype]]
+    return get(l:server.config, 'enabled', v:true)
+  catch
+    return v:false
+  endtry
 endfunction
 
 function! lsc#server#disable() abort
-  if !has_key(g:lsc_servers_by_filetype, &filetype)
-    return v:false
-  endif
-  let l:server = s:servers[g:lsc_servers_by_filetype[&filetype]]
-  let l:server.config.enabled = v:false
-  call s:Kill(l:server, 'disabled', v:null)
+  try
+      for i in s:servers
+          let i.config.enabled = v:false
+          call s:Kill(ir, 'disabled', v:null)
+      endfor
+  catch
+  endtry
 endfunction
 
 function! lsc#server#enable() abort
   if !has_key(g:lsc_servers_by_filetype, &filetype)
     return v:false
   endif
-  let l:server = s:servers[g:lsc_servers_by_filetype[&filetype]]
-  let l:server.config.enabled = v:true
-  call s:Start(l:server)
+  try
+    let l:server = s:servers[g:lsc_servers_by_filetype[&filetype]]
+    let l:server.config.enabled = v:true
+    call s:Start(l:server)
+  catch
+    call lsc#server#restart()
+  endtry
 endfunction
 
 function! lsc#server#register(filetype, config) abort
