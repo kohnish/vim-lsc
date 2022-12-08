@@ -167,7 +167,7 @@ endfunction
 " By default messages are shown at "Info" or higher, this can be overrided per
 " server.
 function! lsc#config#shouldEcho(server, type) abort
-  let l:threshold = 3
+  let l:threshold = 2
   if has_key(a:server.config, 'log_level')
     if type(a:server.config.log_level) == type(0)
       let l:threshold = a:server.config.log_level
