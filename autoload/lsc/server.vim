@@ -111,13 +111,7 @@ function! lsc#server#clear() abort
 endfunction
 
 function! lsc#server#restart() abort
-  let l:server_name = g:lsc_servers_by_filetype[&filetype]
-  let l:server = s:servers[l:server_name]
-  let l:old_status = l:server.status
-  try
-    call lsc#server#disable()
-  catch
-  endtry
+  call lsc#server#disable()
   call lsc#server#clear()
   call LSCServerRegister()
 endfunction
@@ -243,13 +237,9 @@ function! lsc#server#filetypeActive(filetype) abort
 endfunction
 
 function! lsc#server#disable() abort
-  try
-      for i in s:servers
-          let i.config.enabled = v:false
-          call s:Kill(ir, 'disabled', v:null)
-      endfor
-  catch
-  endtry
+  for l:server in values(s:servers)
+    call l:server.notify('exit', v:null)
+  endfor
 endfunction
 
 function! lsc#server#enable() abort
