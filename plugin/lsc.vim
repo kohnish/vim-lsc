@@ -134,6 +134,9 @@ augroup LSC
   autocmd BufUnload * call <SID>OnClose()
   autocmd BufWritePost * call <SID>OnWrite()
 
+  " autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
+  " autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
+  " Try hold instead
   autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onMove')
   autocmd WinLeave,InsertEnter * call <SID>IfEnabled('lsc#cursor#clean')
   autocmd User LSCOnChangesFlushed
@@ -185,6 +188,8 @@ function! LSCEnsureCurrentWindowState() abort
   endif
   call lsc#diagnostics#updateCurrentWindow()
   call lsc#highlights#update()
+  " Might be heavy
+  call lsc#cursor#onWinEnter()
 endfunction
 
 " Run `function` if LSC is enabled for the current filetype.
