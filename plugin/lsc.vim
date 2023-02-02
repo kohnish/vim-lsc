@@ -134,10 +134,10 @@ augroup LSC
   autocmd BufUnload * call <SID>OnClose()
   autocmd BufWritePost * call <SID>OnWrite()
 
-  " autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
-  " autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
+  autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
+  autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
   " Try hold instead
-  autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onMove')
+  " autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onMove')
   autocmd WinLeave,InsertEnter * call <SID>IfEnabled('lsc#cursor#clean')
   autocmd User LSCOnChangesFlushed
       \ call <SID>IfEnabled('lsc#cursor#onChangesFlushed')
