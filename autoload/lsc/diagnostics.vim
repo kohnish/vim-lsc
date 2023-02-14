@@ -14,6 +14,8 @@ if !exists('s:file_diagnostics')
   let s:file_diagnostics = {}
 endif
 
+let s:max_diag = 30
+
 function! lsc#diagnostics#clean(filetype) abort
   for l:buffer in getbufinfo({'bufloaded': v:true})
     if getbufvar(l:buffer.bufnr, '&filetype') != a:filetype | continue | endif
@@ -206,17 +208,17 @@ endfunction
 
 " Returns the total number of diagnostics in all files.
 "
-" If the number grows very large returns instead a String like `'500+'`
-function! lsc#diagnostics#count() abort
-  let l:total = 0
-  for l:diagnostics in values(s:file_diagnostics)
-    let l:total += len(l:diagnostics.lsp_diagnostics)
-    if l:total > 500
-      return string(l:total).'+'
-    endif
-  endfor
-  return l:total
-endfunction
+" " If the number grows very large returns instead a String like `'500+'`
+" function! lsc#diagnostics#count() abort
+"   let l:total = 0
+"   for l:diagnostics in values(s:file_diagnostics)
+"     let l:total += len(l:diagnostics.lsp_diagnostics)
+"     if l:total > 500
+"       return string(l:total).'+'
+"     endif
+"   endfor
+"   return l:total
+" endfunction
 
 " Finds all diagnostics and populates the quickfix list.
 function! lsc#diagnostics#showInQuickFix() abort
@@ -263,14 +265,14 @@ function! s:AllDiagnostics() abort
   let l:files = keys(s:file_diagnostics)
   if exists('s:highest_used_diagnostic')
     call filter(l:files, funcref('<SID>IsUsed', [s:highest_used_diagnostic]))
-  elseif len(l:files) > 500
+  elseif len(l:files) > s:diag_max
     let l:files = s:First500(l:files)
   endif
   call sort(l:files, funcref('lsc#file#compare'))
   for l:file_path in l:files
     let l:diagnostics = s:file_diagnostics[l:file_path]
     call extend(l:all_diagnostics, l:diagnostics.ListItems())
-    if len(l:all_diagnostics) >= 500
+    if len(l:all_diagnostics) >= s:diag_max
       let s:highest_used_diagnostic = l:file_path
       break
     endif
@@ -294,12 +296,12 @@ function! s:First500(file_list) abort
       call lsc#message#error('Missing support for rand().'
           \.' :LSClientAllDiagnostics may be inconsistent when there'
           \.' are more than 500 files with diagnostics.')
-      return a:file_list[:500]
+      return a:file_list[:s:diag_max]
     endif
   endif
   let l:result = []
   let l:search_in = a:file_list
-  while len(l:result) != 500
+  while len(l:result) != s:diag_max
     let l:pivot = l:search_in[s:Rand(len(l:search_in))]
     let l:accept = []
     let l:reject = []
@@ -310,7 +312,7 @@ function! s:First500(file_list) abort
         call add(l:accept, l:file)
       endif
     endfor
-    let l:need = 500 - len(l:result)
+    let l:need = s:diag_max - len(l:result)
     if len(l:accept) > l:need
       let l:search_in = l:accept
     else
