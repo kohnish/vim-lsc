@@ -536,10 +536,3 @@ export def Format(): void
     lsc#server#userCall('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
 enddef
 
-# export def bufnr_for_file(full_path: string): number
-#   var buf_nr = bufnr(full_path)
-#   # if bufnr == -1 && has_key(s:normalized_paths, a:full_path)
-#   #   let l:bufnr = bufnr(s:normalized_paths[a:full_path])
-#   # endif
-#   return buf_nr
-# enddef
