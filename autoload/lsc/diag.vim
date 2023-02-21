@@ -9,6 +9,7 @@ export def Common_bufnr_for_file(full_path: string): number
   # endif
   return buf_nr
 enddef
+
 def SeverityLabel(severity: number): string
     if severity == 1 | return 'Error'
     elseif severity == 2 | return 'Warning'
@@ -35,22 +36,13 @@ def rangeToHighlights(range: dict<any>): list<any>
   var end = range.end
   var ranges = []
   if end.line > start.line
-    ranges = [[
-        start.line + 1,
-        start.character + 1,
-        99 ]]
+    ranges = [[start.line + 1, start.character + 1, 99 ]]
     # Matches render wrong until a `redraw!` if lines are mixed with ranges
     var line_hacks = map(range(start.line + 2, end.line), (_, l) => [l, 0, 99])
     extend(ranges, line_hacks)
-    add(ranges, [
-        end.line + 1,
-        1,
-        end.character])
+    add(ranges, [end.line + 1, 1, end.character])
   else
-    ranges = [[
-        start.line + 1,
-        start.character + 1,
-        end.character - start.character]]
+    ranges = [[start.line + 1, start.character + 1, end.character - start.character]]
   endif
   return ranges
 enddef
@@ -152,6 +144,21 @@ def Diagnostics(file_path: string, lsp_diagnostics: dict<any>): dict<any>
       'ByLine': funcref(DiagnosticsByLine),
       }
 enddef
+
+def DiagforFile(file_path: string): list<any>
+  if !has_key(s:file_diagnostics, a:file_path)
+    return s:EmptyDiagnostics()
+  endif
+  return s:file_diagnostics[a:file_path]
+enddef
+
+def Diag_UpdateWindowStates(file_path: string): void
+  var diagnostics = lsc#diagnostics#forFile(a:file_path)
+  for l:window_id in win_findbuf(lsc#file#bufnr(a:file_path))
+    call s:UpdateWindowState(l:window_id, l:diagnostics)
+  endfor
+enddef
+
 
 def Diag_setForFile(file_diagnostics: dict<any>, file_path: string, diagnostics: dict<any>, ): void
   if (exists('g:lsc_enable_diagnostics') && !g:lsc_enable_diagnostics) || (empty(diagnostics) && !has_key(file_diagnostics, file_path))
