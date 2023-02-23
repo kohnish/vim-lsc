@@ -14,8 +14,6 @@ if !exists('s:file_diagnostics')
   let s:file_diagnostics = {}
 endif
 
-let s:max_diag = 30
-
 function! lsc#diagnostics#clean(filetype) abort
   for l:buffer in getbufinfo({'bufloaded': v:true})
     if getbufvar(l:buffer.bufnr, '&filetype') != a:filetype | continue | endif
@@ -265,14 +263,14 @@ function! s:AllDiagnostics() abort
   let l:files = keys(s:file_diagnostics)
   if exists('s:highest_used_diagnostic')
     call filter(l:files, funcref('<SID>IsUsed', [s:highest_used_diagnostic]))
-  elseif len(l:files) > s:diag_max
+  elseif len(l:files) > 31
     let l:files = s:First500(l:files)
   endif
   call sort(l:files, funcref('lsc#file#compare'))
   for l:file_path in l:files
     let l:diagnostics = s:file_diagnostics[l:file_path]
     call extend(l:all_diagnostics, l:diagnostics.ListItems())
-    if len(l:all_diagnostics) >= s:diag_max
+    if len(l:all_diagnostics) >= 31
       let s:highest_used_diagnostic = l:file_path
       break
     endif
@@ -296,12 +294,12 @@ function! s:First500(file_list) abort
       call lsc#message#error('Missing support for rand().'
           \.' :LSClientAllDiagnostics may be inconsistent when there'
           \.' are more than 500 files with diagnostics.')
-      return a:file_list[:s:diag_max]
+      return a:file_list[:31]
     endif
   endif
   let l:result = []
   let l:search_in = a:file_list
-  while len(l:result) != s:diag_max
+  while len(l:result) != 31
     let l:pivot = l:search_in[s:Rand(len(l:search_in))]
     let l:accept = []
     let l:reject = []
@@ -312,7 +310,7 @@ function! s:First500(file_list) abort
         call add(l:accept, l:file)
       endif
     endfor
-    let l:need = s:diag_max - len(l:result)
+    let l:need = 31 - len(l:result)
     if len(l:accept) > l:need
       let l:search_in = l:accept
     else
