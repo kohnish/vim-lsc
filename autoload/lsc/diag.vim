@@ -105,3 +105,48 @@ export def DiagnosticsByLine(self: dict<any>): dict<any>
     endif
     return self._by_line
 enddef
+
+export def UnderCursor(file_diagnostics: dict<any>): dict<any>
+    var line = line('.')
+    if !has_key(file_diagnostics, line)
+        if line != line('$') | return {} | endif
+        for diagnostic_line in keys(file_diagnostics)
+            var diag_line_num = str2nr(diagnostic_line)
+            if diag_line_num > line
+                return file_diagnostics[diag_line_num][0]
+            endif
+        endfor
+        return {}
+    endif
+    var diagnostics = file_diagnostics[line]
+    var col = col('.')
+    var closest_diagnostic = {}
+    var closest_distance = -1
+    var closest_is_within = false
+    for diagnostic in file_diagnostics[line]
+        var range = diagnostic.range
+        var is_within = range.start.character < col &&
+                    \ (range.end.line >= line || range.end.character > col)
+        if closest_is_within && !is_within
+            continue
+        endif
+        var distance = abs(range.start.character - col)
+        if closest_distance < 0 || distance < closest_distance
+            closest_diagnostic = diagnostic
+            closest_distance = distance
+            closest_is_within = is_within
+        endif
+    endfor
+    return closest_diagnostic
+enddef
+
+def ForLine(lsp_diagnostics: dict<any>, file: string, line: number): list<any>
+    var result = []
+    for diagnostic in lsp_diagnostics
+        if diagnostic.range.start.line <= a:line &&
+                    \ diagnostic.range.end.line >= a:line
+            add(result, diagnostic)
+        endif
+    endfor
+    return result
+enddef

@@ -333,50 +333,12 @@ endfunction
 " no diagnostic is directly under the cursor returns the last seen diagnostic
 " on this line.
 function! lsc#diagnostics#underCursor() abort
-  let l:file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
-  let l:line = line('.')
-  if !has_key(l:file_diagnostics, l:line)
-    if l:line != line('$') | return {} | endif
-    " Find a diagnostic reported after the end of the file
-    for l:diagnostic_line in keys(l:file_diagnostics)
-      if l:diagnostic_line > l:line
-        return l:file_diagnostics[l:diagnostic_line][0]
-      endif
-    endfor
-    return {}
-  endif
-  let l:diagnostics = l:file_diagnostics[l:line]
-  let l:col = col('.')
-  let l:closest_diagnostic = {}
-  let l:closest_distance = -1
-  let l:closest_is_within = v:false
-  for l:diagnostic in l:file_diagnostics[l:line]
-    let l:range = l:diagnostic.range
-    let l:is_within = l:range.start.character < l:col &&
-        \ (l:range.end.line >= l:line || l:range.end.character > l:col)
-    if l:closest_is_within && !l:is_within
-      continue
-    endif
-    let l:distance = abs(l:range.start.character - l:col)
-    if l:closest_distance < 0 || l:distance < l:closest_distance
-      let l:closest_diagnostic = l:diagnostic
-      let l:closest_distance = l:distance
-      let l:closest_is_within = l:is_within
-    endif
-  endfor
-  return l:closest_diagnostic
+  return lsc#diag#UnderCursor(lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine())
 endfunction
 
 " Returns the original LSP representation of diagnostics on a zero-indexed line.
 function! lsc#diagnostics#forLine(file, line) abort
-  let l:result = []
-  for l:diagnostic in lsc#diagnostics#forFile(a:file).lsp_diagnostics
-    if l:diagnostic.range.start.line <= a:line &&
-        \ l:diagnostic.range.end.line >= a:line
-      call add(l:result, l:diagnostic)
-    endif
-  endfor
-  return l:result
+  return lsc#diag#ForLine(lsc#diagnostics#forFile(a:file).lsp_diagnostics, a:file, a:line)
 endfunction
 
 function! lsc#diagnostics#echoForLine() abort
