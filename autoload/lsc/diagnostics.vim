@@ -408,64 +408,12 @@ function! s:Diagnostics(file_path, lsp_diagnostics) abort
 endfunction
 function! s:DiagnosticsHighlights() abort dict
   return lsc#diag#DiagnosticsHighlights(l:self)
-  " if !has_key(l:self, '_highlights')
-  "   let l:self._highlights = []
-  "   for l:diagnostic in l:self.lsp_diagnostics
-  "     call add(l:self._highlights, {
-  "         \ 'group': s:SeverityGroup(l:diagnostic.severity),
-  "         \ 'severity': l:diagnostic.severity,
-  "         \ 'ranges': lsc#convert#rangeToHighlights(l:diagnostic.range),
-  "         \})
-  "   endfor
-  " endif
-  " return l:self._highlights
 endfunction
 function! s:DiagnosticsListItems(file_path) abort dict
-  if !has_key(l:self, '_list_items')
-    let l:self._list_items = []
-    let l:bufnr = lsc#file#bufnr(a:file_path)
-    if l:bufnr == -1
-      let l:file_ref = {'filename': fnamemodify(a:file_path, ':.')}
-    else
-      let l:file_ref = {'bufnr': l:bufnr}
-    endif
-    for l:diagnostic in l:self.lsp_diagnostics
-      let l:item = {
-          \ 'lnum': l:diagnostic.range.start.line + 1,
-          \ 'col': l:diagnostic.range.start.character + 1,
-          \ 'text': s:DiagnosticMessage(l:diagnostic),
-          \ 'type': s:SeverityType(l:diagnostic.severity)
-          \}
-      call extend(l:item, l:file_ref)
-      call add(l:self._list_items, l:item)
-    endfor
-    call sort(l:self._list_items, 'lsc#util#compareQuickFixItems')
-  endif
-  return l:self._list_items
+  return lsc#diag#DiagnosticsListItems(l:self, a:file_path)
 endfunction
 function! s:DiagnosticsByLine() abort dict
-  if !has_key(l:self, '_by_line')
-    let l:self._by_line = {}
-    for l:diagnostic in l:self.lsp_diagnostics
-      let l:start_line = string(l:diagnostic.range.start.line + 1)
-      if !has_key(l:self._by_line, l:start_line)
-        let l:line = []
-        let l:self._by_line[l:start_line] = l:line
-      else
-        let l:line = l:self._by_line[l:start_line]
-      endif
-      let l:simple = {
-          \ 'message': s:DiagnosticMessage(l:diagnostic),
-          \ 'range': l:diagnostic.range,
-          \ 'severity': s:SeverityLabel(l:diagnostic.severity),
-          \}
-      call add(l:line, l:simple)
-    endfor
-    for l:line in values(l:self._by_line)
-      call sort(l:line, function('<SID>CompareRanges'))
-    endfor
-  endif
-  return l:self._by_line
+  return lsc#diag#DiagnosticsByLine(l:self)
 endfunction
 
 function! s:EmptyDiagnostics() abort
