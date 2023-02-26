@@ -177,18 +177,18 @@ export def ShowDiagnostic(): void
 enddef
 
 export def IsInReference(references: list<any>): number
-  var line = line('.')
-  var col = col('.')
-  var idx = 0
-  for reference in references
-    for range in reference.ranges
-      if line == range[0]
-          \ && col >= range[1]
-          \ && col < range[1] + range[2]
-        return idx
-      endif
+    var line = line('.')
+    var col = col('.')
+    var idx = 0
+    for reference in references
+        for range in reference.ranges
+            if line == range[0]
+                        \ && col >= range[1]
+                        \ && col < range[1] + range[2]
+                return idx
+            endif
+        endfor
+        idx += 1
     endfor
-    idx += 1
-  endfor
-  return -1
+    return -1
 enddef
