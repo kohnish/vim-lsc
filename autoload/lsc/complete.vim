@@ -93,7 +93,7 @@ function! s:SuggestCompletions(items) abort
     let b:lsc_is_completing = v:false
     return
   endif
-  let l:start = s:FindStart(a:items)
+  let l:start = lsc#comp#FindStart(a:items)
   let l:base = l:start != col('.')
       \ ? getline('.')[l:start - 1:col('.') - 2]
       \ : ''
@@ -132,39 +132,13 @@ function! lsc#complete#complete(findstart, base) abort
       if !exists('b:lsc_completion') || len(b:lsc_completion) == 0
         return -3
       endif
-      return  s:FindStart(b:lsc_completion) - 1
+      return  lsc#comp#FindStart(b:lsc_completion) - 1
     endif
   else
     " We'll get an error if b:lsc_completion doesn't exist, which is good,
     " we want to be vocal about such failures.
     return s:CompletionItems(a:base, b:lsc_completion)
   endif
-endfunction
-
-" Finds the 1-based index of the first character in the completion.
-function! s:FindStart(completion_items) abort
-  for l:item in a:completion_items
-    if has_key(l:item, 'textEdit')
-        \ && type(l:item.textEdit) == type({})
-      return l:item.textEdit.range.start.character + 1
-    endif
-  endfor
-  return s:GuessCompletionStart()
-endfunction
-
-" Finds the 1-based index of the character after the last non word character
-" behind the cursor.
-function! s:GuessCompletionStart() abort
-  let l:search = col('.') - 2
-  let l:line = getline('.')
-  while l:search > 0
-    let l:char = l:line[l:search]
-    if l:char !~# '\w'
-      return l:search + 2
-    endif
-    let l:search -= 1
-  endwhile
-  return 1
 endfunction
 
 " Filter and convert LSP completion items into the format used by vim.
