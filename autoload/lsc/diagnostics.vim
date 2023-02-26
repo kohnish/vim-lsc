@@ -407,17 +407,18 @@ function! s:Diagnostics(file_path, lsp_diagnostics) abort
       \}
 endfunction
 function! s:DiagnosticsHighlights() abort dict
-  if !has_key(l:self, '_highlights')
-    let l:self._highlights = []
-    for l:diagnostic in l:self.lsp_diagnostics
-      call add(l:self._highlights, {
-          \ 'group': s:SeverityGroup(l:diagnostic.severity),
-          \ 'severity': l:diagnostic.severity,
-          \ 'ranges': lsc#convert#rangeToHighlights(l:diagnostic.range),
-          \})
-    endfor
-  endif
-  return l:self._highlights
+  return lsc#diag#DiagnosticsHighlights(l:self)
+  " if !has_key(l:self, '_highlights')
+  "   let l:self._highlights = []
+  "   for l:diagnostic in l:self.lsp_diagnostics
+  "     call add(l:self._highlights, {
+  "         \ 'group': s:SeverityGroup(l:diagnostic.severity),
+  "         \ 'severity': l:diagnostic.severity,
+  "         \ 'ranges': lsc#convert#rangeToHighlights(l:diagnostic.range),
+  "         \})
+  "   endfor
+  " endif
+  " return l:self._highlights
 endfunction
 function! s:DiagnosticsListItems(file_path) abort dict
   if !has_key(l:self, '_list_items')

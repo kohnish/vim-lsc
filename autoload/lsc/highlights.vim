@@ -12,6 +12,7 @@ function! lsc#highlights#update() abort
   if s:CurrentWindowIsFresh() | return | endif
   call lsc#highlights#clear()
   if &diff | return | endif
+  let l:diag_obj_for_file = lsc#diagnostics#forFile(lsc#file#fullPath())
   for l:highlight in lsc#diagnostics#forFile(lsc#file#fullPath()).Highlights()
     let l:priority = -1 * l:highlight.severity
     let l:group = l:highlight.group
