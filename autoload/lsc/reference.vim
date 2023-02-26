@@ -314,7 +314,7 @@ endfunction
 " in the same document to the symbol under the cursor.
 function! lsc#reference#findNext(direction) abort
   if exists('w:lsc_references')
-    let l:idx = lsc#cursor#isInReference(w:lsc_references)
+    let l:idx = lsc#diag#IsInReference(w:lsc_references)
     if l:idx != -1 &&
         \ l:idx + a:direction >= 0 &&
         \ l:idx + a:direction < len(w:lsc_references)

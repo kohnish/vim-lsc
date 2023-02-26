@@ -5,7 +5,7 @@ if !exists('s:initialized')
 endif
 
 function! lsc#cursor#onMove() abort
-  call lsc#cursor#showDiagnostic()
+  call lsc#diag#ShowDiagnostic()
   call s:HighlightReferences(v:false)
 endfunction
 
@@ -54,7 +54,7 @@ function! s:HighlightReferences(force_in_highlight) abort
   if !s:CanHighlightReferences() | return | endif
   if !a:force_in_highlight &&
       \ exists('w:lsc_references') &&
-      \ lsc#cursor#isInReference(w:lsc_references) >= 0
+      \ lsc#diag#IsInReference(w:lsc_references) >= 0
     return
   endif
   if has_key(s:pending, &filetype) && s:pending[&filetype]
@@ -93,7 +93,7 @@ function! s:HandleHighlights(request_number, old_pos, old_buf_nr,
   if empty(a:highlights) | return | endif
   call map(a:highlights, {_, reference -> s:ConvertReference(reference)})
   call sort(a:highlights, function('<SID>CompareRange'))
-  if lsc#cursor#isInReference(a:highlights) == -1
+  if lsc#diag#IsInReference(a:highlights) == -1
     if a:old_pos != getcurpos()
       call s:HighlightReferences(v:true)
     endif

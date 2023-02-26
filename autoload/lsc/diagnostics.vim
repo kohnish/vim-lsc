@@ -113,7 +113,7 @@ function! lsc#diagnostics#setForFile(file_path, diagnostics) abort
     doautocmd <nomodeline> User LSCDiagnosticsChange
   endif
   if(a:file_path ==# lsc#file#fullPath())
-    call lsc#cursor#showDiagnostic()
+    call lsc#diag#ShowDiagnostic()
   endif
 endfunction
 

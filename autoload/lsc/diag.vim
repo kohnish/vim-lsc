@@ -150,3 +150,45 @@ def ForLine(lsp_diagnostics: dict<any>, file: string, line: number): list<any>
     endfor
     return result
 enddef
+
+export def ShowDiagnostic(): void
+    if !get(g:, 'lsc_diagnostic_highlights', true) | return | endif
+    var diagnostic = lsc#diagnostics#underCursor()
+    if has_key(diagnostic, 'message')
+        var max_width = &columns - 1 
+        var has_ruler = &ruler &&
+                    \ (&laststatus == 0 || (&laststatus == 1 && winnr('$') < 2))
+        if has_ruler | max_width -= 18 | endif
+        if &showcmd | max_width -= 11 | endif
+        var message = strtrans(diagnostic.message)
+        if strdisplaywidth(message) > max_width
+            max_width -= 1
+            var truncated = strcharpart(message, 0, max_width)
+            while strdisplaywidth(truncated) > max_width
+                truncated = strcharpart(truncated, 0, strchars(truncated) - 1)
+            endwhile
+            echo truncated .. "\u2026"
+        else
+            echo message
+        endif
+    else
+        echo ''
+    endif
+enddef
+
+export def IsInReference(references: list<any>): number
+  var line = line('.')
+  var col = col('.')
+  var idx = 0
+  for reference in references
+    for range in reference.ranges
+      if line == range[0]
+          \ && col >= range[1]
+          \ && col < range[1] + range[2]
+        return idx
+      endif
+    endfor
+    idx += 1
+  endfor
+  return -1
+enddef
