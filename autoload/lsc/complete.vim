@@ -97,7 +97,7 @@ function! s:SuggestCompletions(items) abort
   let l:base = l:start != col('.')
       \ ? getline('.')[l:start - 1:col('.') - 2]
       \ : ''
-  let l:completion_items = s:CompletionItems(l:base, a:items)
+  let l:completion_items = lsc#comp#CompletionItems(l:base, a:items)
   call s:SetCompleteOpt()
   if exists('#User#LSCAutocomplete')
     doautocmd <nomodeline> User LSCAutocomplete
@@ -140,61 +140,3 @@ function! lsc#complete#complete(findstart, base) abort
     return s:CompletionItems(a:base, b:lsc_completion)
   endif
 endfunction
-
-" Filter and convert LSP completion items into the format used by vim.
-"
-" a:base is the portion of the portion of the word typed so far, matching the
-" argument to `completefunc` the second time it is called.
-"
-" If a non-empty base is passed, only the items which contain the base somewhere
-" whithin the completion will be used. Preference is given first to the
-" completions which match by a case-sensitive prefix, then by case-insensitive
-" prefix, then case-insensitive substring.
-function! s:CompletionItems(base, lsp_items) abort
-  let l:prefix_case_matches = []
-  let l:prefix_matches = []
-  let l:substring_matches = []
-
-  let l:prefix_base = '^'.a:base
-
-  for l:lsp_item in a:lsp_items
-    let l:vim_item = s:CompletionItemWord(l:lsp_item)
-    if l:vim_item.word =~# l:prefix_base
-      call add(l:prefix_case_matches, l:vim_item)
-    elseif l:vim_item.word =~? l:prefix_base
-      call add(l:prefix_matches, l:vim_item)
-    elseif l:vim_item.word =~? a:base
-      call add(l:substring_matches, l:vim_item)
-    else
-      continue
-    endif
-    call lsc#common#FinishItem(l:lsp_item, l:vim_item)
-  endfor
-
-  return l:prefix_case_matches + l:prefix_matches + l:substring_matches
-endfunction
-
-" Normalize the multiple potential fields which may convey the text to insert
-" from the LSP item into a vim formatted completion.
-function! s:CompletionItemWord(lsp_item) abort
-  let l:item = {'abbr': a:lsp_item.label, 'icase': 1, 'dup': 1}
-  if has_key(a:lsp_item, 'textEdit')
-      \ && type(a:lsp_item.textEdit) == type({})
-      \ && has_key(a:lsp_item.textEdit, 'newText')
-    let l:item.word = a:lsp_item.textEdit.newText
-  elseif has_key(a:lsp_item, 'insertText')
-      \ && !empty(a:lsp_item.insertText)
-    let l:item.word = a:lsp_item.insertText
-  else
-    let l:item.word = a:lsp_item.label
-  endif
-  if has_key(a:lsp_item, 'insertTextFormat') && a:lsp_item.insertTextFormat == 2
-    let l:item.user_data = json_encode({
-          \ 'snippet': l:item.word,
-          \ 'snippet_trigger': l:item.word
-          \ })
-    let l:item.word = a:lsp_item.label
-  endif
-  return l:item
-endfunction
-
