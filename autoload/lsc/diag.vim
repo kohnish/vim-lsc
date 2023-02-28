@@ -140,7 +140,7 @@ export def UnderCursor(file_diagnostics: dict<any>): dict<any>
     return closest_diagnostic
 enddef
 
-def ForLine(lsp_diagnostics: list<any>, file: string, line: number): list<any>
+export def ForLine(lsp_diagnostics: list<any>, file: string, line: number): list<any>
     var result = []
     for diagnostic in lsp_diagnostics
         if diagnostic.range.start.line <= line && diagnostic.range.end.line >= line
