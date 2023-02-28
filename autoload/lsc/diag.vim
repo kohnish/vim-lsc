@@ -1,5 +1,8 @@
 vim9script
 
+var g_pending = {}
+var g_highlights_request = 0
+
 def CompareRanges(d1: dict<any>, d2: dict<any>): number
     if d1.range.start.character != d2.range.start.character
         return d1.range.start.character - d2.range.start.character
@@ -8,6 +11,15 @@ def CompareRanges(d1: dict<any>, d2: dict<any>): number
         return d1.range.end.line - d2.range.end.line
     endif
     return d1.range.end.character - d2.range.end.character
+enddef
+
+def CompareRange(r1: dict<any>, r2: dict<any>): number
+    var line_1 = r1.ranges[0][0]
+    var line_2 = r2.ranges[0][0]
+    if line_1 != line_2 | return line_1 > line_2 ? 1 : -1 | endif
+    var col_1 = r1.ranges[0][1]
+    var col_2 = r2.ranges[0][1]
+    return col_1 - col_2
 enddef
 
 def SeverityLabel(severity: number): string
@@ -191,3 +203,74 @@ export def IsInReference(references: list<any>): number
     endfor
     return -1
 enddef
+
+def CanHighlightReferences(): bool
+    for server in lsc#server#current()
+        if server.capabilities.referenceHighlights
+            return true
+        endif
+    endfor
+    return false
+enddef
+
+def ConvertReference(reference: dict<any>): dict<any>
+    return {'ranges': lsc#convert#rangeToHighlights(reference.range)}
+enddef
+
+export def HighlightReferences(force_in_highlight: bool): void
+    if exists('g:lsc_reference_highlights') && !g:lsc_reference_highlights
+        return
+    endif
+    if !CanHighlightReferences() | return | endif
+    if !force_in_highlight && exists('w:lsc_references') && IsInReference(w:lsc_references) >= 0
+        return
+    endif
+    if has_key(g_pending, &filetype) && g_pending[&filetype]
+        return
+    endif
+    g_highlights_request += 1
+    var params = lsc#params#documentPosition()
+    var server = lsc#server#forFileType(&filetype)[0]
+    try
+        g_pending[&filetype] = server.request('textDocument/documentHighlight', params, funcref(HandleHighlights, [g_highlights_request, getcurpos(), bufnr('%'), &filetype]))
+    catch
+    endtry
+enddef
+
+export def Clean(): void
+    g_pending[&filetype] = false
+    if exists('w:lsc_reference_matches')
+        for current_match in w:lsc_reference_matches
+            matchdelete(current_match)
+        endfor
+        unlet w:lsc_reference_matches
+        unlet w:lsc_references
+    endif
+enddef
+
+def HandleHighlights(request_number: number, old_pos: list<number>, old_buf_nr: number, request_filetype: string, highlights: list<any>): void
+    if !has_key(g_pending, request_filetype) || !g_pending[request_filetype]
+        return
+    endif
+    g_pending[request_filetype] = false
+    if bufnr('%') != old_buf_nr | return | endif
+    if request_number != g_highlights_request | return | endif
+    Clean()
+    if empty(highlights) | return | endif
+    map(highlights, (_, reference) => ConvertReference(reference))
+    sort(highlights, CompareRange)
+    if IsInReference(highlights) == -1
+        if old_pos != getcurpos()
+            HighlightReferences(true)
+        endif
+        return
+    endif
+
+    w:lsc_references = highlights
+    w:lsc_reference_matches = []
+    for reference in highlights
+        var match = matchaddpos('lscReference', reference.ranges, -5)
+        add(w:lsc_reference_matches, match)
+    endfor
+enddef
+
