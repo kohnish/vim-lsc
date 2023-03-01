@@ -4,7 +4,11 @@ import "./common.vim"
 
 var g_alternative_last_pos = {}
 
-def SwitchToAlternative(results: string): void
+def SwitchToAlternative(results: any): void
+    if type(results) != 1
+        call lsc#message#error("Alternative not found")
+        return
+    endif
     var last_file = ""
     var last_line = 0
     var last_col = 0
