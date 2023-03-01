@@ -181,6 +181,8 @@ def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
             "hierarchy_result_key": mode_info["result_key"],
             }
         OpenTreeWindow(ignition)
+    else
+        call lsc#message#error("No results for " .. mode_info["call_name"])
     endif
 enddef
 
