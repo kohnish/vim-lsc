@@ -39,7 +39,7 @@ command! LSClientFindImplementations call lsc#reference#findImplementations()
 command! -nargs=? LSClientShowHover call lsc#reference#hover()
 command! LSClientDocumentSymbol call lsc#reference#documentSymbols()
 command! -nargs=? LSClientWorkspaceSymbol
-    \ call lsc#search#workspaceSymbol(<args>)
+    \ call lsc#search#workspaceSymbol(<q-args>)
 command! -nargs=? LSClientFindCodeActions
     \ call lsc#edit#findCodeActions(lsc#edit#filterActions(<args>))
 command! LSClientAllDiagnostics call lsc#diagnostics#showInQuickFix()
