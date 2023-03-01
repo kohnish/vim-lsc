@@ -182,7 +182,7 @@ def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
             }
         OpenTreeWindow(ignition)
     else
-        call lsc#message#error("No results for " .. mode_info["call_name"])
+        lsc#message#error("No results for " .. mode_info["call_name"])
     endif
 enddef
 
