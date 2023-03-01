@@ -527,8 +527,13 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     setpos('.', orig_cursor_pos)
 enddef
 
+def Reset_format_delay(arg: any): void
+    g_format_delay = false
+enddef
+
 def Format_(arg: any): void
     g_format_delay = true
+    timer_start(1000, Reset_format_delay)
     lsc#file#flushChanges()
     var params: dict<any>
     params = { 'textDocument': { 'uri': Uri() } }
@@ -540,7 +545,6 @@ enddef
 
 export def Format(): void
     if g_format_delay
-        g_format_delay = false
         timer_start(1000, Format_)
     else
         Format_(0)
