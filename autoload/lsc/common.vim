@@ -1,7 +1,5 @@
 vim9script
 
-var g_format_running = false
-
 def EncodeChar(char: string): string
     var charcode = char2nr(char)
     return printf('%%%02x', charcode)
@@ -58,16 +56,16 @@ export def IsCompletable(): bool
         surr_chars =  line[pos - 4 : pos - 2]
     endif
     if len(trim(surr_chars)) > 2
-       var banned_chars = [';', '{', '}', ',', '(', ')', '+']
-       if surr_chars[2] == ':' && surr_chars[1] != ':'
-           return false
-       endif
-       for i in banned_chars
-           if surr_chars[0] == i || surr_chars[1] == i || surr_chars[2] == i
-               return false
-           endif
-       endfor
-       return true
+        var banned_chars = [';', '{', '}', ',', '(', ')', '+']
+        if surr_chars[2] == ':' && surr_chars[1] != ':'
+            return false
+        endif
+        for i in banned_chars
+            if surr_chars[0] == i || surr_chars[1] == i || surr_chars[2] == i
+                return false
+            endif
+        endfor
+        return true
     endif
     return false
 enddef
@@ -108,7 +106,7 @@ def FirstDifference(old: list<any>, new: list<any>): list<any>
     var i = NumFirstDiff(old, new, 0)
 
     if i >= line_count
-      return [line_count - 1, strchars(old[line_count - 1])]
+        return [line_count - 1, strchars(old[line_count - 1])]
     endif
 
     var old_line = old[i]
@@ -209,11 +207,11 @@ def ContentsDiff(old: list<any>, new: list<any>): dict<any>
         'range': {
             'start': {'line': start_line, 'character': start_char},
             'end': {'line': adj_end_line, 'character': adj_end_char}
-            },
+        },
         'text': text,
         'rangeLength': length
-        }
-  return result
+    }
+    return result
 enddef
 
 export def GetDidChangeParam(file_versions: dict<any>, file_path: string, file_content: dict<list<string>>, incremental: bool): dict<any>
@@ -249,7 +247,7 @@ const g_lsp_dict = {
     11: "Unit", 12: "Value", 13: "Enum", 14: "Keyword", 15: "Snippet",
     16: "Color", 17: "File", 18: "Reference", 19: "Folder", 20: "EnumMember",
     21: "Constant", 22: "Struct", 23: "Event", 24: "Operator", 25: "TypeParameter"
-    }
+}
 def CompletionItemKind(lsp_kind: number): string
     try
         return g_lsp_dict[lsp_kind]
@@ -449,9 +447,9 @@ def Edit_sort_func(a: dict<any>, b: dict<any>): number
     return 0
 enddef
 
+var g_format_delay = false
 def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     if text_edits->empty()
-        g_format_running = false
         return
     endif
 
@@ -527,14 +525,10 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     # bnr->deletebufline(bnr->getbufinfo()[0].linecount)
     # endif
     setpos('.', orig_cursor_pos)
-    g_format_running = false
 enddef
 
-export def Format(): void
-    if g_format_running
-        return
-    endif
-    g_format_running = true
+def Format_(arg: any): void
+    g_format_delay = true
     lsc#file#flushChanges()
     var params: dict<any>
     params = { 'textDocument': { 'uri': Uri() } }
@@ -544,3 +538,11 @@ export def Format(): void
     lsc#server#userCall('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
 enddef
 
+export def Format(): void
+    if g_format_delay
+        g_format_delay = false
+        timer_start(1000, Format_)
+    else
+        Format_(0)
+    endif
+enddef
