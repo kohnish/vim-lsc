@@ -1,5 +1,7 @@
 vim9script
 
+var g_format_running = false
+
 def EncodeChar(char: string): string
     var charcode = char2nr(char)
     return printf('%%%02x', charcode)
@@ -449,6 +451,7 @@ enddef
 
 def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     if text_edits->empty()
+        g_format_running = false
         return
     endif
 
@@ -524,9 +527,14 @@ def FormatCb(bnr: number, text_edits: list<dict<any>>): void
     # bnr->deletebufline(bnr->getbufinfo()[0].linecount)
     # endif
     setpos('.', orig_cursor_pos)
+    g_format_running = false
 enddef
 
 export def Format(): void
+    if g_format_running
+        return
+    endif
+    g_format_running = true
     lsc#file#flushChanges()
     var params: dict<any>
     params = { 'textDocument': { 'uri': Uri() } }
