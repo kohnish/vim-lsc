@@ -164,8 +164,8 @@ def OpenTreeWindow(ignition: dict<any>): void
     augroup END
 
     setlocal filetype=yggdrasil
-    g:vim9_lsc_hierarchy_buf_name = buf_name
-    setlocal statusline=\ \ %{g:vim9_lsc_hierarchy_buf_name}
+    b:vim9_lsc_hierarchy_buf_name = buf_name
+    setlocal statusline=\ \ %{b:vim9_lsc_hierarchy_buf_name}
 
     tree.Tree_update(b:tree, [])
 enddef
