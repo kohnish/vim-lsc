@@ -32,7 +32,7 @@ command! LSClientGoToDeclaration
 command! LSClientFindReferences call lsc#reference#findReferences()
 command! LSClientIncomingCalls call lsc#vim9#PrepCallHierarchy("incoming")
 command! LSClientOutgoingCalls call lsc#vim9#PrepCallHierarchy("outgoing")
-command! LSClientSwitchSourceHeader call lsc#switch_source_header#SwitchSourceHeader()
+command! LSClientSwitchSourceHeader call lsc#vim9#SwitchSourceHeader()
 command! LSClientNextReference call lsc#reference#findNext(1)
 command! LSClientPreviousReference call lsc#reference#findNext(-1)
 command! LSClientFindImplementations call lsc#reference#findImplementations()

@@ -1,12 +1,14 @@
 vim9script
 
-import "./common.vim"
+import "./server.vim" as server
+import "./util.vim" as util
+import "./log.vim" as log
 
 var g_alternative_last_pos = {}
 
 def SwitchToAlternative(results: any): void
     if type(results) != 1
-        call lsc#message#error("Alternative not found")
+        log.Error("Alternative not found")
         return
     endif
     var last_file = ""
@@ -17,7 +19,7 @@ def SwitchToAlternative(results: any): void
         last_line = g_alternative_last_pos["position"]["line"]
         last_col = g_alternative_last_pos["position"]["character"]
     endif
-    g_alternative_last_pos =  { 'textDocument': {'uri': common.Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
+    g_alternative_last_pos =  { 'textDocument': {'uri': util.Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
     if !empty(results)
         if &modified
             execute "vsplit " .. results
@@ -31,7 +33,6 @@ def SwitchToAlternative(results: any): void
 enddef
 
 export def SwitchSourceHeader(): void
-    lsc#file#flushChanges()
-    var params = {'uri': common.Uri()}
-    lsc#server#userCall('textDocument/switchSourceHeader', params, SwitchToAlternative)
+    var params = {'uri': util.Uri()}
+    server.LspRequest('textDocument/switchSourceHeader', params, SwitchToAlternative)
 enddef
