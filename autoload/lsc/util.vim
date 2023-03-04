@@ -1,5 +1,4 @@
 if !exists('s:initialized')
-  let s:callback_gates = {}
   let s:au_group_id = 0
   let s:initialized = v:true
 endif
@@ -119,34 +118,6 @@ endfunction
 function! lsc#util#shift(list, max_length, value) abort
   call add(a:list, a:value)
   if len(a:list) > a:max_length | call remove(a:list, 0) | endif
-endfunction
-
-function! lsc#util#gateResult(name, callback, ...) abort
-  if !has_key(s:callback_gates, a:name)
-    let s:callback_gates[a:name] = 0
-  else
-    let s:callback_gates[a:name] += 1
-  endif
-  let l:gate = s:callback_gates[a:name]
-  let l:old_pos = getcurpos()
-  if a:0 >= 1 && type(a:1) == type({_->_})
-    let l:OnSkip = a:1
-  else
-    let l:OnSkip = v:false
-  endif
-  return function('<SID>Gated',
-      \ [a:name, l:gate, l:old_pos, a:callback, l:OnSkip])
-endfunction
-
-function! s:Gated(name, gate, old_pos, on_call, on_skip, ...) abort
-  if s:callback_gates[a:name] != a:gate ||
-      \ a:old_pos != getcurpos()
-    if type(a:on_skip) == type({_->_})
-      call call(a:on_skip, a:000)
-    endif
-  else
-    call call(a:on_call, a:000)
-  endif
 endfunction
 
 function! lsc#util#noop() abort

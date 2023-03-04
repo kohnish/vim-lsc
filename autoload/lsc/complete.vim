@@ -63,7 +63,7 @@ function! s:startCompletion(isAuto) abort
   let l:server = lsc#server#forFileType(&filetype)[0]
   try
     call l:server.request('textDocument/completion', l:params,
-        \ lsc#util#gateResult('Complete',
+        \ lsc#vim9#GateResult('Complete',
         \     function('<SID>OnResult', [a:isAuto]),
         \     function('<SID>OnSkip', [bufnr('%')])))
     catch

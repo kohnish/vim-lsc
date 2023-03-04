@@ -8,9 +8,10 @@ function! lsc#edit#findCodeActions(...) abort
   let l:params = lsc#params#documentRange()
   let l:params.context = {'diagnostics':
       \ lsc#diagnostics#forLine(lsc#file#fullPath(), line('.') - 1)}
+
   call lsc#server#userCall('textDocument/codeAction', l:params,
-      \ lsc#util#gateResult('CodeActions',
-      \     function('<SID>SelectAction', [l:ActionFilter])))
+      \ lsc#vim9#GateResult('CodeActions',
+      \     function('<SID>SelectAction', [l:ActionFilter]), []))
 endfunction
 
 function! s:SelectAction(ActionFilter, result) abort
@@ -87,7 +88,7 @@ function! lsc#edit#rename(...) abort
   let l:params = lsc#params#documentPosition()
   let l:params.newName = l:new_name
   call lsc#server#userCall('textDocument/rename', l:params,
-      \ lsc#util#gateResult('Rename', function('lsc#edit#apply')))
+      \ lsc#vim9#GateResult('Rename', function('lsc#edit#apply'), []))
 endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.

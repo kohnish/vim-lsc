@@ -1,52 +1,6 @@
 vim9script
 
-def EncodeChar(char: string): string
-    var charcode = char2nr(char)
-    return printf('%%%02x', charcode)
-enddef
-
-def EncodePath(value: string): string
-    return substitute(value, '\([^a-zA-Z0-9-_.~/]\)', '\=EncodeChar(submatch(1))', 'g')
-enddef
-
-def OsFilePrefix(): string
-    if has('win32')
-        return 'file:///'
-    else
-        return 'file://'
-    endif
-enddef
-
-def OsNormalizePath(path: string): string
-    if has('win32')
-        return substitute(path, '\\', '/', 'g')
-    endif
-    return path
-enddef
-
-def NormalizePath(original_path: string): string
-    var full_path = original_path
-    if full_path !~# '^/\|\%([c-zC-Z]:[/\\]\)'
-        full_path = getcwd() .. '/' .. full_path
-    endif
-    full_path = OsNormalizePath(full_path)
-    return full_path
-enddef
-
-def FullPath(): string
-    var full_path = expand('%:p')
-    if full_path ==# expand('%')
-        full_path = NormalizePath(getbufinfo('%')[0].name)
-    elseif has('win32')
-        full_path = OsNormalizePath(full_path)
-    endif
-    return full_path
-enddef
-
-export def Uri(): string
-    var file_path = FullPath()
-    return OsFilePrefix() .. EncodePath(file_path)
-enddef
+import autoload "../../lazyload/util.vim"
 
 export def IsCompletable(): bool
     var pos = col(".")
@@ -204,18 +158,18 @@ def ContentsDiff(old: list<any>, new: list<any>): dict<any>
     var adj_end_char = end_line == 0 ? 0 : strchars(old[end_line]) + end_char + 1
 
     var result = {
-        'range': {
-            'start': {'line': start_line, 'character': start_char},
-            'end': {'line': adj_end_line, 'character': adj_end_char}
-        },
-        'text': text,
-        'rangeLength': length
-    }
+                \ 'range': {
+                \ 'start': {'line': start_line, 'character': start_char},
+                \ 'end': {'line': adj_end_line, 'character': adj_end_char}
+                \ },
+                \ 'text': text,
+                \ 'rangeLength': length
+                \ }
     return result
 enddef
 
 export def GetDidChangeParam(file_versions: dict<any>, file_path: string, file_content: dict<list<string>>, incremental: bool): dict<any>
-    var document_params = {'textDocument': { 'uri': OsFilePrefix() .. file_path, 'version': file_versions[file_path]}}
+    var document_params = {'textDocument': { 'uri': util.OsFilePrefix() .. file_path, 'version': file_versions[file_path]}}
     var current_content = getbufline(bufnr(file_path), 1, '$')
     var params = {}
     if incremental
@@ -242,12 +196,12 @@ enddef
 # The `menu` and `info` vim fields are normalized from the `detail` and
 # `documentation` LSP fields.
 const g_lsp_dict = {
-    1: "Text", 2: "Method", 3: "Function", 4: "Constructor", 5: "Field",
-    6: "Variable", 7: "Class", 8: "Interface", 9: "Module", 10: "Property",
-    11: "Unit", 12: "Value", 13: "Enum", 14: "Keyword", 15: "Snippet",
-    16: "Color", 17: "File", 18: "Reference", 19: "Folder", 20: "EnumMember",
-    21: "Constant", 22: "Struct", 23: "Event", 24: "Operator", 25: "TypeParameter"
-}
+            \ 1: "Text", 2: "Method", 3: "Function", 4: "Constructor", 5: "Field",
+            \ 6: "Variable", 7: "Class", 8: "Interface", 9: "Module", 10: "Property",
+            \ 11: "Unit", 12: "Value", 13: "Enum", 14: "Keyword", 15: "Snippet",
+            \ 16: "Color", 17: "File", 18: "Reference", 19: "Folder", 20: "EnumMember",
+            \ 21: "Constant", 22: "Struct", 23: "Event", 24: "Operator", 25: "TypeParameter"
+            \ }
 def CompletionItemKind(lsp_kind: number): string
     try
         return g_lsp_dict[lsp_kind]
@@ -357,196 +311,5 @@ export def DiagHover(): void
         insert(diag_popup_arr, '')
         add(diag_popup_arr, '')
         popup_atcursor(diag_popup_arr, {})
-    endif
-enddef
-
-export def GetLineByteFromPos(bnr: number, pos: dict<number>): number
-    var col: number = pos.character
-    # When on the first character, we can ignore the difference between byte and
-    # character
-    if col > 0
-        # Need a loaded buffer to read the line and compute the offset
-        if !bnr->bufloaded()
-            bnr->bufload()
-        endif
-
-        var ltext: list<string> = bnr->getbufline(pos.line + 1)
-        if !ltext->empty()
-            var bidx = ltext[0]->byteidx(col)
-            if bidx != -1
-                return bidx
-            endif
-        endif
-    endif
-    return col
-enddef
-
-def Set_lines(lines: list<string>, A: list<number>, B: list<number>, new_lines: list<string>): list<string>
-    var i_0: number = A[0]
-
-    # If it extends past the end, truncate it to the end. This is because the
-    # way the LSP describes the range including the last newline is by
-    # specifying a line number after what we would call the last line.
-    var numlines: number = lines->len()
-    var i_n = [B[0], numlines - 1]->min()
-
-    if i_0 < 0 || i_0 >= numlines || i_n < 0 || i_n >= numlines
-        var msg = "set_lines: Invalid range, A = " .. A->string()
-        msg ..= ", B = " ..    B->string() .. ", numlines = " .. numlines
-        msg ..= ", new lines = " .. new_lines->string()
-        return lines
-    endif
-
-    # save the prefix and suffix text before doing the replacements
-    var prefix: string = ''
-    var suffix: string = lines[i_n][B[1] :]
-    if A[1] > 0
-        prefix = lines[i_0][0 : A[1] - 1]
-    endif
-
-    var new_lines_len: number = new_lines->len()
-
-    var n: number = i_n - i_0 + 1
-    if n != new_lines_len
-        if n > new_lines_len
-            # remove the deleted lines
-            lines->remove(i_0, i_0 + n - new_lines_len - 1)
-        else
-            # add empty lines for newly the added lines (will be replaced with the
-            # actual lines below)
-            lines->extend(repeat([''], new_lines_len - n), i_0)
-        endif
-    endif
-
-    # replace the previous lines with the new lines
-    for i in range(new_lines_len)
-        lines[i_0 + i] = new_lines[i]
-    endfor
-
-    # append the suffix (if any) to the last line
-    if suffix != ''
-        var i = i_0 + new_lines_len - 1
-        lines[i] = lines[i] .. suffix
-    endif
-
-    # prepend the prefix (if any) to the first line
-    if prefix != ''
-        lines[i_0] = prefix .. lines[i_0]
-    endif
-
-    return lines
-enddef
-
-def Edit_sort_func(a: dict<any>, b: dict<any>): number
-    if a.A[0] != b.A[0]
-        return b.A[0] - a.A[0]
-    endif
-    if a.A[1] != b.A[1]
-        return b.A[1] - a.A[1]
-    endif
-    return 0
-enddef
-
-var g_format_delay = false
-def FormatCb(bnr: number, text_edits: list<dict<any>>): void
-    if text_edits->empty()
-        return
-    endif
-
-    var orig_cursor_pos = getcurpos()
-    # if the buffer is not loaded, load it and make it a listed buffer
-    if !bnr->bufloaded()
-        bnr->bufload()
-    endif
-    setbufvar(bnr, '&buflisted', true)
-
-    var start_line: number = 4294967295
-    var finish_line: number = -1
-    var updated_edits: list<dict<any>> = []
-    var start_row: number
-    var start_col: number
-    var end_row: number
-    var end_col: number
-
-    # create a list of buffer positions where the edits have to be applied.
-    for e in text_edits
-        # Adjust the start and end columns for multibyte characters
-        start_row = e.range.start.line
-        start_col = GetLineByteFromPos(bnr, e.range.start)
-        end_row = e.range.end.line
-        end_col = GetLineByteFromPos(bnr, e.range.end)
-        start_line = [e.range.start.line, start_line]->min()
-        finish_line = [e.range.end.line, finish_line]->max()
-        updated_edits->add({A: [start_row, start_col], B: [end_row, end_col], lines: e.newText->split("\n", true)})
-    endfor
-
-    # Reverse sort the edit operations by descending line and column numbers so
-    # that they can be applied without interfering with each other.
-    updated_edits->sort(Edit_sort_func)
-
-    var lines: list<string> = bnr->getbufline(start_line + 1, finish_line + 1)
-    # This causes issues with haskell-language-server sometimes so just add lines without checking eol stuff
-    # var fix_eol: bool = bnr->getbufvar('&fixeol')
-    # var set_eol = fix_eol && bnr->getbufinfo()[0].linecount <= finish_line + 1
-    # if set_eol && lines[-1]->len() != 0
-    #     lines->add('')
-    # endif
-    if bnr->getbufinfo()[0].linecount <= finish_line + 1
-        lines->add('')
-    endif
-
-    for e in updated_edits
-        var A: list<number> = [e.A[0] - start_line, e.A[1]]
-        var B: list<number> = [e.B[0] - start_line, e.B[1]]
-        lines = Set_lines(lines, A, B, e.lines)
-    endfor
-
-    # If the last line is empty and we need to set EOL, then remove it.
-    # if set_eol && lines[-1]->len() == 0
-    #     lines->remove(-1)
-    # endif
-
-    # Delete all the lines that need to be modified
-    bnr->deletebufline(start_line + 1, finish_line + 1)
-
-    # if the buffer is empty, appending lines before the first line adds an
-    # extra empty line at the end. Delete the empty line after appending the
-    # lines.
-    var dellastline: bool = false
-    if start_line == 0 && bnr->getbufinfo()[0].linecount == 1 && bnr->getbufline(1)[0] == ''
-        dellastline = true
-    endif
-
-    # Append the updated lines
-    appendbufline(bnr, start_line, lines)
-
-    # This causes issues with haskell-language-server
-    # if dellastline
-    # bnr->deletebufline(bnr->getbufinfo()[0].linecount)
-    # endif
-    setpos('.', orig_cursor_pos)
-enddef
-
-def Reset_format_delay(arg: any): void
-    g_format_delay = false
-enddef
-
-def Format_(arg: any): void
-    g_format_delay = true
-    timer_start(1000, Reset_format_delay)
-    lsc#file#flushChanges()
-    var params: dict<any>
-    params = { 'textDocument': { 'uri': Uri() } }
-    if exists('g:lsc_format_options')
-        params['options'] = g:lsc_format_options
-    endif
-    lsc#server#userCall('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
-enddef
-
-export def Format(): void
-    if g_format_delay
-        timer_start(1000, Format_)
-    else
-        Format_(0)
     endif
 enddef

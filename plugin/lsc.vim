@@ -52,8 +52,8 @@ command! LSClientEnable call lsc#server#enable()
 command! LSClientDisableDiagnosticHighlights call <SID>DisableHighlights()
 command! LSClientEnableDiagnosticHighlights call <SID>EnableHighlights()
 command! LSClientDiagnosticHover call lsc#common#DiagHover()
-command! LSClientFormat call lsc#common#Format()
-command! LSClientInlayHintToggle call lsc#inlayhint#ToggleInlayHint()
+command! LSClientFormat call lsc#vim9#Format()
+command! LSClientInlayHintToggle call lsc#vim9#ToggleInlayHint()
 
 if !exists('g:lsc_enable_apply_edit') || g:lsc_enable_apply_edit
   command! -nargs=? LSClientRename call lsc#edit#rename(<args>)
@@ -150,11 +150,11 @@ augroup LSC
     autocmd ExitPre * let g:_lsc_is_exiting = v:true
   endif
 
-  autocmd BufWinLeave * call lsc#inlayhint#ClearInlayHint(bufnr(''))
-  if exists("g:lsc_enable_inlayhint_auto_toggle") && g:lsc_enable_inlayhint_auto_toggle
-    autocmd InsertEnter * call lsc#inlayhint#ClearInlayHint(bufnr(''))
-    autocmd InsertLeave * call lsc#inlayhint#InlayHint()
-  endif
+  " autocmd BufWinLeave * call lsc#inlayhint#ClearInlayHint(bufnr(''))
+  " if exists("g:lsc_enable_inlayhint_auto_toggle") && g:lsc_enable_inlayhint_auto_toggle
+  "   autocmd InsertEnter * call lsc#inlayhint#ClearInlayHint(bufnr(''))
+  "   autocmd InsertLeave * call lsc#inlayhint#InlayHint()
+  " endif
 augroup END
 
 " Set window local state only if this is a brand new window which has not

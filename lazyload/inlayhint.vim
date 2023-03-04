@@ -1,6 +1,7 @@
 vim9script
 
-import "./common.vim"
+import "./server.vim"
+import "./util.vim"
 
 const INLAYHINT_PROP_NAME = "inlayhint"
 prop_type_add(INLAYHINT_PROP_NAME, {highlight: 'VertSplit'})
@@ -46,14 +47,14 @@ export def InlayHint(): void
     endif
     var params: dict<any>
     params = {
-        'textDocument': { 'uri': common.Uri() },
+        'textDocument': { 'uri': util.Uri() },
         'range': {
             'start': {'line': 0, 'character': 0},
             'end': {'line': line('$') - 1, 'character': len(getline(line('$')))}
             }
         }
     b:inlayhint_waiting = true
-    lsc#server#userCall('clangd/inlayHints', params, function(InlayHintCb, [bufnr('')]))
+    server.LspRequest('clangd/inlayHints', params, function(InlayHintCb, [bufnr('')]))
 enddef
 
 export def ClearInlayHint(bnr: number): void
