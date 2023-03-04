@@ -24,7 +24,7 @@ export def PrepCallHierarchy(mode: string): void
 enddef
 
 export def SwitchSourceHeader(): void
-    switch_source_header.SwitchSourceHeader()
+    switch_source_header.Alternative()
 enddef
 
 export def GetSignatureHelp(): void

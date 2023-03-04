@@ -6,7 +6,7 @@ import "./log.vim" as log
 
 var g_alternative_last_pos = {}
 
-def SwitchToAlternative(results: any): void
+export def SwitchToAlternative(results: any): void
     if type(results) != 1
         log.Error("Alternative not found")
         return
@@ -32,7 +32,7 @@ def SwitchToAlternative(results: any): void
     endif
 enddef
 
-export def SwitchSourceHeader(): void
+export def Alternative(): void
     var params = {'uri': util.Uri()}
     server.LspRequest('textDocument/switchSourceHeader', params, SwitchToAlternative)
 enddef
