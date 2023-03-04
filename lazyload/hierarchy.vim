@@ -1,6 +1,7 @@
 vim9script
 
-import autoload "../../lazyload/tree.vim"
+import autoload "./server.vim"
+import autoload "./tree.vim"
 
 def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: list<any>): void
     if len(results) == 0
@@ -187,7 +188,6 @@ def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
 enddef
 
 export def PrepCallHierarchy(mode: string): void
-    lsc#file#flushChanges()
     var prep_req = "textDocument/prepareCallHierarchy"
     var hierarchy_call = "callHierarchy/incomingCalls"
     var result_key = "from"

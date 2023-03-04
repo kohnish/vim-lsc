@@ -30,8 +30,8 @@ command! LSClientGoToDeclarationSplit
 command! LSClientGoToDeclaration
     \ call lsc#reference#goToDeclaration(<q-mods>, 0)
 command! LSClientFindReferences call lsc#reference#findReferences()
-command! LSClientIncomingCalls call lsc#hierarchy#PrepCallHierarchy("incoming")
-command! LSClientOutgoingCalls call lsc#hierarchy#PrepCallHierarchy("outgoing")
+command! LSClientIncomingCalls call lsc#vim9#PrepCallHierarchy("incoming")
+command! LSClientOutgoingCalls call lsc#vim9#PrepCallHierarchy("outgoing")
 command! LSClientSwitchSourceHeader call lsc#switch_source_header#SwitchSourceHeader()
 command! LSClientNextReference call lsc#reference#findNext(1)
 command! LSClientPreviousReference call lsc#reference#findNext(-1)
