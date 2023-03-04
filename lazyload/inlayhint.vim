@@ -77,7 +77,7 @@ export def ClearInlayHint(bnr: number): void
     endif
 enddef
 
-export def ToggleInlayHint(): void
+export def InlayHint(): void
     var buf_nr = bufnr('')
     if !InlayHintExists(buf_nr)
         InlayHint()

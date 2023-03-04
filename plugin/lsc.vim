@@ -52,7 +52,7 @@ command! LSClientEnable call lsc#server#enable()
 command! LSClientDisableDiagnosticHighlights call <SID>DisableHighlights()
 command! LSClientEnableDiagnosticHighlights call <SID>EnableHighlights()
 command! LSClientDiagnosticHover call lsc#diag#DiagHover()
-command! LSClientFormat call lsc#vim9#Format()
+command! LSClientFormat call lsc#vim9#RunFormat()
 command! LSClientInlayHintToggle call lsc#vim9#ToggleInlayHint()
 
 if !exists('g:lsc_enable_apply_edit') || g:lsc_enable_apply_edit
@@ -176,7 +176,7 @@ function! LSCEnsureCurrentWindowState() abort
   let w:lsc_window_initialized = v:true
   if !has_key(g:lsc_servers_by_filetype, &filetype)
     if exists('w:lsc_diagnostic_matches')
-      call lsc#highlights#clear()
+      call lsc#vim9#HighlightsClear()
     endif
     if exists('w:lsc_diagnostics')
       call lsc#diagnostics#clear()
@@ -187,7 +187,7 @@ function! LSCEnsureCurrentWindowState() abort
     return
   endif
   call lsc#diagnostics#updateCurrentWindow()
-  call lsc#highlights#update()
+  call lsc#vim9#HighlightsUpdate()
   " Might be heavy
   call lsc#cursor#onWinEnter()
 endfunction

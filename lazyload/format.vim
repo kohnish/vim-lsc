@@ -175,7 +175,7 @@ def Reset_format_delay(arg: any): void
     g_format_delay = false
 enddef
 
-def Format_(arg: any): void
+def FormatRequest(arg: any): void
     g_format_delay = true
     var params: dict<any>
     params = { 'textDocument': { 'uri': util.Uri() } }
@@ -188,8 +188,8 @@ enddef
 
 export def Format(): void
     if g_format_delay
-        timer_start(1000, Format_)
+        timer_start(1000, FormatRequest)
     else
-        Format_(0)
+        FormatRequest(0)
     endif
 enddef

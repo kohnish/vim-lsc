@@ -189,7 +189,7 @@ def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
     endif
 enddef
 
-export def PrepCallHierarchy(mode: string): void
+export def CallHierarchy(mode: string): void
     var prep_req = "textDocument/prepareCallHierarchy"
     var hierarchy_call = "callHierarchy/incomingCalls"
     var result_key = "from"

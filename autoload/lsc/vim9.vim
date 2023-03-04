@@ -1,26 +1,39 @@
 vim9script
 
-import autoload "../../lazyload/gates.vim" as gates
+import autoload "../../lazyload/gates.vim"
 import autoload "../../lazyload/format.vim"
 import autoload "../../lazyload/inlayhint.vim"
 import autoload "../../lazyload/hierarchy.vim"
 import autoload "../../lazyload/switch_source_header.vim"
-import autoload "../../lazyload/signature_help.vim" as sighelp
+import autoload "../../lazyload/signature_help.vim"
+import autoload "../../lazyload/highlight.vim"
+
+export def HighlightsUpdateDisplayed(buf_number: number): void
+    highlight.UpdateDisplayed(buf_number)
+enddef
+
+export def HighlightsUpdate(): void
+    highlight.Update()
+enddef
+
+export def HighlightsClear(): void
+    highlight.Clear()
+enddef
 
 export def GateResult(name: string, Callback: func, vargs: list<any>): func
     return gates.CreateOrGet(name, Callback, vargs)
 enddef
 
-export def Format(): void
+export def RunFormat(): void
     format.Format()
 enddef
 
 export def ToggleInlayHint(): void
-    inlayhint.ToggleInlayHint()
+    inlayhint.InlayHint()
 enddef
 
 export def PrepCallHierarchy(mode: string): void
-    hierarchy.PrepCallHierarchy(mode)
+    hierarchy.CallHierarchy(mode)
 enddef
 
 export def SwitchSourceHeader(): void
@@ -28,5 +41,5 @@ export def SwitchSourceHeader(): void
 enddef
 
 export def GetSignatureHelp(): void
-    sighelp.SignatureHelp()
+    signature_help.SignatureHelp()
 enddef

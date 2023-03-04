@@ -21,39 +21,6 @@ function! lsc#diagnostics#clean(filetype) abort
   endfor
 endfunction
 
-" Finds the highlight group given a diagnostic severity level
-function! s:SeverityGroup(severity) abort
-  return 'lscDiagnostic'.s:SeverityLabel(a:severity)
-endfunction
-
-" Finds the human readable label for a diagnsotic severity level
-function! s:SeverityLabel(severity) abort
-    if a:severity == 1 | return 'Error'
-    elseif a:severity == 2 | return 'Warning'
-    elseif a:severity == 3 | return 'Info'
-    elseif a:severity == 4 | return 'Hint'
-    else | return ''
-    endif
-endfunction
-
-" Finds the location list type given a diagnostic severity level
-function! s:SeverityType(severity) abort
-    if a:severity == 1 | return 'E'
-    elseif a:severity == 2 | return 'W'
-    elseif a:severity == 3 | return 'I'
-    elseif a:severity == 4 | return 'H'
-    else | return ''
-    endif
-endfunction
-
-function! s:DiagnosticMessage(diagnostic) abort
-  let l:message = a:diagnostic.message
-  if has_key(a:diagnostic, 'code')
-    let l:message = l:message.' ['.a:diagnostic.code.']'
-  endif
-  return l:message
-endfunction
-
 function! lsc#diagnostics#forFile(file_path) abort
   if !has_key(s:file_diagnostics, a:file_path)
     return s:EmptyDiagnostics()
@@ -101,7 +68,7 @@ function! lsc#diagnostics#setForFile(file_path, diagnostics) abort
   let l:bufnr = lsc#file#bufnr(a:file_path)
   if l:bufnr != -1
     call s:UpdateWindowStates(a:file_path)
-    call lsc#highlights#updateDisplayed(l:bufnr)
+    call lsc#vim9#HighlightsUpdateDisplayed(l:bufnr)
   endif
   if l:visible_change
     if exists('s:quickfix_debounce')
