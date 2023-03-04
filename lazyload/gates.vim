@@ -1,13 +1,14 @@
 vim9script
 
 var g_callback_gates = {}
-def Gated(name: string, gate: number, old_pos: list<number>, OnCall: func, on_skip: any, vargs: any): void
+def Gated(name: string, gate: number, old_pos: list<number>, OnCall: func, on_skip: any, result: any): void
     if g_callback_gates[name] != gate || old_pos != getcurpos()
         if type(on_skip) == 2
-            OnCall(on_skip, vargs)
+            var Cb = funcref(on_skip)
+            Cb(result)
         endif
     else
-        OnCall(vargs)
+        OnCall(result)
     endif
 enddef
 

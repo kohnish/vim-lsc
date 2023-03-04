@@ -1,5 +1,36 @@
 vim9script
 
+def QuickFixSeverity(type: string): number
+    if type ==# 'E' | return 1
+    elseif type ==# 'W' | return 2
+    elseif type ==# 'I' | return 3
+    elseif type ==# 'H' | return 4
+    endif
+    return 5
+enddef
+
+def QuickFixFilename(item: dict<any>): string
+    if has_key(item, 'filename')
+        return item.filename
+    endif
+    return NormalizePath(bufname(item.bufnr))
+enddef
+
+export def CompareQuickFixItems(i1: dict<any>, i2: dict<any>): number
+    var file_1 = QuickFixFilename(i1)
+    var file_2 = QuickFixFilename(i2)
+    if file_1 != file_2
+        return lsc#file#compare(file_1, file_2)
+    endif
+    if i1.lnum != i2.lnum | return i1.lnum - i2.lnum | endif
+    if i1.col != i2.col | return i1.col - i2.col | endif
+    if has_key(i1, 'type') && has_key(i2, 'type') && i1.type != i2.type
+        return QuickFixSeverity(i2.type) - QuickFixSeverity(i1.type)
+    endif
+    return i1.text == i2.text ? 0 : i1.text > i2.text ? 1 : -1
+enddef
+
+
 def EncodeChar(char: string): string
     var charcode = char2nr(char)
     return printf('%%%02x', charcode)
@@ -49,13 +80,13 @@ export def Uri(): string
 enddef
 
 export def DocPos(): dict<any>
-  return { 'textDocument': {'uri': Uri()},
-      \ 'position': {'line': line('.') - 1, 'character': col('.') - 1}
-      \ }
+    return { 'textDocument': {'uri': Uri()},
+                \ 'position': {'line': line('.') - 1, 'character': col('.') - 1}
+                \ }
 enddef
 
 export def PlainDocPos(): dict<any>
-  return { 'textDocument': {'uri': Uri()},
-      \ 'position': {'line': line('.'), 'character': col('.')}
-      \ }
+    return { 'textDocument': {'uri': Uri()},
+                \ 'position': {'line': line('.'), 'character': col('.')}
+                \ }
 enddef

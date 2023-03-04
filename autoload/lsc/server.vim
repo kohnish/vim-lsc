@@ -371,7 +371,7 @@ endfunction
 function! s:Dispatch(server, method, params, id) abort
   if a:method ==? 'textDocument/publishDiagnostics'
     let l:file_path = lsc#uri#documentPath(a:params['uri'])
-    call lsc#diagnostics#setForFile(l:file_path, a:params['diagnostics'])
+    call lsc#vim9#DiagnosticsSetForFile(l:file_path, a:params['diagnostics'])
   elseif a:method ==? 'window/showMessage'
     call lsc#message#show(a:params['message'], a:params['type'])
   elseif a:method ==? 'window/showMessageRequest'

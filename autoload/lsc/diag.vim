@@ -44,7 +44,6 @@ def SeverityType(severity: number): string
     endif
 enddef
 
-
 export def DiagnosticsHighlights(self: dict<any>): list<any>
     if !has_key(self, '_highlights')
         self._highlights = []
