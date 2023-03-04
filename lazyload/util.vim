@@ -53,3 +53,9 @@ export def DocPos(): dict<any>
       \ 'position': {'line': line('.') - 1, 'character': col('.') - 1}
       \ }
 enddef
+
+export def PlainDocPos(): dict<any>
+  return { 'textDocument': {'uri': Uri()},
+      \ 'position': {'line': line('.'), 'character': col('.')}
+      \ }
+enddef

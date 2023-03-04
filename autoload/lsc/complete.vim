@@ -61,13 +61,13 @@ function! s:startCompletion(isAuto) abort
   let l:params = lsc#params#documentPosition()
   " TODO handle multiple servers
   let l:server = lsc#server#forFileType(&filetype)[0]
-  " try
+  try
     call l:server.request('textDocument/completion', l:params,
         \ lsc#vim9#GateResult('Complete',
         \     function('<SID>OnResult', [a:isAuto]),
         \     [function('<SID>OnSkip', [bufnr('%')])]))
-    " catch
-  " endtry
+    catch
+  endtry
 endfunction
 
 function! s:OnResult(isAuto, completion) abort
