@@ -45,7 +45,7 @@ command! -nargs=? LSClientFindCodeActions
 command! LSClientAllDiagnostics call lsc#diagnostics#showInQuickFix()
 command! LSClientWindowDiagnostics call lsc#diagnostics#showLocationList()
 command! LSClientLineDiagnostics call lsc#diagnostics#echoForLine()
-command! LSClientSignatureHelp call lsc#signature_help#GetSignatureHelp()
+command! LSClientSignatureHelp call lsc#vim9#GetSignatureHelp()
 command! LSClientRestartServer call <SID>IfEnabled('lsc#server#restart')
 command! LSClientDisable call lsc#server#disable()
 command! LSClientEnable call lsc#server#enable()

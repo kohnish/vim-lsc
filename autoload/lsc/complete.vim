@@ -18,7 +18,7 @@ function! lsc#complete#textChanged() abort
   if empty(s:next_char) | return | endif
   call s:typedCharacter()
   let s:next_char = ''
-  call lsc#signature_help#GetSignatureHelp()
+  call lsc#vim9#GetSignatureHelp()
 endfunction
 
 function! s:typedCharacter() abort
@@ -61,13 +61,13 @@ function! s:startCompletion(isAuto) abort
   let l:params = lsc#params#documentPosition()
   " TODO handle multiple servers
   let l:server = lsc#server#forFileType(&filetype)[0]
-  try
+  " try
     call l:server.request('textDocument/completion', l:params,
         \ lsc#vim9#GateResult('Complete',
         \     function('<SID>OnResult', [a:isAuto]),
-        \     function('<SID>OnSkip', [bufnr('%')])))
-    catch
-  endtry
+        \     [function('<SID>OnSkip', [bufnr('%')])]))
+    " catch
+  " endtry
 endfunction
 
 function! s:OnResult(isAuto, completion) abort

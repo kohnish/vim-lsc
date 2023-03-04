@@ -1,13 +1,14 @@
 vim9script
 
-import "./common.vim"
+import autoload "./server.vim"
+import autoload "./util.vim"
+import autoload "./gates.vim"
 
-export def GetSignatureHelp(): void
+export def SignatureHelp(): void
     lsc#file#flushChanges()
     var params = lsc#params#documentPosition()
-    var server = lsc#server#forFileType(&filetype)[0]
     try
-        server.request('textDocument/signatureHelp', params, lsc#util#gateResult('SignatureHelp', ShowHelp))
+        server.LspRequest('textDocument/signatureHelp', params, gates.CreateOrGet('SignatureHelp', ShowHelp, []))
     catch
     endtry
 enddef
