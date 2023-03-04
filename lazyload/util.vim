@@ -47,3 +47,9 @@ export def Uri(): string
     var file_path = FullPath()
     return OsFilePrefix() .. EncodePath(file_path)
 enddef
+
+export def DocPos(): dict<any>
+  return { 'textDocument': {'uri': Uri()},
+      \ 'position': {'line': line('.') - 1, 'character': col('.') - 1}
+      \ }
+enddef

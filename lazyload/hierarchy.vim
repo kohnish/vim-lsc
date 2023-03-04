@@ -1,6 +1,8 @@
 vim9script
 
 import autoload "./server.vim"
+import autoload "./util.vim"
+import autoload "./log.vim"
 import autoload "./tree.vim"
 
 def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: list<any>): void
@@ -54,7 +56,7 @@ def Command_callback(id: number): void
         return
     endif
     var param = b:nodes[id]["query"]
-    lsc#server#userCall_with_server(b:ctx["server"], b:ctx["hierarchy_call"], param, function(OpenHierarchyCallNode, [id, param]))
+    server.LspRequestWithServer(b:ctx["server"], b:ctx["hierarchy_call"], param, function(OpenHierarchyCallNode, [id, param]))
 enddef
 
 def Number_to_treeitem(id: number): dict<any>
@@ -174,7 +176,7 @@ enddef
 def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
     if len(results) > 0
         var ignition = {
-            "server": lsc#server#forFileType(&filetype)[0],
+            "server": server.ServerForFileType(&filetype),
             "original_win_id": win_getid(),
             "query": {"item": results[0]},
             "mode": mode_info["name"],
@@ -183,7 +185,7 @@ def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
             }
         OpenTreeWindow(ignition)
     else
-        lsc#message#error("No results for " .. mode_info["call_name"])
+        log.Error("No results for " .. mode_info["call_name"])
     endif
 enddef
 
@@ -200,5 +202,5 @@ export def PrepCallHierarchy(mode: string): void
         "call_name": hierarchy_call,
         "result_key": result_key
         }
-    lsc#server#userCall(prep_req, lsc#params#documentPosition(), function(PrepHierarchyCb, [mode_info]))
+    server.LspRequest(prep_req, util.DocPos(), function(PrepHierarchyCb, [mode_info]))
 enddef

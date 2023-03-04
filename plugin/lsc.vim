@@ -51,7 +51,7 @@ command! LSClientDisable call lsc#server#disable()
 command! LSClientEnable call lsc#server#enable()
 command! LSClientDisableDiagnosticHighlights call <SID>DisableHighlights()
 command! LSClientEnableDiagnosticHighlights call <SID>EnableHighlights()
-command! LSClientDiagnosticHover call lsc#common#DiagHover()
+command! LSClientDiagnosticHover call lsc#diag#DiagHover()
 command! LSClientFormat call lsc#vim9#Format()
 command! LSClientInlayHintToggle call lsc#vim9#ToggleInlayHint()
 
