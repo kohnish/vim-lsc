@@ -29,11 +29,11 @@ export def Clear(): void
 enddef
 
 export def Update(): void
-    # if !get(g:, 'lsc_diagnostic_highlights', true) | return | endif
-    # if CurrentWindowIsFresh() | return | endif
+    if !get(g:, 'lsc_diagnostic_highlights', true) | return | endif
+    if CurrentWindowIsFresh() | return | endif
     Clear()
     if &diff | return | endif
-    var diag_obj_for_file = lsc#diagnostics#forFile(lsc#file#fullPath())
+    var diag_obj_for_file = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
     for highlight in diag_obj_for_file.Highlights()
         var match = 0
         var priority = -1 * highlight.severity
@@ -49,5 +49,5 @@ export def Update(): void
         endif
         add(w:lsc_diagnostic_matches, match)
     endfor
-    # MarkCurrentWindowFresh()
+    MarkCurrentWindowFresh()
 enddef

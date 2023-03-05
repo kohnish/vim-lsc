@@ -265,3 +265,110 @@ export def QflistTrimRoot(info: dict<any>): list<any>
     return modified_qflist
 enddef
 
+def Incomplete(buffer: list<any>): bool
+    if len(buffer) == 1 | return false | endif
+    var first = remove(buffer, 0)
+    var second = remove(buffer, 0)
+    call insert(buffer, first .. second)
+    return true
+enddef
+
+def ContentLength(headers: list<any>): number
+    for header in headers
+        if header =~? '^Content-Length'
+            var parts = split(header, ':')
+            var length = parts[1]
+            if length[0] ==# ' ' | length = length[1 : ] | endif
+            return str2nr(length)
+        endif
+    endfor
+    return -1
+enddef
+
+export def Dispatch(message: dict<any>, OnMessage: func, callbacks: dict<any>): void
+    if has_key(message, 'method')
+        var method = message.method
+        var params = has_key(message, 'params') ? message.params : {}
+        var id = has_key(message, 'id') ? message.id : v:null
+        OnMessage(method, params, id)
+    elseif has_key(message, 'error')
+        var error = message.error
+        var msg = has_key(error, 'message') ? error.message : string(error)
+        lsc#message#error(msg)
+    elseif has_key(message, 'id')
+        var call_id = message['id']
+        if has_key(callbacks, call_id)
+            var Callback = callbacks[call_id][0]
+            unlet callbacks[call_id]
+            Callback(get(message, 'result', v:null))
+        endif
+    else
+        call lsc#message#error('Unknown message type: ' .. string(message))
+    endif
+enddef
+
+export def Consume(server: dict<any>): bool
+    var buffer = server._buffer
+    var message = buffer[0]
+    var end_of_header = stridx(message, "\r\n\r\n")
+    if end_of_header < 0
+        return Incomplete(buffer)
+    endif
+    var headers = split(message[: end_of_header - 1], "\r\n")
+    var message_start = end_of_header + len("\r\n\r\n")
+    var message_end = message_start + ContentLength(headers)
+    if len(message) < message_end
+        return Incomplete(buffer)
+    endif
+    var payload = ""
+    if len(message) == message_end
+        payload = message[message_start :]
+        remove(buffer, 0)
+    else
+        payload = message[message_start : message_end - 1]
+        buffer[0] = message[message_end : ]
+    endif
+    var content = {}
+    try
+        if len(payload) > 0
+            content = json_decode(payload)
+            if type(content) != type({})
+                content = {}
+                throw 1
+            endif
+        endif
+    catch
+        lsc#message#error('Could not decode message')
+    endtry
+    if !empty(content)
+        lsc#util#shift(server._out, 10, deepcopy(content))
+        Dispatch(content, server._on_message, server._callbacks)
+    endif
+    return !empty(buffer)
+enddef
+
+export def OsNormalisePath(path: string): string
+    if has('win32')
+        return substitute(path, '\\', '/', 'g')
+    endif
+    return path
+enddef
+
+export def NormalisePath(original_path: string): string
+    var full_path = original_path
+    if full_path !~# '^/\|\%([c-zC-Z]:[/\\]\)'
+        full_path = getcwd() .. '/' .. full_path
+    endif
+    full_path = OsNormalisePath(full_path)
+    return full_path
+enddef
+
+export def FullAbsPath(): string
+    var full_path = expand('%:p')
+    if full_path ==# expand('%')
+        full_path = NormalisePath(getbufinfo('%')[0].name)
+    elseif has('win32')
+        full_path = OsNormalisePath(full_path)
+    endif
+    return full_path
+enddef

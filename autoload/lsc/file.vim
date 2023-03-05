@@ -30,7 +30,7 @@ endfunction
 " Run language servers for this filetype if they aren't already running and
 " flush file changes.
 function! lsc#file#onOpen() abort
-  let l:file_path = lsc#file#fullPath()
+  let l:file_path = lsc#common#FullAbsPath()
   if has_key(s:file_versions, l:file_path)
     call lsc#file#flushChanges()
   else
@@ -71,7 +71,7 @@ endfunction
 
 " Flushes changes for the current buffer.
 function! lsc#file#flushChanges() abort
-  call s:FlushIfChanged(lsc#file#fullPath(), &filetype)
+  call s:FlushIfChanged(lsc#common#FullAbsPath(), &filetype)
 endfunction
 
 " Send the 'didOpen' message for a file.
@@ -117,7 +117,7 @@ function! lsc#file#onChange(...) abort
     let l:file_path = a:1
     let l:filetype = getbufvar(lsc#file#bufnr(l:file_path), '&filetype')
   else
-    let l:file_path = lsc#file#fullPath()
+    let l:file_path = lsc#common#FullAbsPath()
     let l:filetype = &filetype
   endif
   if has_key(s:flush_timers, l:file_path)
@@ -146,26 +146,7 @@ function! s:FlushIfChanged(file_path, filetype) abort
 endfunction
 
 function! lsc#file#version() abort
-  return get(s:file_versions, lsc#file#fullPath(), '')
-endfunction
-
-" The full path to the current buffer.
-"
-" The association between a buffer and full path may change if the file has not
-" been written yet - this makes a best-effort attempt to get a full path anyway.
-" In most cases if the working directory doesn't change this isn't harmful.
-"
-" Paths which do need to be manually normalized are stored so that the full path
-" can be associated back to a buffer with `lsc#file#bufnr()`.
-function! lsc#file#fullPath() abort
-  let l:full_path = expand('%:p')
-  if l:full_path ==# expand('%')
-    " Path could not be expanded due to pointing to a non-existent directory
-    let l:full_path = lsc#file#normalize(getbufinfo('%')[0].name)
-  elseif has('win32')
-    let l:full_path = s:os_normalize(l:full_path)
-  endif
-  return l:full_path
+  return get(s:file_versions, lsc#common#FullAbsPath(), '')
 endfunction
 
 " Like `bufnr()` but handles the case where a relative path was normalized

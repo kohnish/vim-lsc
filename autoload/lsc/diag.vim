@@ -274,7 +274,7 @@ def HandleHighlights(request_number: number, old_pos: list<number>, old_buf_nr: 
 enddef
 
 export def DiagHover(): void
-    var file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
+    var file_diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine()
     var line = line('.')
     var diag_msg = {}
 

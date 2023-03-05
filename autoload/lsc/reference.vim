@@ -117,7 +117,7 @@ function! s:goTo(file, line, character, mods, issplit) abort
     call lsc#common#FocusIfOpen(a:file)
   endif
   let l:prev_buf = bufnr('%')
-  if a:issplit || a:file !=# lsc#file#fullPath()
+  if a:issplit || a:file !=# lsc#common#FullAbsPath()
     let l:cmd = 'edit'
     if &modified
       let l:cmd = 'vsplit'

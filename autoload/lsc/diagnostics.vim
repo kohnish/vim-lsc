@@ -33,7 +33,7 @@ function! lsc#diagnostics#forFile(file_path) abort
 endfunction
 
 function! lsc#diagnostics#echoForLine() abort
-    let l:file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
+    let l:file_diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine()
     let l:line = line('.')
     if !has_key(l:file_diagnostics, l:line)
         echo 'No diagnostics'
@@ -52,7 +52,7 @@ function! lsc#diagnostics#echoForLine() abort
 endfunction
 
 function! lsc#diagnostics#updateCurrentWindow() abort
-    let l:diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath())
+    let l:diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
     if exists('w:lsc_diagnostics') && w:lsc_diagnostics is l:diagnostics
         return
     endif
@@ -155,7 +155,7 @@ function! s:EmptyDiagnostics() abort
 endfunction
 
 function! lsc#diagnostics#underCursor() abort
-    return lsc#diag#UnderCursor(lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine())
+    return lsc#diag#UnderCursor(lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine())
 endfunction
 
 function! lsc#diagnostics#forLine(file, line) abort

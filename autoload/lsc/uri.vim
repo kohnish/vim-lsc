@@ -2,7 +2,7 @@ function! lsc#uri#documentUri(...) abort
   if a:0 >= 1
     let l:file_path = a:1
   else
-    let l:file_path = lsc#file#fullPath()
+    let l:file_path = lsc#common#FullAbsPath()
   endif
   return s:filePrefix().s:EncodePath(l:file_path)
 endfunction

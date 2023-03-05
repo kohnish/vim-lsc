@@ -7,7 +7,7 @@ function! lsc#edit#findCodeActions(...) abort
   call lsc#file#flushChanges()
   let l:params = lsc#params#documentRange()
   let l:params.context = {'diagnostics':
-      \ lsc#diagnostics#forLine(lsc#file#fullPath(), line('.') - 1)}
+      \ lsc#diagnostics#forLine(lsc#common#FullAbsPath(), line('.') - 1)}
 
   call lsc#server#userCall('textDocument/codeAction', l:params,
       \ lsc#vim9#GateResult('CodeActions',
