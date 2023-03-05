@@ -14,10 +14,6 @@ if !exists('s:file_diagnostics')
     let s:file_diagnostics = {}
 endif
 
-function! lsc#diagnostics#file_diagnostics() abort
-    return s:file_diagnostics
-endfunction
-
 function! lsc#diagnostics#clean(filetype) abort
     for l:buffer in getbufinfo({'bufloaded': v:true})
         if getbufvar(l:buffer.bufnr, '&filetype') != a:filetype | continue | endif
@@ -25,11 +21,34 @@ function! lsc#diagnostics#clean(filetype) abort
     endfor
 endfunction
 
+function! lsc#diagnostics#file_diagnostics() abort
+    return s:file_diagnostics
+endfunction
+
 function! lsc#diagnostics#forFile(file_path) abort
     if !has_key(s:file_diagnostics, a:file_path)
         return s:EmptyDiagnostics()
     endif
     return s:file_diagnostics[a:file_path]
+endfunction
+
+function! lsc#diagnostics#echoForLine() abort
+    let l:file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
+    let l:line = line('.')
+    if !has_key(l:file_diagnostics, l:line)
+        echo 'No diagnostics'
+        return
+    endif
+    let l:diagnostics = l:file_diagnostics[l:line]
+    for l:diagnostic in l:diagnostics
+        let l:label = '['.l:diagnostic.severity.']'
+        if stridx(l:diagnostic.message, "\n") >= 0
+            echo l:label
+            echo l:diagnostic.message
+        else
+            echo l:label.': '.l:diagnostic.message
+        endif
+    endfor
 endfunction
 
 function! lsc#diagnostics#updateCurrentWindow() abort
@@ -112,25 +131,6 @@ function! lsc#diagnostics#clear() abort
         call s:UpdateLocationList(win_getid(), [])
     endif
     unlet w:lsc_diagnostics
-endfunction
-
-function! lsc#diagnostics#echoForLine() abort
-    let l:file_diagnostics = lsc#diagnostics#forFile(lsc#file#fullPath()).ByLine()
-    let l:line = line('.')
-    if !has_key(l:file_diagnostics, l:line)
-        echo 'No diagnostics'
-        return
-    endif
-    let l:diagnostics = l:file_diagnostics[l:line]
-    for l:diagnostic in l:diagnostics
-        let l:label = '['.l:diagnostic.severity.']'
-        if stridx(l:diagnostic.message, "\n") >= 0
-            echo l:label
-            echo l:diagnostic.message
-        else
-            echo l:label.': '.l:diagnostic.message
-        endif
-    endfor
 endfunction
 
 function! lsc#diagnostics#DiagObjCreate(file_path, lsp_diagnostics) abort
