@@ -1,8 +1,8 @@
 vim9script
 
-import "./server.vim" as server
-import "./util.vim" as util
-import "./log.vim" as log
+import autoload "./server.vim"
+import autoload "./util.vim"
+import autoload "./log.vim"
 
 var g_alternative_last_pos = {}
 

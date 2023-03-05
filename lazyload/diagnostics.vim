@@ -4,6 +4,7 @@ vim9script
 
 import autoload "./util.vim"
 import autoload "./highlight.vim"
+import autoload "./log.vim"
 
 # var g_quickfix_debounce = -1
 # var g_highest_used_diagnostic = ""
@@ -59,12 +60,18 @@ def AllDiagnostics(): list<any>
 enddef
 
 export def ShowInQuickFix(): void
-    setqflist([], ' ', {
-                \ 'items': AllDiagnostics(),
-                \ 'title': 'LSC Diagnostics',
-                \ 'context': {'client': 'LSC'}
-                \ })
-    copen
+    var diags = AllDiagnostics()
+    if len(diags) > 0
+        setqflist([], ' ', {
+                    \ 'items': AllDiagnostics(),
+                    \ 'title': 'LSC Diagnostics',
+                    \ 'context': {'client': 'LSC'},
+                    \ 'quickfixtextfunc': 'lsc#common#QflistTrimRoot',
+                    \ })
+        copen
+    else
+        log.Error("No diagnostics results")
+    endif
 enddef
 
 # def FindNearest(prev: dict<any>, items: list<any>): number
