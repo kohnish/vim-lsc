@@ -108,10 +108,10 @@ export def DiagnosticsByLine(self: dict<any>): dict<any>
                         \ 'range': diagnostic.range,
                         \ 'severity': SeverityLabel(diagnostic.severity),
                         \ }
-            call add(line, simple)
+            add(line, simple)
         endfor
         for val in values(self._by_line)
-            call sort(val, CompareRanges)
+            sort(val, CompareRanges)
         endfor
     endif
     return self._by_line

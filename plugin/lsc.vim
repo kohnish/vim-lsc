@@ -42,7 +42,7 @@ command! -nargs=? LSClientWorkspaceSymbol
     \ call lsc#search#workspaceSymbol(<q-args>)
 command! -nargs=? LSClientFindCodeActions
     \ call lsc#edit#findCodeActions(lsc#edit#filterActions(<args>))
-command! LSClientAllDiagnostics call lsc#diagnostics#showInQuickFix()
+command! LSClientAllDiagnostics call lsc#vim9#DiagnosticsShowInQuickFix()
 command! LSClientWindowDiagnostics call lsc#diagnostics#showLocationList()
 command! LSClientLineDiagnostics call lsc#diagnostics#echoForLine()
 command! LSClientSignatureHelp call lsc#vim9#GetSignatureHelp()

@@ -9,6 +9,9 @@ import autoload "../../lazyload/signature_help.vim"
 import autoload "../../lazyload/highlight.vim"
 import autoload "../../lazyload/diagnostics.vim"
 
+export def DiagnosticsShowInQuickFix(): void
+    diagnostics.ShowInQuickFix()
+enddef
 export def DiagnosticsSetForFile(file_path: string, diags: list<any>): void
     diagnostics.SetForFile(file_path, diags)
 enddef
