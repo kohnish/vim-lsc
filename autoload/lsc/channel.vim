@@ -27,6 +27,7 @@ function! lsc#channel#open(command, Callback, ErrCallback, OnExit) abort
         \ 'exit_cb': {_, __ -> a:OnExit()}}
     let l:job = job_start(a:command, l:job_options)
     call s:WrapVim(job_getchannel(l:job), l:c)
+    let l:c.pid = job_info(l:job).process
     return l:c
   elseif exists('*jobstart')
     let l:job_options = {
@@ -44,7 +45,7 @@ function! lsc#channel#open(command, Callback, ErrCallback, OnExit) abort
 endfunction
 
 function! s:Channel() abort
-  let l:c = {'send_buffer': ''}
+  let l:c = {'send_buffer': '', 'pid': -1}
 
   function! l:c.send(message) abort
     let l:self.send_buffer .= a:message

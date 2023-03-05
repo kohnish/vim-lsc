@@ -111,8 +111,10 @@ function! lsc#server#clear() abort
 endfunction
 
 function! lsc#server#restart() abort
+  call lsc#vim9#CleanAllMatchs()
   call lsc#server#disable()
   call lsc#server#clear()
+  call clearmatches()
   call LSCServerRegister()
 endfunction
 
@@ -239,6 +241,13 @@ endfunction
 function! lsc#server#disable() abort
   for l:server in values(s:servers)
     call l:server.notify('exit', v:null)
+    try
+        let l:kill_cmd = "kill " .. l:server._channel._channel.pid
+        system(l:kill_cmd)
+        let l:kill_force_cmd = "kill -9 " .. l:server._channel._channel.pid
+        system(l:kill_force_cmd)
+    catch
+    endtry
   endfor
 endfunction
 

@@ -9,6 +9,11 @@ import autoload "../../lazyload/signature_help.vim"
 import autoload "../../lazyload/highlight.vim"
 import autoload "../../lazyload/diagnostics.vim"
 
+export def CleanAllMatchs(): void
+    highlight.Clear()
+    lsc#diag#Clean()
+enddef
+
 export def DiagnosticsShowInQuickFix(): void
     diagnostics.ShowInQuickFix()
 enddef
