@@ -6,8 +6,9 @@ import autoload "./gates.vim"
 
 export def SignatureHelp(): void
     lsc#file#flushChanges()
+    var params = lsc#params#documentPosition()
     try
-        server.LspRequest('textDocument/signatureHelp', util.PlainDocPos(), gates.CreateOrGet('SignatureHelp', ShowHelp, []))
+        server.LspRequest('textDocument/signatureHelp', params, gates.CreateOrGet('SignatureHelp', ShowHelp, []))
     catch
     endtry
 enddef
