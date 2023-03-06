@@ -128,7 +128,10 @@ augroup LSC
   autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
 
   autocmd BufNewFile,BufReadPost * call <SID>OnOpen()
-  autocmd TextChanged,TextChangedI,CompleteDone *
+  " autocmd TextChanged,TextChangedI,CompleteDone *
+  "     \ call <SID>IfEnabled('lsc#file#onChange')
+  " TextChangedI already has an action, and looks good enough
+  autocmd TextChanged,CompleteDone *
       \ call <SID>IfEnabled('lsc#file#onChange')
   autocmd BufLeave * call <SID>IfEnabled('lsc#file#flushChanges')
   autocmd BufUnload * call <SID>OnClose()
