@@ -11,6 +11,12 @@ function! lsc#complete#insertCharPre() abort
   let s:next_char = v:char
 endfunction
 
+let s:sighelp_timer = -1
+function! lsc#complete#sig_help_with_timer() abort
+    call lsc#vim9#GetSignatureHelp()
+    let s:sighelp_timer = -1
+endfunction
+
 function! lsc#complete#textChanged() abort
   if &paste | return | endif
   if !g:lsc_enable_autocomplete | return | endif
@@ -18,7 +24,10 @@ function! lsc#complete#textChanged() abort
   if empty(s:next_char) | return | endif
   call s:typedCharacter()
   let s:next_char = ''
-  call lsc#vim9#GetSignatureHelp()
+  " Might help input becoming slower.
+  if s:sighelp_timer == -1
+      let s:sighelp_timer = timer_start(300, {_->lsc#complete#sig_help_with_timer()})
+  endif
 endfunction
 
 function! s:typedCharacter() abort
