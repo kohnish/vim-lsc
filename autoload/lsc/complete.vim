@@ -25,9 +25,10 @@ function! lsc#complete#textChanged() abort
   call s:typedCharacter()
   let s:next_char = ''
   " Might help input becoming slower.
-  if s:sighelp_timer == -1
-      let s:sighelp_timer = timer_start(200, {_->lsc#complete#sig_help_with_timer()})
-  endif
+  call lsc#vim9#GetSignatureHelp()
+  " if s:sighelp_timer == -1
+  "     let s:sighelp_timer = timer_start(200, {_->lsc#complete#sig_help_with_timer()})
+  " endif
 endfunction
 
 function! s:typedCharacter() abort

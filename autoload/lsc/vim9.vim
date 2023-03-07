@@ -45,6 +45,14 @@ export def ToggleInlayHint(): void
     inlayhint.InlayHint()
 enddef
 
+# export def InlayHintClear(bnr: number): void
+#     inlayhint.ClearInlayHint(bnr)
+# enddef
+
+# export def ReqInlayHint(bnr: number): void
+#     inlayhint.InlayHintReq()
+# enddef
+
 export def PrepCallHierarchy(mode: string): void
     hierarchy.CallHierarchy(mode)
 enddef

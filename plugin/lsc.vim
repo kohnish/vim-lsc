@@ -152,8 +152,8 @@ augroup LSC
 
   " autocmd BufWinLeave * call lsc#inlayhint#ClearInlayHint(bufnr(''))
   " if exists("g:lsc_enable_inlayhint_auto_toggle") && g:lsc_enable_inlayhint_auto_toggle
-  "   autocmd InsertEnter * call lsc#inlayhint#ClearInlayHint(bufnr(''))
-  "   autocmd InsertLeave * call lsc#inlayhint#InlayHint()
+  "   autocmd InsertEnter * call lsc#vim9#InlayHintClear(bufnr(''))
+  "   autocmd InsertLeave * call lsc#vim9#ReqInlayHint()
   " endif
 augroup END
 

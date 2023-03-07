@@ -1,7 +1,7 @@
 vim9script
 
-import "./server.vim"
-import "./util.vim"
+import autoload "./server.vim"
+import autoload "./util.vim"
 
 const INLAYHINT_PROP_NAME = "inlayhint"
 prop_type_add(INLAYHINT_PROP_NAME, {highlight: 'VertSplit'})
@@ -34,7 +34,7 @@ def InlayHintCb(bnr: number, text_edits: list<dict<any>>): void
     endfor
 enddef
 
-export def InlayHint(): void
+export def InlayHintReq(): void
     if exists("b:inlayhint_waiting")
         if b:inlayhint_waiting
             return
@@ -80,7 +80,7 @@ enddef
 export def InlayHint(): void
     var buf_nr = bufnr('')
     if !InlayHintExists(buf_nr)
-        InlayHint()
+        InlayHintReq()
     else
         ClearInlayHint(buf_nr)
     endif
