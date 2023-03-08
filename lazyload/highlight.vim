@@ -42,7 +42,7 @@ export def Update(): void
         if highlight.ranges[0][0] > line
             match = matchadd(group, '\%' .. line .. 'l$', priority)
         elseif len(highlight.ranges) == 1 && highlight.ranges[0][1] > len(getline(highlight.ranges[0][0]))
-            var line_range = '\%' .. highlight.ranges[0][0] .. ' l$'
+            var line_range = '\%' .. highlight.ranges[0][0] .. 'l$'
             match = matchadd(group, line_range, priority)
         else
             match = matchaddpos(group, highlight.ranges, priority)
