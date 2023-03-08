@@ -30,9 +30,6 @@ command! LSClientGoToDeclarationSplit
 command! LSClientGoToDeclaration
     \ call lsc#reference#goToDeclaration(<q-mods>, 0)
 command! LSClientFindReferences call lsc#reference#findReferences()
-command! LSClientIncomingCalls call lsc#vim9#PrepCallHierarchy("incoming")
-command! LSClientOutgoingCalls call lsc#vim9#PrepCallHierarchy("outgoing")
-command! LSClientSwitchSourceHeader call lsc#vim9#SwitchSourceHeader()
 command! LSClientNextReference call lsc#reference#findNext(1)
 command! LSClientPreviousReference call lsc#reference#findNext(-1)
 command! LSClientFindImplementations call lsc#reference#findImplementations()
@@ -42,18 +39,13 @@ command! -nargs=? LSClientWorkspaceSymbol
     \ call lsc#search#workspaceSymbol(<q-args>)
 command! -nargs=? LSClientFindCodeActions
     \ call lsc#edit#findCodeActions(lsc#edit#filterActions(<args>))
-command! LSClientAllDiagnostics call lsc#vim9#DiagnosticsShowInQuickFix()
 command! LSClientWindowDiagnostics call lsc#diagnostics#showLocationList()
 command! LSClientLineDiagnostics call lsc#diagnostics#echoForLine()
-command! LSClientSignatureHelp call lsc#vim9#GetSignatureHelp()
 command! LSClientRestartServer call <SID>IfEnabled('lsc#server#restart')
 command! LSClientDisable call lsc#server#disable()
 command! LSClientEnable call lsc#server#enable()
 command! LSClientDisableDiagnosticHighlights call <SID>DisableHighlights()
 command! LSClientEnableDiagnosticHighlights call <SID>EnableHighlights()
-command! LSClientDiagnosticHover call lsc#diag#DiagHover()
-command! LSClientFormat call lsc#vim9#RunFormat()
-command! LSClientInlayHintToggle call lsc#vim9#ToggleInlayHint()
 
 if !exists('g:lsc_enable_apply_edit') || g:lsc_enable_apply_edit
   command! -nargs=? LSClientRename call lsc#edit#rename(<args>)
@@ -121,11 +113,11 @@ augroup LSC
   " relationship can change. There are some exceptions where this event is not
   " fired such as `:split` and `:lopen` so `WinEnter` is used as a fallback with
   " a block to ensure it only happens once.
-  autocmd BufEnter * call LSCEnsureCurrentWindowState()
-  autocmd WinEnter * call timer_start(1, function('<SID>OnWinEnter'))
+  " autocmd BufEnter * call LSCEnsureCurrentWindowState()
+  " autocmd WinEnter * call timer_start(1, function('<SID>OnWinEnter'))
 
-  " Window local state is only correctly maintained for the current tab.
-  autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
+  " " Window local state is only correctly maintained for the current tab.
+  " autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
 
   autocmd BufNewFile,BufReadPost * call <SID>OnOpen()
   autocmd TextChanged,TextChangedI,CompleteDone *
@@ -149,48 +141,7 @@ augroup LSC
   if exists('##ExitPre')
     autocmd ExitPre * let g:_lsc_is_exiting = v:true
   endif
-
-  " autocmd BufWinLeave * call lsc#inlayhint#ClearInlayHint(bufnr(''))
-  " if exists("g:lsc_enable_inlayhint_auto_toggle") && g:lsc_enable_inlayhint_auto_toggle
-  "   autocmd InsertEnter * call lsc#vim9#InlayHintClear(bufnr(''))
-  "   autocmd InsertLeave * call lsc#vim9#ReqInlayHint()
-  " endif
 augroup END
-
-" Set window local state only if this is a brand new window which has not
-" already been initialized for LSC.
-"
-" This function must be called on a delay since critical values like
-" `expand('%')` and `&filetype` are not correctly set when the event fires. The
-" delay means that in the cases where `BufWinEnter` actually runs this will run
-" later and do nothing.
-function! s:OnWinEnter(timer) abort
-  if exists('w:lsc_window_initialized')
-    return
-  endif
-  call LSCEnsureCurrentWindowState()
-endfunction
-
-" Update or clear state local to the current window.
-function! LSCEnsureCurrentWindowState() abort
-  let w:lsc_window_initialized = v:true
-  if !has_key(g:lsc_servers_by_filetype, &filetype)
-    if exists('w:lsc_diagnostic_matches')
-      call lsc#vim9#HighlightsClear()
-    endif
-    if exists('w:lsc_diagnostics')
-      call lsc#diagnostics#clear()
-    endif
-    if exists('w:lsc_reference_matches')
-      call lsc#cursor#clean()
-    endif
-    return
-  endif
-  call lsc#diagnostics#updateCurrentWindow()
-  call lsc#vim9#HighlightsUpdate()
-  " Might be heavy
-  call lsc#cursor#onWinEnter()
-endfunction
 
 " Run `function` if LSC is enabled for the current filetype.
 "

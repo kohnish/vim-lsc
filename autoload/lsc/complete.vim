@@ -13,7 +13,7 @@ endfunction
 
 let s:sighelp_timer = -1
 function! lsc#complete#sig_help_with_timer() abort
-    call lsc#vim9#GetSignatureHelp()
+    call lsc#common#GetSignatureHelp()
     let s:sighelp_timer = -1
 endfunction
 
@@ -25,7 +25,7 @@ function! lsc#complete#textChanged() abort
   call s:typedCharacter()
   let s:next_char = ''
   " Might help input becoming slower.
-  call lsc#vim9#GetSignatureHelp()
+  call lsc#common#GetSignatureHelp()
   " if s:sighelp_timer == -1
   "     let s:sighelp_timer = timer_start(200, {_->lsc#complete#sig_help_with_timer()})
   " endif
@@ -73,7 +73,7 @@ function! s:startCompletion(isAuto) abort
   let l:server = lsc#server#forFileType(&filetype)[0]
   " try
     call l:server.request('textDocument/completion', l:params,
-        \ lsc#vim9#GateResult('Complete',
+        \ lsc#common#GateResult('Complete',
         \     function('<SID>OnResult', [a:isAuto]),
         \     [function('<SID>OnSkip', [bufnr('%')])]))
     " catch

@@ -111,7 +111,7 @@ function! lsc#server#clear() abort
 endfunction
 
 function! lsc#server#restart() abort
-  call lsc#vim9#CleanAllMatchs()
+  call lsc#common#CleanAllMatchs()
   call lsc#server#disable()
   call lsc#server#clear()
   call clearmatches()
@@ -380,7 +380,7 @@ endfunction
 function! s:Dispatch(server, method, params, id) abort
   if a:method ==? 'textDocument/publishDiagnostics'
     let l:file_path = lsc#uri#documentPath(a:params['uri'])
-    call lsc#vim9#DiagnosticsSetForFile(l:file_path, a:params['diagnostics'])
+    call lsc#common#DiagnosticsSetForFile(l:file_path, a:params['diagnostics'])
   elseif a:method ==? 'window/showMessage'
     call lsc#message#show(a:params['message'], a:params['type'])
   elseif a:method ==? 'window/showMessageRequest'

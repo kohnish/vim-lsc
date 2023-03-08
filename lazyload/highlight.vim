@@ -1,8 +1,34 @@
 vim9script
 
+export def EnsureCurrentWindowState(): void
+    w:lsc_window_initialized = v:true
+    if !has_key(g:lsc_servers_by_filetype, &filetype)
+        if exists('w:lsc_diagnostic_matches')
+            lsc#common#HighlightsClear()
+        endif
+        if exists('w:lsc_diagnostics')
+            lsc#diagnostics#clear()
+        endif
+        if exists('w:lsc_reference_matches')
+            lsc#cursor#clean()
+        endif
+        return
+    endif
+    lsc#diagnostics#updateCurrentWindow()
+    lsc#common#HighlightsUpdate()
+    lsc#cursor#onWinEnter()
+enddef
+
+export def OnWinEnter(timer_arg: any): void
+    if exists('w:lsc_window_initialized')
+        return
+    endif
+    EnsureCurrentWindowState()
+enddef
+
 export def UpdateDisplayed(bufnr: number): void
     for window_id in win_findbuf(bufnr)
-        win_execute(window_id, 'call lsc#vim9#HighlightsUpdate()')
+        win_execute(window_id, 'call lsc#common#HighlightsUpdate()')
     endfor
 enddef
 

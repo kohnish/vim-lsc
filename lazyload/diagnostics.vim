@@ -4,6 +4,25 @@ import autoload "./util.vim"
 import autoload "./highlight.vim"
 import autoload "./log.vim"
 
+# var g_file_diagnostics = {}
+# var g_empty_diagnostics = []
+
+# def Clean(filetype: string): void
+#     for buffer in getbufinfo({'bufloaded': true})
+#         if getbufvar(buffer.bufnr, '&filetype') == filetype
+#             continue
+#         endif
+#         lsc#common#DiagnosticsSetForFile(lsc#file#normalize(buffer.name), [])
+#     endfor
+# enddef
+
+# def GetForFile(file_path: string): dict<any>
+#     if has_key(g_file_diagnostics, file_path)
+#         return g_empty_diagnostics
+#     endif
+#     return g_file_diagnostics[file_path]
+# enddef
+
 def AllDiagnostics(): list<any>
     var all_diagnostics = []
     var file_diagnostics = lsc#diagnostics#file_diagnostics()

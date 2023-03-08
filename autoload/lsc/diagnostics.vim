@@ -17,7 +17,7 @@ endif
 function! lsc#diagnostics#clean(filetype) abort
     for l:buffer in getbufinfo({'bufloaded': v:true})
         if getbufvar(l:buffer.bufnr, '&filetype') != a:filetype | continue | endif
-        call lsc#vim9#DiagnosticsSetForFile(lsc#file#normalize(l:buffer.name), [])
+        call lsc#common#DiagnosticsSetForFile(lsc#file#normalize(l:buffer.name), [])
     endfor
 endfunction
 

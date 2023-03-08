@@ -1,5 +1,12 @@
 vim9script
 
+export def WinDo(command: string): void
+    echom command
+    var current_window = winnr()
+    execute 'keepjumps noautocmd windo ' .. command
+    execute 'keepjumps noautocmd :' .. current_window .. 'wincmd w'
+enddef
+
 def QuickFixSeverity(type: string): number
     if type ==# 'E' | return 1
     elseif type ==# 'W' | return 2

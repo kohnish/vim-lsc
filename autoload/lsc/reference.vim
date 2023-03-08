@@ -4,7 +4,7 @@ function! lsc#reference#goToDeclaration(mods, issplit) abort
   call lsc#file#flushChanges()
   call lsc#server#userCall('textDocument/declaration',
       \ lsc#params#documentPosition(),
-      \ lsc#vim9#GateResult('GoTo',
+      \ lsc#common#GateResult('GoTo',
       \   function('<SID>GoTo', ['declaration', a:mods, a:issplit]), []))
 endfunction
 
@@ -12,7 +12,7 @@ function! lsc#reference#goToDefinition(mods, issplit) abort
   call lsc#file#flushChanges()
   call lsc#server#userCall('textDocument/definition',
       \ lsc#params#documentPosition(),
-      \ lsc#vim9#GateResult('GoTo',
+      \ lsc#common#GateResult('GoTo',
       \   function('<SID>GoTo', ['definition', a:mods, a:issplit]), []))
 endfunction
 

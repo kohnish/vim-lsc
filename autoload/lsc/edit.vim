@@ -10,7 +10,7 @@ function! lsc#edit#findCodeActions(...) abort
       \ lsc#diagnostics#forLine(lsc#common#FullAbsPath(), line('.') - 1)}
 
   call lsc#server#userCall('textDocument/codeAction', l:params,
-      \ lsc#vim9#GateResult('CodeActions',
+      \ lsc#common#GateResult('CodeActions',
       \     function('<SID>SelectAction', [l:ActionFilter]), []))
 endfunction
 
@@ -88,7 +88,7 @@ function! lsc#edit#rename(...) abort
   let l:params = lsc#params#documentPosition()
   let l:params.newName = l:new_name
   call lsc#server#userCall('textDocument/rename', l:params,
-      \ lsc#vim9#GateResult('Rename', function('lsc#edit#apply'), []))
+      \ lsc#common#GateResult('Rename', function('lsc#edit#apply'), []))
 endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.

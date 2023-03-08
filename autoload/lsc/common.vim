@@ -1,6 +1,10 @@
 vim9script
 
 import autoload "../../lazyload/util.vim"
+import autoload "../../lazyload/gates.vim"
+import autoload "../../lazyload/highlight.vim"
+import autoload "../../lazyload/diagnostics.vim"
+import autoload "../../lazyload/signature_help.vim"
 
 export def IsCompletable(): bool
     var pos = col(".")
@@ -371,4 +375,29 @@ export def FullAbsPath(): string
         full_path = OsNormalisePath(full_path)
     endif
     return full_path
+enddef
+
+export def CleanAllMatchs(): void
+    highlight.Clear()
+    lsc#diag#Clean()
+enddef
+
+export def DiagnosticsSetForFile(file_path: string, diags: list<any>): void
+    diagnostics.SetForFile(file_path, diags)
+enddef
+
+export def HighlightsUpdate(): void
+    highlight.Update()
+enddef
+
+export def HighlightsClear(): void
+    highlight.Clear()
+enddef
+
+export def GateResult(name: string, Callback: func, vargs: list<any>): func
+    return gates.CreateOrGet(name, Callback, vargs)
+enddef
+
+export def GetSignatureHelp(): void
+    signature_help.SignatureHelp()
 enddef
