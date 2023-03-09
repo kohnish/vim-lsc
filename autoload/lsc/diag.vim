@@ -275,7 +275,7 @@ enddef
 
 export def DiagHover(): void
     var file_diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine()
-    var line = line('.') - 1
+    var line = line('.')
     var diag_msg = {}
 
     if !has_key(file_diagnostics, line)

@@ -4,7 +4,7 @@ export def EnsureCurrentWindowState(): void
     w:lsc_window_initialized = v:true
     if !has_key(g:lsc_servers_by_filetype, &filetype)
         if exists('w:lsc_diagnostic_matches')
-            lsc#common#HighlightsClear()
+            Clear()
         endif
         if exists('w:lsc_diagnostics')
             lsc#diagnostics#clear()

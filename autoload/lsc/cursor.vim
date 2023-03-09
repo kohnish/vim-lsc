@@ -1,4 +1,18 @@
+
+let s:on_move_timer = -1
+function! lsc#cursor#on_move_with_timer() abort
+    let s:on_move_timer = -1
+    call lsc#diag#ShowDiagnostic()
+    call lsc#diag#HighlightReferences(v:false)
+endfunction
+
 function! lsc#cursor#onMove() abort
+  if s:on_move_timer == -1
+      let s:on_move_timer = timer_start(200, {_->lsc#cursor#on_move_with_timer()})
+  endif
+endfunction
+
+function! lsc#cursor#onHold() abort
   call lsc#diag#ShowDiagnostic()
   call lsc#diag#HighlightReferences(v:false)
 endfunction
