@@ -111,11 +111,7 @@ function! lsc#server#clear() abort
 endfunction
 
 function! lsc#server#restart() abort
-  call lsc#common#CleanAllMatchs()
-  call lsc#server#disable()
-  call lsc#server#clear()
-  call clearmatches()
-  call LSCServerRegister()
+  call lsc#server#disable(v:true)
 endfunction
 
 " A server call explicitly initiated by the user for the current buffer.
@@ -238,31 +234,32 @@ function! lsc#server#filetypeActive(filetype) abort
   endtry
 endfunction
 
-function! lsc#server#disable() abort
+function! lsc#server#kill(job_id) abort
+  call job_stop(a:job_id, "kill")
+  call lsc#common#CleanAllMatchs()
+  call clearmatches()
+endfunction
+
+function! lsc#server#reset_start() abort
+  call lsc#server#clear()
+  call LSCServerRegister()
+endfunction
+
+function! lsc#server#disable(do_restart) abort
   for l:server in values(s:servers)
     call l:server.notify('exit', v:null)
-    try
-        call job_stop(l:server._channel._channel.job_id)
-        let l:kill_cmd = "kill " .. l:server._channel._channel.pid
-        call system(l:kill_cmd)
-        let l:kill_force_cmd = "kill -9 " .. l:server._channel._channel.pid
-        call system(l:kill_force_cmd)
-    catch
-    endtry
+    if has_key(l:server, "_channel") && has_key(l:server._channel, "_channel") && has_key(l:server._channel._channel, "job_id")
+        let l:job_id = l:server._channel._channel.job_id
+        call timer_start(100, {_->lsc#server#kill(l:job_id)})
+    endif
   endfor
+  if a:do_restart
+    call timer_start(1000, {_->lsc#server#reset_start()})
+  endif
 endfunction
 
 function! lsc#server#enable() abort
-  if !has_key(g:lsc_servers_by_filetype, &filetype)
-    return v:false
-  endif
-  try
-    let l:server = s:servers[g:lsc_servers_by_filetype[&filetype]]
-    let l:server.config.enabled = v:true
-    call s:Start(l:server)
-  catch
     call lsc#server#restart()
-  endtry
 endfunction
 
 function! lsc#server#register(filetype, config) abort
