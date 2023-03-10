@@ -162,8 +162,9 @@ export def ForLine(lsp_diagnostics: list<any>, file: string, line: number): list
 enddef
 
 export def ShowDiagnostic(): void
-    if !get(g:, 'lsc_diagnostic_highlights', true) | return | endif
-    var diagnostic = lsc#diagnostics#underCursor()
+    var diag_obj = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
+    DiagnosticsByLine(diag_obj)
+    var diagnostic = UnderCursor(DiagnosticsByLine(diag_obj))
     if has_key(diagnostic, 'message')
         var max_width = &columns - 1 
         var has_ruler = &ruler &&
@@ -274,7 +275,8 @@ def HandleHighlights(request_number: number, old_pos: list<number>, old_buf_nr: 
 enddef
 
 export def DiagHover(): void
-    var file_diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine()
+    var diag_obj = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
+    var file_diagnostics = DiagnosticsByLine(diag_obj)
     var line = line('.')
     var diag_msg = {}
 

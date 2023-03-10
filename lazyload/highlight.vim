@@ -4,7 +4,7 @@ export def EnsureCurrentWindowState(): void
     w:lsc_window_initialized = v:true
     if !has_key(g:lsc_servers_by_filetype, &filetype)
         if exists('w:lsc_diagnostic_matches')
-            Clear()
+            HighlightClear()
         endif
         if exists('w:lsc_diagnostics')
             lsc#diagnostics#clear()
@@ -15,7 +15,7 @@ export def EnsureCurrentWindowState(): void
         return
     endif
     lsc#diagnostics#updateCurrentWindow()
-    lsc#common#HighlightsUpdate()
+    Update()
     lsc#cursor#onWinEnter()
 enddef
 
@@ -42,7 +42,7 @@ def CurrentWindowIsFresh(): bool
     return w:lsc_highlights_source is w:lsc_diagnostics
 enddef
 
-export def Clear(): void
+export def HighlightClear(): void
     if exists('w:lsc_diagnostic_matches')
         for current_match in w:lsc_diagnostic_matches
             matchdelete(current_match)
@@ -57,7 +57,7 @@ enddef
 export def Update(): void
     if !get(g:, 'lsc_diagnostic_highlights', true) | return | endif
     if CurrentWindowIsFresh() | return | endif
-    Clear()
+    HighlightClear()
     if &diff | return | endif
     var diag_obj_for_file = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
     for highlight in diag_obj_for_file.Highlights()

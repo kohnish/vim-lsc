@@ -378,7 +378,7 @@ export def FullAbsPath(): string
 enddef
 
 export def CleanAllMatchs(): void
-    highlight.Clear()
+    highlight.HighlightClear()
     lsc#diag#Clean()
 enddef
 
@@ -390,14 +390,10 @@ export def HighlightsUpdate(): void
     highlight.Update()
 enddef
 
-export def HighlightsClear(): void
-    highlight.Clear()
-enddef
-
 export def GateResult(name: string, Callback: func, vargs: list<any>): func
     return gates.CreateOrGet(name, Callback, vargs)
 enddef
 
 export def GetSignatureHelp(): void
-    signature_help.SignatureHelp()
+     signature_help.SignatureHelp()
 enddef

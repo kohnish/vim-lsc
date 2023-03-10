@@ -32,25 +32,6 @@ function! lsc#diagnostics#forFile(file_path) abort
     return s:file_diagnostics[a:file_path]
 endfunction
 
-function! lsc#diagnostics#echoForLine() abort
-    let l:file_diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine()
-    let l:line = line('.')
-    if !has_key(l:file_diagnostics, l:line)
-        echo 'No diagnostics'
-        return
-    endif
-    let l:diagnostics = l:file_diagnostics[l:line]
-    for l:diagnostic in l:diagnostics
-        let l:label = '['.l:diagnostic.severity.']'
-        if stridx(l:diagnostic.message, "\n") >= 0
-            echo l:label
-            echo l:diagnostic.message
-        else
-            echo l:label.': '.l:diagnostic.message
-        endif
-    endfor
-endfunction
-
 function! lsc#diagnostics#updateCurrentWindow() abort
     let l:diagnostics = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
     if exists('w:lsc_diagnostics') && w:lsc_diagnostics is l:diagnostics
@@ -138,7 +119,6 @@ function! lsc#diagnostics#DiagObjCreate(file_path, lsp_diagnostics) abort
                 \ 'lsp_diagnostics': a:lsp_diagnostics,
                 \ 'Highlights': funcref('<SID>DiagnosticsHighlights'),
                 \ 'ListItems': funcref('<SID>DiagnosticsListItems', [a:file_path]),
-                \ 'ByLine': funcref('<SID>DiagnosticsByLine'),
                 \ }
 endfunction
 
@@ -148,14 +128,9 @@ function! s:EmptyDiagnostics() abort
                     \ 'lsp_diagnostics': [],
                     \ 'Highlights': {->[]},
                     \ 'ListItems': {->[]},
-                    \ 'ByLine': {->{}},
                     \}
     endif
     return s:empty_diagnostics
-endfunction
-
-function! lsc#diagnostics#underCursor() abort
-    return lsc#diag#UnderCursor(lsc#diagnostics#forFile(lsc#common#FullAbsPath()).ByLine())
 endfunction
 
 function! lsc#diagnostics#forLine(file, line) abort
@@ -168,8 +143,4 @@ endfunction
 
 function! s:DiagnosticsListItems(file_path) abort dict
     return lsc#diag#DiagnosticsListItems(l:self, a:file_path)
-endfunction
-
-function! s:DiagnosticsByLine() abort dict
-    return lsc#diag#DiagnosticsByLine(l:self)
 endfunction
