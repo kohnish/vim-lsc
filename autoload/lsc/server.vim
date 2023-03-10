@@ -242,10 +242,11 @@ function! lsc#server#disable() abort
   for l:server in values(s:servers)
     call l:server.notify('exit', v:null)
     try
+        call job_stop(l:server._channel._channel.job_id)
         let l:kill_cmd = "kill " .. l:server._channel._channel.pid
-        system(l:kill_cmd)
+        call system(l:kill_cmd)
         let l:kill_force_cmd = "kill -9 " .. l:server._channel._channel.pid
-        system(l:kill_force_cmd)
+        call system(l:kill_force_cmd)
     catch
     endtry
   endfor
