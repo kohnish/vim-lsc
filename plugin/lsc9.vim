@@ -19,6 +19,7 @@ command! LSClientSignatureHelp signature_help.SignatureHelp()
 command! LSClientFormat format.Format()
 command! LSClientInlayHintToggle inlayhint.InlayHint()
 command! LSClientEnsureCurrentWindowState highlight.EnsureCurrentWindowState()
+command! LSClientHighlightUpdate highlight.Update()
 # command! LSClientWindowDiagnostics call lsc#diagnostics#showLocationList()
 # command! LSClientLineDiagnostics call lsc#diagnostics#echoForLine()
 

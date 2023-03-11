@@ -76,7 +76,7 @@ enddef
 
 export def UpdateDisplayed(bufnr: number): void
     for window_id in win_findbuf(bufnr)
-        win_execute(window_id, 'call lsc#common#HighlightsUpdate()')
+        win_execute(window_id, 'LSClientHighlightUpdate')
     endfor
 enddef
 

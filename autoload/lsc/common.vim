@@ -388,10 +388,6 @@ export def DiagnosticsSetForFile(file_path: string, diags: list<any>): void
     diagnostics.SetForFile(file_path, diags)
 enddef
 
-export def HighlightsUpdate(): void
-    highlight.Update()
-enddef
-
 export def GateResult(name: string, Callback: func, vargs: list<any>): func
     return gates.CreateOrGet(name, Callback, vargs)
 enddef
