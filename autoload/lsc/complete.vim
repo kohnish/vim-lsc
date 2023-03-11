@@ -102,11 +102,11 @@ function! s:SuggestCompletions(items) abort
     let b:lsc_is_completing = v:false
     return
   endif
-  let l:start = lsc#comp#FindStart(a:items)
+  let l:start = lsc#common#FindStart(a:items)
   let l:base = l:start != col('.')
       \ ? getline('.')[l:start - 1:col('.') - 2]
       \ : ''
-  let l:completion_items = lsc#comp#CompletionItems(l:base, a:items)
+  let l:completion_items = lsc#common#CompletionItems(l:base, a:items)
   call s:SetCompleteOpt()
   if exists('#User#LSCAutocomplete')
     doautocmd <nomodeline> User LSCAutocomplete
@@ -141,7 +141,7 @@ function! lsc#complete#complete(findstart, base) abort
       if !exists('b:lsc_completion') || len(b:lsc_completion) == 0
         return -3
       endif
-      return  lsc#comp#FindStart(b:lsc_completion) - 1
+      return  lsc#common#FindStart(b:lsc_completion) - 1
     endif
   else
     " We'll get an error if b:lsc_completion doesn't exist, which is good,
