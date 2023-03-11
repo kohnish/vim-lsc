@@ -221,3 +221,30 @@ def HandleHighlights(request_number: number, old_pos: list<number>, old_buf_nr: 
         add(w:lsc_reference_matches, match)
     endfor
 enddef
+
+export def DiagnosticsByLine(self: dict<any>): dict<any>
+    var line = []
+    if !has_key(self, '_by_line')
+        self._by_line = {}
+        for diagnostic in self.lsp_diagnostics
+            var start_line = string(diagnostic.range.start.line + 1)
+            if !has_key(self._by_line, start_line)
+                line = []
+                self._by_line[start_line] = line
+            else
+                line = self._by_line[start_line]
+            endif
+            var simple = {
+                        \ 'message': DiagnosticMessage(diagnostic),
+                        \ 'range': diagnostic.range,
+                        \ 'severity': SeverityLabel(diagnostic.severity),
+                        \ }
+            add(line, simple)
+        endfor
+        for val in values(self._by_line)
+            sort(val, CompareRanges)
+        endfor
+    endif
+    return self._by_line
+enddef
+

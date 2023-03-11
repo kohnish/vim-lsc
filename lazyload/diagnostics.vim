@@ -5,25 +5,6 @@ import autoload "./cursor.vim"
 import autoload "./highlight.vim"
 import autoload "./log.vim"
 
-# var g_file_diagnostics = {}
-# var g_empty_diagnostics = []
-
-# export def DiagClean(filetype: string): void
-#     for buffer in getbufinfo({'bufloaded': true})
-#         if getbufvar(buffer.bufnr, '&filetype') == filetype
-#             continue
-#         endif
-#         lsc#common#DiagnosticsSetForFile(lsc#file#normalize(buffer.name), [])
-#     endfor
-# enddef
-
-# def GetForFile(file_path: string): dict<any>
-#     if has_key(g_file_diagnostics, file_path)
-#         return g_empty_diagnostics
-#     endif
-#     return g_file_diagnostics[file_path]
-# enddef
-
 def AllDiagnostics(): list<any>
     var all_diagnostics = []
     var file_diagnostics = lsc#diagnostics#file_diagnostics()
@@ -70,98 +51,9 @@ export def SetForFile(file_path: string, diagnostics: list<any>): void
     endif
 enddef
 
-def SeverityLabel(severity: number): string
-    if severity == 1 | return 'Error'
-    elseif severity == 2 | return 'Warning'
-    elseif severity == 3 | return 'Info'
-    elseif severity == 4 | return 'Hint'
-    else | return ''
-    endif
-enddef
-
-def CompareRanges(d1: dict<any>, d2: dict<any>): number
-    if d1.range.start.character != d2.range.start.character
-        return d1.range.start.character - d2.range.start.character
-    endif
-    if d1.range.end.line != d2.range.end.line
-        return d1.range.end.line - d2.range.end.line
-    endif
-    return d1.range.end.character - d2.range.end.character
-enddef
-
-
-def DiagnosticMessage(diagnostic: dict<any>): string
-    var message = diagnostic.message
-    if has_key(diagnostic, 'code')
-        message = message .. ' [' .. diagnostic.code .. ']'
-    endif
-    return message
-enddef
-
-export def DiagnosticsByLine(self: dict<any>): dict<any>
-    var line = []
-    if !has_key(self, '_by_line')
-        self._by_line = {}
-        for diagnostic in self.lsp_diagnostics
-            var start_line = string(diagnostic.range.start.line + 1)
-            if !has_key(self._by_line, start_line)
-                line = []
-                self._by_line[start_line] = line
-            else
-                line = self._by_line[start_line]
-            endif
-            var simple = {
-                        \ 'message': DiagnosticMessage(diagnostic),
-                        \ 'range': diagnostic.range,
-                        \ 'severity': SeverityLabel(diagnostic.severity),
-                        \ }
-            add(line, simple)
-        endfor
-        for val in values(self._by_line)
-            sort(val, CompareRanges)
-        endfor
-    endif
-    return self._by_line
-enddef
-
-export def UnderCursor(file_diagnostics: dict<any>): dict<any>
-    var line = line('.')
-    if !has_key(file_diagnostics, line)
-        if line != line('$') | return {} | endif
-        for diagnostic_line in keys(file_diagnostics)
-            var diag_line_num = str2nr(diagnostic_line)
-            if diag_line_num > line
-                return file_diagnostics[diag_line_num][0]
-            endif
-        endfor
-        return {}
-    endif
-    var diagnostics = file_diagnostics[line]
-    var col = col('.')
-    var closest_diagnostic = {}
-    var closest_distance = -1
-    var closest_is_within = false
-    for diagnostic in file_diagnostics[line]
-        var range = diagnostic.range
-        var is_within = range.start.character < col &&
-                    \ (range.end.line >= line || range.end.character > col)
-        if closest_is_within && !is_within
-            continue
-        endif
-        var distance = abs(range.start.character - col)
-        if closest_distance < 0 || distance < closest_distance
-            closest_diagnostic = diagnostic
-            closest_distance = distance
-            closest_is_within = is_within
-        endif
-    endfor
-    return closest_diagnostic
-enddef
-
 export def ShowDiagnostic(): void
     var diag_obj = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
-    DiagnosticsByLine(diag_obj)
-    var diagnostic = UnderCursor(DiagnosticsByLine(diag_obj))
+    var diagnostic = cursor.UnderCursor(cursor.DiagnosticsByLine(diag_obj))
     if has_key(diagnostic, 'message')
         var max_width = &columns - 1 
         var has_ruler = &ruler &&
@@ -186,7 +78,7 @@ enddef
 
 export def DiagHover(): void
     var diag_obj = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
-    var file_diagnostics = DiagnosticsByLine(diag_obj)
+    var file_diagnostics = cursor.DiagnosticsByLine(diag_obj)
     var line = line('.')
     var diag_msg = {}
 
