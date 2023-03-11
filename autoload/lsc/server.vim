@@ -234,10 +234,14 @@ function! lsc#server#filetypeActive(filetype) abort
   endtry
 endfunction
 
-function! lsc#server#kill(job_id) abort
+function! lsc#server#kill(job_id, filetypes) abort
   call job_stop(a:job_id, "kill")
   call lsc#common#CleanAllMatchs()
-  call clearmatches()
+  for l:filetype in a:filetypes
+    call lsc#diagnostics#clean(l:filetype)
+    call lsc#complete#clean(l:filetype)
+    call lsc#file#clean(l:filetype)
+  endfor
 endfunction
 
 function! lsc#server#reset_start() abort
@@ -250,7 +254,8 @@ function! lsc#server#disable(do_restart) abort
     call l:server.notify('exit', v:null)
     if has_key(l:server, "_channel") && has_key(l:server._channel, "_channel") && has_key(l:server._channel._channel, "job_id")
         let l:job_id = l:server._channel._channel.job_id
-        call timer_start(100, {_->lsc#server#kill(l:job_id)})
+        let l:filetypes = l:server.filetypes
+        call timer_start(100, {_->lsc#server#kill(l:job_id, l:filetypes)})
     endif
   endfor
   if a:do_restart
@@ -346,11 +351,11 @@ function! lsc#server#register(filetype, config) abort
       let l:self.status = 'unexpected exit'
       call lsc#message#error('Command exited unexpectedly: '.l:self.config.name)
     endif
+    call lsc#common#CleanAllMatchs()
     for l:filetype in l:self.filetypes
-      call lsc#complete#clean(l:filetype)
       call lsc#diagnostics#clean(l:filetype)
+      call lsc#complete#clean(l:filetype)
       call lsc#file#clean(l:filetype)
-      call lsc#cursor#clean()
     endfor
     if l:old_status ==# 'restarting'
       call s:Start(l:self)

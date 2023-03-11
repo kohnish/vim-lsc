@@ -4,6 +4,7 @@ import autoload "../../lazyload/util.vim"
 import autoload "../../lazyload/gates.vim"
 import autoload "../../lazyload/highlight.vim"
 import autoload "../../lazyload/diagnostics.vim"
+import autoload "../../lazyload/cursor.vim"
 import autoload "../../lazyload/signature_help.vim"
 
 export def IsCompletable(): bool
@@ -379,7 +380,8 @@ enddef
 
 export def CleanAllMatchs(): void
     highlight.HighlightClear()
-    lsc#diag#Clean()
+    cursor.Clean()
+    clearmatches()
 enddef
 
 export def DiagnosticsSetForFile(file_path: string, diags: list<any>): void
