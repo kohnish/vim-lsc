@@ -459,7 +459,7 @@ export def CompletionItems(base: string, lsp_items: list<any>): list<any>
     var prefix_base = '^' .. base
 
     for lsp_item in lsp_items
-        var vim_item = s:CompletionItemWord(lsp_item)
+        var vim_item = CompletionItemWord(lsp_item)
         if vim_item.word =~# prefix_base
             add(prefix_case_matches, vim_item)
         elseif vim_item.word =~? prefix_base
