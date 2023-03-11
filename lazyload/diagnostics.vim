@@ -2,12 +2,28 @@ vim9script
 
 import autoload "./util.vim"
 import autoload "./cursor.vim"
-import autoload "./highlight.vim"
 import autoload "./log.vim"
+
+var g_file_diagnostics = {}
+var g_empty_diagnostics = {'lsp_diagnostics': []}
+
+def DiagCleanForFile(filetype: string): void
+    for buffer in getbufinfo({'bufloaded': v:true})
+        if getbufvar(buffer.bufnr, '&filetype') != filetype | continue | endif
+        SetForFile(lsc#file#normalize(buffer.name), [])
+    endfor
+enddef
+
+export def ForFile(file_path: string): dict<any>
+    if !has_key(g_file_diagnostics, file_path)
+        return g_empty_diagnostics
+    endif
+    return g_file_diagnostics[file_path]
+enddef
 
 def AllDiagnostics(): list<any>
     var all_diagnostics = []
-    var file_diagnostics = lsc#diagnostics#file_diagnostics()
+    var file_diagnostics = g_file_diagnostics
     var files = keys(file_diagnostics)
     sort(files, lsc#file#compare)
     for file_path in files
@@ -32,8 +48,14 @@ export def ShowInQuickFix(): void
     endif
 enddef
 
+def UpdateDisplayed(bufnr: number): void
+    for window_id in win_findbuf(bufnr)
+        win_execute(window_id, 'LSClientHighlightUpdate')
+    endfor
+enddef
+
 export def SetForFile(file_path: string, diagnostics: list<any>): void
-    var file_diagnostics = lsc#diagnostics#file_diagnostics()
+    var file_diagnostics = g_file_diagnostics
     if (exists('g:lsc_enable_diagnostics') && !g:lsc_enable_diagnostics) || (empty(diagnostics) && !has_key(file_diagnostics, file_path))
         return
     endif
@@ -47,12 +69,12 @@ export def SetForFile(file_path: string, diagnostics: list<any>): void
     endif
     var bufnr = lsc#file#bufnr(file_path)
     if bufnr != -1
-        highlight.UpdateDisplayed(bufnr)
+        UpdateDisplayed(bufnr)
     endif
 enddef
 
 export def ShowDiagnostic(): void
-    var diag_obj = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
+    var diag_obj = ForFile(lsc#common#FullAbsPath())
     var diagnostic = cursor.UnderCursor(cursor.DiagnosticsByLine(diag_obj))
     if has_key(diagnostic, 'message')
         var max_width = &columns - 1 
@@ -77,7 +99,7 @@ export def ShowDiagnostic(): void
 enddef
 
 export def DiagHover(): void
-    var diag_obj = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
+    var diag_obj = ForFile(lsc#common#FullAbsPath())
     var file_diagnostics = cursor.DiagnosticsByLine(diag_obj)
     var line = line('.')
     var diag_msg = {}

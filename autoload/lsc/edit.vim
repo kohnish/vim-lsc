@@ -6,8 +6,7 @@ function! lsc#edit#findCodeActions(...) abort
   endif
   call lsc#file#flushChanges()
   let l:params = lsc#params#documentRange()
-  let l:params.context = {'diagnostics':
-      \ lsc#diagnostics#forLine(lsc#common#FullAbsPath(), line('.') - 1)}
+  let l:params.context = {'diagnostics': lsc#common#DiagForLine(lsc#common#FullAbsPath(), line('.') - 1)}
 
   call lsc#server#userCall('textDocument/codeAction', l:params,
       \ lsc#common#GateResult('CodeActions',

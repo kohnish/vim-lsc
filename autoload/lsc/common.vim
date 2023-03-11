@@ -395,3 +395,7 @@ enddef
 export def GetSignatureHelp(): void
      signature_help.SignatureHelp()
 enddef
+
+export def DiagForLine(file: string, line: number): list<any>
+    return cursor.ForLine(diagnostics.ForFile(file).lsp_diagnostics, file, line)
+enddef

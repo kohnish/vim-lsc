@@ -41,7 +41,7 @@ enddef
 
 def UpdateCurrentWindow(): void
     var file_path = lsc#common#FullAbsPath()
-    var diags = lsc#diagnostics#forFile(file_path)
+    var diags = diagnostics.ForFile(file_path)
     if exists('w:lsc_diagnostics') && w:lsc_diagnostics is diags
         return
     endif
@@ -74,12 +74,6 @@ export def OnWinEnter(timer_arg: any): void
     EnsureCurrentWindowState()
 enddef
 
-export def UpdateDisplayed(bufnr: number): void
-    for window_id in win_findbuf(bufnr)
-        win_execute(window_id, 'LSClientHighlightUpdate')
-    endfor
-enddef
-
 def MarkCurrentWindowFresh(): void
     w:lsc_highlight_source = w:lsc_diagnostics
 enddef
@@ -107,7 +101,7 @@ export def Update(): void
     if CurrentWindowIsFresh() | return | endif
     HighlightClear()
     if &diff | return | endif
-    var diag_obj_for_file = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
+    var diag_obj_for_file = diagnostics.ForFile(lsc#common#FullAbsPath())
     var highlights = cursor.DiagnosticsHighlights(diag_obj_for_file)
     for highlight in highlights
         var match = 0
