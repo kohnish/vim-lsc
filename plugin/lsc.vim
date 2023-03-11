@@ -39,8 +39,6 @@ command! -nargs=? LSClientWorkspaceSymbol
     \ call lsc#search#workspaceSymbol(<q-args>)
 command! -nargs=? LSClientFindCodeActions
     \ call lsc#edit#findCodeActions(lsc#edit#filterActions(<args>))
-command! LSClientWindowDiagnostics call lsc#diagnostics#showLocationList()
-command! LSClientLineDiagnostics call lsc#diagnostics#echoForLine()
 command! LSClientRestartServer call lsc#server#restart()
 command! LSClientDisable call lsc#server#disable(v:false)
 command! LSClientEnable call lsc#server#enable()
@@ -126,13 +124,13 @@ augroup LSC
   autocmd BufUnload * call <SID>OnClose()
   autocmd BufWritePost * call <SID>OnWrite()
 
-  " Move is too heavy
-  " autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
-  autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onHold')
-  autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
-  autocmd WinLeave,InsertEnter * call <SID>IfEnabled('lsc#cursor#clean')
-  autocmd User LSCOnChangesFlushed
-      \ call <SID>IfEnabled('lsc#cursor#onChangesFlushed')
+  " " Move is too heavy
+  " " autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
+  " autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onHold')
+  " autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
+  " autocmd WinLeave,InsertEnter * call <SID>IfEnabled('lsc#cursor#clean')
+  " autocmd User LSCOnChangesFlushed
+  "     \ call <SID>IfEnabled('lsc#cursor#onChangesFlushed')
 
   autocmd TextChangedI * call <SID>IfEnabled('lsc#complete#textChanged')
   autocmd InsertCharPre * call <SID>IfEnabled('lsc#complete#insertCharPre')

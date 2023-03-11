@@ -1,5 +1,53 @@
 vim9script
 
+import autoload "./diagnostics.vim"
+import autoload "./cursor.vim"
+
+def CreateLocationList(window_id: number, items: list<any>): void
+    setloclist(window_id, [], ' ', {
+                \ 'title': 'LSC Diagnostics',
+                \ 'items': items,
+                \ })
+    var new_id = getloclist(window_id, {'id': 0}).id
+    settabwinvar(0, window_id, 'lsc_location_list_id', new_id)
+enddef
+
+def UpdateLocationList(window_id: number, items: list<any>): void
+    var list_id = gettabwinvar(0, window_id, 'lsc_location_list_id', -1)
+    setloclist(window_id, [], 'r', {
+                \ 'id': list_id,
+                \ 'items': items,
+                \ })
+enddef
+
+export def DiagnosticsClear(): void
+    if !empty(w:lsc_diagnostics.lsp_diagnostics)
+        UpdateLocationList(win_getid(), [])
+    endif
+    unlet w:lsc_diagnostics
+enddef
+
+def UpdateWindowState(window_id: number, diags: dict<any>, file_path: string): void
+    settabwinvar(0, window_id, 'lsc_diagnostics', diags)
+    var list_info = getloclist(window_id, {'changedtick': 1})
+    var new_list = get(list_info, 'changedtick', 0) == 0
+    var items = cursor.DiagnosticsListItems(diags, file_path)
+    if new_list
+        CreateLocationList(window_id, items)
+    else
+        UpdateLocationList(window_id, items)
+    endif
+enddef
+
+def UpdateCurrentWindow(): void
+    var file_path = lsc#common#FullAbsPath()
+    var diags = lsc#diagnostics#forFile(file_path)
+    if exists('w:lsc_diagnostics') && w:lsc_diagnostics is diags
+        return
+    endif
+    UpdateWindowState(win_getid(), diags, file_path)
+enddef
+
 export def EnsureCurrentWindowState(): void
     w:lsc_window_initialized = v:true
     if !has_key(g:lsc_servers_by_filetype, &filetype)
@@ -7,16 +55,16 @@ export def EnsureCurrentWindowState(): void
             HighlightClear()
         endif
         if exists('w:lsc_diagnostics')
-            lsc#diagnostics#clear()
+            DiagnosticsClear()
         endif
         if exists('w:lsc_reference_matches')
-            lsc#cursor#clean()
+            cursor.Clean()
         endif
         return
     endif
-    lsc#diagnostics#updateCurrentWindow()
+    UpdateCurrentWindow()
     Update()
-    lsc#cursor#onWinEnter()
+    diagnostics.CursorOnWinEnter()
 enddef
 
 export def OnWinEnter(timer_arg: any): void
@@ -60,7 +108,8 @@ export def Update(): void
     HighlightClear()
     if &diff | return | endif
     var diag_obj_for_file = lsc#diagnostics#forFile(lsc#common#FullAbsPath())
-    for highlight in diag_obj_for_file.Highlights()
+    var highlights = cursor.DiagnosticsHighlights(diag_obj_for_file)
+    for highlight in highlights
         var match = 0
         var priority = -1 * highlight.severity
         var group = highlight.group
