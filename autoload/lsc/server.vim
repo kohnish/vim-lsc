@@ -127,15 +127,6 @@ function! lsc#server#userCall(method, params, callback) abort
   endif
 endfunction
 
-function! lsc#server#userCall_with_server(server, method, params, callback) abort
-  let l:server = a:server
-  let l:result = l:server.request(a:method, a:params, a:callback)
-  if !l:result
-    call lsc#message#error('Failed to call '.a:method)
-    call lsc#message#error('Server status: '.lsc#server#status(&filetype))
-  endif
-endfunction
-
 " Start `server` if it isn't already running.
 function! s:Start(server) abort
   if has_key(a:server, '_channel')
