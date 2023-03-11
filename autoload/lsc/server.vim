@@ -238,9 +238,7 @@ function! lsc#server#kill(job_id, filetypes) abort
   call job_stop(a:job_id, "kill")
   call lsc#common#CleanAllMatchs()
   for l:filetype in a:filetypes
-    call lsc#diagnostics#clean(l:filetype)
-    call lsc#complete#clean(l:filetype)
-    call lsc#file#clean(l:filetype)
+    call lsc#common#CleanAllForFile(l:filetype)
   endfor
 endfunction
 
@@ -353,9 +351,7 @@ function! lsc#server#register(filetype, config) abort
     endif
     call lsc#common#CleanAllMatchs()
     for l:filetype in l:self.filetypes
-      call lsc#diagnostics#clean(l:filetype)
-      call lsc#complete#clean(l:filetype)
-      call lsc#file#clean(l:filetype)
+      call lsc#common#CleanAllForFile(l:filetype)
     endfor
     if l:old_status ==# 'restarting'
       call s:Start(l:self)

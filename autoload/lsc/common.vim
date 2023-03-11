@@ -384,6 +384,12 @@ export def CleanAllMatchs(): void
     clearmatches()
 enddef
 
+export def CleanAllForFile(filetype: string): void
+    diagnostics.DiagCleanForFile(filetype)
+    lsc#complete#clean(filetype)
+    lsc#file#clean(filetype)
+enddef
+
 export def DiagnosticsSetForFile(file_path: string, diags: list<any>): void
     diagnostics.SetForFile(file_path, diags)
 enddef

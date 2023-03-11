@@ -7,7 +7,7 @@ import autoload "./log.vim"
 var g_file_diagnostics = {}
 var g_empty_diagnostics = {'lsp_diagnostics': []}
 
-def DiagCleanForFile(filetype: string): void
+export def DiagCleanForFile(filetype: string): void
     for buffer in getbufinfo({'bufloaded': v:true})
         if getbufvar(buffer.bufnr, '&filetype') != filetype | continue | endif
         SetForFile(lsc#file#normalize(buffer.name), [])
