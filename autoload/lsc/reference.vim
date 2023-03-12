@@ -307,23 +307,3 @@ function! s:setQuickFixSymbols(results) abort
   call setqflist(a:results)
   copen
 endfunction
-
-
-" If the server supports `textDocument/documentHighlight` and they are enabled,
-" use the active highlights to move the cursor to the next or previous referene
-" in the same document to the symbol under the cursor.
-function! lsc#reference#findNext(direction) abort
-  if exists('w:lsc_references')
-    let l:idx = lsc#diag#IsInReference(w:lsc_references)
-    if l:idx != -1 &&
-        \ l:idx + a:direction >= 0 &&
-        \ l:idx + a:direction < len(w:lsc_references)
-      let l:target = w:lsc_references[l:idx + a:direction].ranges[0][0:1]
-    endif
-  endif
-  if !exists('l:target')
-    return
-  endif
-  " Move with 'G' to ensure a jump is left
-  exec 'normal! '.l:target[0].'G'.l:target[1].'|'
-endfunction

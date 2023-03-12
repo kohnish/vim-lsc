@@ -30,8 +30,8 @@ command! LSClientGoToDeclarationSplit
 command! LSClientGoToDeclaration
     \ call lsc#reference#goToDeclaration(<q-mods>, 0)
 command! LSClientFindReferences call lsc#reference#findReferences()
-command! LSClientNextReference call lsc#reference#findNext(1)
-command! LSClientPreviousReference call lsc#reference#findNext(-1)
+" command! LSClientNextReference call lsc#reference#findNext(1)
+" command! LSClientPreviousReference call lsc#reference#findNext(-1)
 command! LSClientFindImplementations call lsc#reference#findImplementations()
 command! -nargs=? LSClientShowHover call lsc#reference#hover()
 command! LSClientDocumentSymbol call lsc#reference#documentSymbols()
