@@ -3,6 +3,7 @@ vim9script
 import autoload "./util.vim"
 import autoload "./cursor.vim"
 import autoload "./log.vim"
+import autoload "./highlight.vim"
 
 var g_file_diagnostics = {}
 var g_empty_diagnostics = {'lsp_diagnostics': []}
@@ -148,8 +149,17 @@ export def DiagHover(): void
     endif
 enddef
 
+var g_ensure_diag_state_timer = -1
+def EnsureDiagState(arg: any): void
+    highlight.EnsureCurrentWindowState()
+    g_ensure_diag_state_timer = -1
+enddef
+
 export def CursorOnHold(): void
-    ShowDiagnostic()
+    if g_ensure_diag_state_timer != -1
+        timer_stop(g_ensure_diag_state_timer)
+    endif
+    g_ensure_diag_state_timer = timer_start(1000, EnsureDiagState)
     cursor.HighlightReferences(false)
 enddef
 
