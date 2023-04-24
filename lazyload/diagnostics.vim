@@ -156,10 +156,12 @@ def EnsureDiagState(arg: any): void
 enddef
 
 export def CursorOnHold(): void
-    if g_ensure_diag_state_timer != -1
-        timer_stop(g_ensure_diag_state_timer)
-    endif
-    g_ensure_diag_state_timer = timer_start(1000, EnsureDiagState)
+    # if g_ensure_diag_state_timer != -1
+    #     timer_stop(g_ensure_diag_state_timer)
+    # endif
+    # g_ensure_diag_state_timer = timer_start(1000, EnsureDiagState)
+    # EnsureDiagState
+    highlight.EnsureCurrentWindowState()
     cursor.HighlightReferences(false)
 enddef
 
