@@ -191,7 +191,11 @@ if !hlexists('lscDiagnosticHint')
   highlight link lscDiagnosticHint SpellCap
 endif
 if !hlexists('lscReference')
-  highlight link lscReference CtrlPMatch
+  if hlexists('CtrlPMatch')
+    highlight link lscReference CtrlPMatch
+  else
+    highlight link lscReference CursorColumn
+  endif
 endif
 if !hlexists('lscCurrentParameter')
   highlight link lscCurrentParameter CursorColumn
