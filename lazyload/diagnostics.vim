@@ -74,7 +74,7 @@ export def SetForFile(file_path: string, diagnostics: list<any>): void
     endif
 enddef
 
-export def ShowDiagnostic(): void
+def ShowDiagnostic(): void
     var diag_obj = ForFile(lsc#common#FullAbsPath())
     var diagnostic = cursor.UnderCursor(cursor.DiagnosticsByLine(diag_obj))
     if has_key(diagnostic, 'message')
@@ -149,18 +149,7 @@ export def DiagHover(): void
     endif
 enddef
 
-var g_ensure_diag_state_timer = -1
-def EnsureDiagState(arg: any): void
-    highlight.EnsureCurrentWindowState()
-    g_ensure_diag_state_timer = -1
-enddef
-
 export def CursorOnHold(): void
-    # if g_ensure_diag_state_timer != -1
-    #     timer_stop(g_ensure_diag_state_timer)
-    # endif
-    # g_ensure_diag_state_timer = timer_start(1000, EnsureDiagState)
-    # EnsureDiagState
     highlight.EnsureCurrentWindowState()
     cursor.HighlightReferences(false)
     ShowDiagnostic()
