@@ -163,6 +163,7 @@ export def CursorOnHold(): void
     # EnsureDiagState
     highlight.EnsureCurrentWindowState()
     cursor.HighlightReferences(false)
+    ShowDiagnostic()
 enddef
 
 export def CursorOnWinEnter(): void
