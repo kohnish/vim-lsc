@@ -9,16 +9,12 @@ function! lsc#protocol#open(command, on_message, on_err, on_exit) abort
       \ '_in': [],
       \ '_out': [],
       \ '_buffer': [],
-      \ '_on_message': lsc#util#async('message handler', a:on_message),
+      \ '_on_message': a:on_message,
       \ '_callbacks': {},
       \}
   function! l:c.request(method, params, callback, options) abort
-    let l:self._call_id += 1
     let l:message = s:Format(a:method, a:params, l:self._call_id)
-    let l:self._callbacks[l:self._call_id] = get(a:options, 'sync', v:false)
-        \ ? [a:callback]
-        \ : [lsc#util#async('request callback for '.a:method, a:callback)]
-    call l:self._send(l:message)
+    call ch_sendexpr(l:self._channel._channel, l:message, {"callback": {channel, msg -> a:callback(msg)}})
   endfunction
   function! l:c.notify(method, params) abort
     let l:message = s:Format(a:method, a:params, v:null)
@@ -29,15 +25,16 @@ function! lsc#protocol#open(command, on_message, on_err, on_exit) abort
   endfunction
   function! l:c._send(message) abort
     call lsc#util#shift(l:self._in, s:log_size, a:message)
-    call l:self._channel.send(s:Encode(a:message))
+    call l:self._channel.send(a:message)
   endfunction
   function! l:c._receive(message) abort
-    call add(l:self._buffer, a:message)
-    if has_key(l:self, '_consume') | return | endif
-    if lsc#common#Consume(l:self)
-      let l:self._consume = timer_start(0,
-          \ function('<SID>HandleTimer', [l:self]))
-    endif
+    call lsc#common#Dispatch(a:message, l:self._on_message, {})
+    " call add(l:self._buffer, a:message)
+    " if has_key(l:self, '_consume') | return | endif
+    " if lsc#common#Consume(l:self)
+    "   let l:self._consume = timer_start(0,
+    "       \ function('<SID>HandleTimer', [l:self]))
+    " endif
   endfunction
   let l:channel = lsc#channel#open(a:command, l:c._receive, a:on_err, a:on_exit)
   if type(l:channel) == type(v:null)

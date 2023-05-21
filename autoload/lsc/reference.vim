@@ -5,7 +5,7 @@ function! lsc#reference#goToDeclaration(mods, issplit) abort
   call lsc#server#userCall('textDocument/declaration',
       \ lsc#params#documentPosition(),
       \ lsc#common#GateResult('GoTo',
-      \   function('<SID>GoTo', ['declaration', a:mods, a:issplit]), []))
+      \   { msg -> s:GoTo('declaration', a:mods, a:issplit) }, []))
 endfunction
 
 function! lsc#reference#goToDefinition(mods, issplit) abort
@@ -17,18 +17,19 @@ function! lsc#reference#goToDefinition(mods, issplit) abort
 endfunction
 
 function! s:GoTo(label, mods, issplit, result) abort
-  if type(a:result) == type(v:null) ||
-      \ (type(a:result) == type([]) && len(a:result) == 0)
+  let l:result = a:result["result"]
+  if type(l:result) == type(v:null) ||
+      \ (type(l:result) == type([]) && len(l:result) == 0)
     call lsc#message#error('No'. a:label .'found')
     return
   endif
-  if type(a:result) == type([]) && (a:label ==# 'declaration' || len(a:result) == 1)
-    let l:location = a:result[0]
-  elseif type(a:result) == type([]) && len(a:result) > 1
-    call s:setQuickFixLocations('Definitions', a:result)
+  if type(l:result) == type([]) && (a:label ==# 'declaration' || len(l:result) == 1)
+    let l:location = l:result[0]
+  elseif type(l:result) == type([]) && len(l:result) > 1
+    call s:setQuickFixLocations('Definitions', l:result)
     copen
   else
-    let l:location = a:result
+    let l:location = l:result
   endif
   if exists('l:location')
     let l:file = lsc#uri#documentPath(l:location.uri)
@@ -73,13 +74,13 @@ function! lsc#reference#findImplementations() abort
 endfunction
 
 function! s:setQuickFixLocations(label, results) abort
-  if empty(a:results)
+  if !has_key(a:results, "result") || empty(a:results["result"])
     call lsc#message#show('No '.a:label.' found')
     return
   endif
-  call map(a:results, {_, ref -> s:QuickFixItem(ref)})
-  call sort(a:results, 'lsc#util#compareQuickFixItems')
-  call setqflist([], ' ', {'title': 'Symbol Reference', 'items': a:results, 'quickfixtextfunc': 'lsc#common#QflistTrimRoot' })
+  call map(a:results["result"], {_, ref -> s:QuickFixItem(ref)})
+  call sort(a:results["result"], 'lsc#util#compareQuickFixItems')
+  call setqflist([], ' ', {'title': 'Symbol Reference', 'items': a:results["result"], 'quickfixtextfunc': 'lsc#common#QflistTrimRoot' })
   copen
 endfunction
 
@@ -156,12 +157,13 @@ function! s:hasOpenHover() abort
   return len(popup_getoptions(s:popup_id)) > 0
 endfunction
 
-function! s:showHover(force_preview, result) abort
-  if empty(a:result) || empty(a:result.contents)
+function! s:showHover(force_preview, msg) abort
+  let l:result = a:msg["result"]
+  if empty(l:result) || empty(l:result.contents)
     echom 'No hover information'
     return
   endif
-  let l:contents = a:result.contents
+  let l:contents = l:result.contents
   if type(l:contents) != type([])
     let l:contents = [l:contents]
   endif
@@ -296,14 +298,15 @@ function! lsc#reference#documentSymbols() abort
       \ function('<SID>setQuickFixSymbols'))
 endfunction
 
-function! s:setQuickFixSymbols(results) abort
-  if empty(a:results)
+function! s:setQuickFixSymbols(msg) abort
+  let l:results = a:msg["result"]
+  if empty(l:results)
     call lsc#message#show('No symbols found')
     return
   endif
 
-  call map(a:results, {_, symbol -> lsc#convert#quickFixSymbol(symbol)})
-  call sort(a:results, 'lsc#util#compareQuickFixItems')
-  call setqflist(a:results)
+  call map(l:results, {_, symbol -> lsc#convert#quickFixSymbol(symbol)})
+  call sort(l:results, 'lsc#util#compareQuickFixItems')
+  call setqflist(l:results)
   copen
 endfunction

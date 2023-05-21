@@ -81,12 +81,7 @@ function! s:startCompletion(isAuto) abort
 endfunction
 
 function! s:OnResult(isAuto, completion) abort
-  let l:items = []
-  if type(a:completion) == type([])
-    let l:items = a:completion
-  elseif type(a:completion) == type({})
-    let l:items = a:completion.items
-  endif
+  let l:items = a:completion.result.items
   if (a:isAuto)
     call s:SuggestCompletions(l:items)
   else

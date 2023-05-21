@@ -19,13 +19,14 @@ function! lsc#channel#open(command, Callback, ErrCallback, OnExit) abort
     endif
   endif
   if exists('*job_start')
-    let l:job_options = {'in_io': 'pipe', 'in_mode': 'raw',
-        \ 'out_io': 'pipe', 'out_mode': 'raw',
+    let l:job_options = {'in_mode': 'lsp',
+        \ 'out_mode': 'lsp',
         \ 'out_cb': {_, message -> a:Callback(message)},
         \ 'err_io': 'pipe', 'err_mode': 'nl',
         \ 'err_cb': {_, message -> a:ErrCallback(message)},
         \ 'exit_cb': {_, __ -> a:OnExit()}}
     let l:job = job_start(a:command, l:job_options)
+    call ch_logfile("/var/tmp/t", "w")
     call s:WrapVim(job_getchannel(l:job), l:c)
     let l:c.job_id = l:job
     return l:c
@@ -48,8 +49,7 @@ function! s:Channel() abort
   let l:c = {'send_buffer': '', 'job_id': -1}
 
   function! l:c.send(message) abort
-    let l:self.send_buffer .= a:message
-    call l:self.__flush()
+    call ch_sendexpr(l:self._channel, a:message)
   endfunction
 
   function! l:c.__flush(...) abort

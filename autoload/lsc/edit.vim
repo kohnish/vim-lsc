@@ -10,15 +10,16 @@ function! lsc#edit#findCodeActions(...) abort
 
   call lsc#server#userCall('textDocument/codeAction', l:params,
       \ lsc#common#GateResult('CodeActions',
-      \     function('<SID>SelectAction', [l:ActionFilter]), []))
+      \     { msg -> s:SelectAction(l:ActionFilter, msg)}, []))
 endfunction
 
-function! s:SelectAction(ActionFilter, result) abort
-  if type(a:result) != type([]) || len(a:result) == 0
+function! s:SelectAction(ActionFilter, msg) abort
+  let l:result = a:msg["result"]
+  if type(l:result) != type([]) || len(l:result) == 0
     call lsc#message#show('No actions available')
     return
   endif
-  call a:ActionFilter(a:result, function('<SID>ExecuteCommand'))
+  call a:ActionFilter(l:result, function('<SID>ExecuteCommand'))
 endfunction
 
 function! s:ExecuteCommand(choice) abort
@@ -91,10 +92,11 @@ function! lsc#edit#rename(...) abort
 endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.
-function! lsc#edit#apply(workspace_edit) abort
+function! lsc#edit#apply(msg) abort
+  l:workspace_edit = a:msg["result"]
   if !get(g:, 'lsc_enable_apply_edit', v:true) | return v:false | endif
-  if !has_key(a:workspace_edit, 'changes')
-      \ && !has_key(a:workspace_edit, 'documentChanges')
+  if !has_key(l:workspace_edit, 'changes')
+      \ && !has_key(l:workspace_edit, 'documentChanges')
     return v:false
   endif
   let l:view = winsaveview()
@@ -108,11 +110,11 @@ function! lsc#edit#apply(workspace_edit) abort
   set virtualedit=onemore
 
 
-  if (!has_key(a:workspace_edit, 'documentChanges'))
-    let l:changes = a:workspace_edit.changes
+  if (!has_key(l:workspace_edit, 'documentChanges'))
+    let l:changes = l:workspace_edit.changes
   else
     let l:changes = {}
-    for l:textDocumentEdit in a:workspace_edit.documentChanges
+    for l:textDocumentEdit in l:workspace_edit.documentChanges
       let l:uri = l:textDocumentEdit.textDocument.uri
       let l:changes[l:uri] = l:textDocumentEdit.edits
     endfor

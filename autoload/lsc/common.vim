@@ -164,8 +164,8 @@ def ContentsDiff(old: list<any>, new: list<any>): dict<any>
 
     var result = {
                 \ 'range': {
-                \ 'start': {'line': start_line, 'character': start_char},
-                \ 'end': {'line': adj_end_line, 'character': adj_end_char}
+                \ 'start': {'line': start_line + 1, 'character': start_char},
+                \ 'end': {'line': adj_end_line + 1, 'character': adj_end_char}
                 \ },
                 \ 'text': text,
                 \ 'rangeLength': length
@@ -291,11 +291,14 @@ def ContentLength(headers: list<any>): number
 enddef
 
 export def Dispatch(message: dict<any>, OnMessage: func, callbacks: dict<any>): void
+    if !empty(callbacks)
+        echom "Assert: callback array should be empty"
+    endif
     if has_key(message, 'method')
         var method = message.method
         var params = has_key(message, 'params') ? message.params : {}
         var id = has_key(message, 'id') ? message.id : v:null
-        OnMessage(method, params, id)
+        OnMessage(message)
     elseif has_key(message, 'error')
         var error = message.error
         var msg = has_key(error, 'message') ? error.message : string(error)
@@ -313,43 +316,8 @@ export def Dispatch(message: dict<any>, OnMessage: func, callbacks: dict<any>): 
 enddef
 
 export def Consume(server: dict<any>): bool
-    var buffer = server._buffer
-    var message = buffer[0]
-    var end_of_header = stridx(message, "\r\n\r\n")
-    if end_of_header < 0
-        return Incomplete(buffer)
-    endif
-    var headers = split(message[: end_of_header - 1], "\r\n")
-    var message_start = end_of_header + len("\r\n\r\n")
-    var message_end = message_start + ContentLength(headers)
-    if len(message) < message_end
-        return Incomplete(buffer)
-    endif
-    var payload = ""
-    if len(message) == message_end
-        payload = message[message_start :]
-        remove(buffer, 0)
-    else
-        payload = message[message_start : message_end - 1]
-        buffer[0] = message[message_end : ]
-    endif
-    var content = {}
-    try
-        if len(payload) > 0
-            content = json_decode(payload)
-            if type(content) != type({})
-                content = {}
-                throw 1
-            endif
-        endif
-    catch
-        lsc#message#error('Could not decode message')
-    endtry
-    if !empty(content)
-        lsc#util#shift(server._out, 10, deepcopy(content))
-        Dispatch(content, server._on_message, server._callbacks)
-    endif
-    return !empty(buffer)
+    Dispatch(server._buffer[0], server._on_message, server._callbacks)
+    return false
 enddef
 
 export def OsNormalisePath(path: string): string

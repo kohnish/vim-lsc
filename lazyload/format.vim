@@ -92,7 +92,8 @@ def Edit_sort_func(a: dict<any>, b: dict<any>): number
     return 0
 enddef
 
-def FormatCb(bnr: number, text_edits: list<dict<any>>): void
+def FormatCb(bnr: number, msg: dict<any>): void
+    var text_edits = msg["result"]
     if text_edits->empty()
         return
     endif

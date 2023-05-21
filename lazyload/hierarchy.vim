@@ -5,7 +5,8 @@ import autoload "./util.vim"
 import autoload "./log.vim"
 import autoload "./tree.vim"
 
-def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, results: list<any>): void
+def OpenHierarchyCallNode(current_node_num: number, params: dict<any>, msg: dict<any>): void
+    var results = msg["result"]
     if len(results) == 0
         return
     endif
@@ -173,7 +174,8 @@ def OpenTreeWindow(ignition: dict<any>): void
     tree.Tree_update(b:tree, [])
 enddef
 
-def PrepHierarchyCb(mode_info: dict<any>, results: list<any>): void
+def PrepHierarchyCb(mode_info: dict<any>, msg: dict<any>): void
+    var results = msg["result"]
     if len(results) > 0
         var ignition = {
                     \ "server": server.ServerForFileType(&filetype),

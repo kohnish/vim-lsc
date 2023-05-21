@@ -6,11 +6,8 @@ import autoload "./log.vim"
 
 var g_alternative_last_pos = {}
 
-export def SwitchToAlternative(results: any): void
-    if type(results) != 1
-        log.Error("Alternative not found")
-        return
-    endif
+export def SwitchToAlternative(msg: dict<any>): void
+    var results = msg["result"]
     var last_file = ""
     var last_line = 0
     var last_col = 0

@@ -14,11 +14,12 @@ export def SignatureHelp(): void
 enddef
 
 # sometimes it gets special instead of dict<any> for unknown reason
-export def ShowHelp(signatureHelp: any): void
+export def ShowHelp(signatureHelp_result: any): void
     # To avoid inlayhint disappearing for some reason
     # if exists("b:inlayhint_prop_list") && !empty(b:inlayhint_prop_list)
     #     return
     # endif
+    var signatureHelp = signatureHelp_result.result
 
     if empty(signatureHelp)
         #call lsc#message#show('No signature help available')
