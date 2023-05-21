@@ -26,7 +26,7 @@ function! lsc#channel#open(command, Callback, ErrCallback, OnExit) abort
         \ 'err_cb': {_, message -> a:ErrCallback(message)},
         \ 'exit_cb': {_, __ -> a:OnExit()}}
     let l:job = job_start(a:command, l:job_options)
-    call ch_logfile("/var/tmp/t", "w")
+    " call ch_logfile("/var/tmp/t", "w")
     call s:WrapVim(job_getchannel(l:job), l:c)
     let l:c.job_id = l:job
     return l:c
