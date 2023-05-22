@@ -172,9 +172,9 @@ export def HighlightReferences(force_in_highlight: bool): void
     #     return
     # endif
     # if !CanHighlightReferences() | return | endif
-    # if !force_in_highlight && exists('w:lsc_references') && IsInReference(w:lsc_references) >= 0
-    #     return
-    # endif
+    if !force_in_highlight && exists('w:lsc_references') && IsInReference(w:lsc_references) >= 0
+        return
+    endif
     # if has_key(g_pending, &filetype) && g_pending[&filetype]
     #     return
     # endif
@@ -211,18 +211,22 @@ def HandleHighlights(request_number: number, old_pos: list<number>, old_buf_nr: 
     #     return
     # endif
     # g_pending[request_filetype] = false
-    # if bufnr('%') != old_buf_nr | return | endif
-    # if request_number != g_highlights_request | return | endif
+    if bufnr('%') != old_buf_nr
+        return
+    endif
+    if request_number != g_highlights_request
+        return
+    endif
     Clean()
     if empty(highlights) | return | endif
     map(highlights, (_, reference) => ConvertReference(reference))
     sort(highlights, CompareRange)
-    # if IsInReference(highlights) == -1
-    #     if old_pos != getcurpos()
-    #         HighlightReferences(true)
-    #     endif
-    #     return
-    # endif
+    if IsInReference(highlights) == -1
+        if old_pos != getcurpos()
+            HighlightReferences(true)
+        endif
+        return
+    endif
 
     w:lsc_references = highlights
     w:lsc_reference_matches = []
