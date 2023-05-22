@@ -71,6 +71,10 @@ function! s:startCompletion(isAuto) abort
   " TODO handle multiple servers
   try
     let l:server = lsc#server#forFileType(&filetype)[0]
+    " call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
+    "     \ lsc#common#GateResult('Complete',
+    "     \     function('<SID>OnResult', [a:isAuto]),
+    "     \     [function('<SID>OnSkip', [bufnr('%')])]))
     call l:server.request('textDocument/completion', l:params,
         \ lsc#common#GateResult('Complete',
         \     function('<SID>OnResult', [a:isAuto]),

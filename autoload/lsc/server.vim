@@ -138,6 +138,7 @@ function! s:Start(server) abort
   let a:server._channel = lsc#protocol#open(l:command,
       \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
       \ a:server.on_err, a:server.on_exit)
+  let a:server.channel = a:server._channel.channel
   if type(a:server._channel) == type(v:null)
     let a:server.status = 'failed'
     return
@@ -306,9 +307,6 @@ function! lsc#server#register(filetype, config) abort
     if l:params is lsc#config#skip() | return v:false | endif
     call l:self._channel.notify(a:method, l:params)
     return v:true
-  endfunction
-  function! l:server.respond(id, result) abort
-    call l:self._channel.respond(a:id, a:result)
   endfunction
   function! l:server._initialize(params, callback) abort
     let l:params = lsc#config#messageHook(l:self, 'initialize', a:params)

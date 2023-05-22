@@ -93,7 +93,7 @@ endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.
 function! lsc#edit#apply(msg) abort
-  l:workspace_edit = a:msg["result"]
+  let l:workspace_edit = a:msg["result"]
   if !get(g:, 'lsc_enable_apply_edit', v:true) | return v:false | endif
   if !has_key(l:workspace_edit, 'changes')
       \ && !has_key(l:workspace_edit, 'documentChanges')
