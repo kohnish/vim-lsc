@@ -1,8 +1,3 @@
-if !exists('s:initialized')
-  let s:log_size = 10
-  let s:initialized = v:true
-endif
-
 function! lsc#protocol#job_start(command, Callback, ErrCallback, OnExit) abort
   let l_c = {}
   let l:job_options = {'in_mode': 'lsp',
