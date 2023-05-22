@@ -364,40 +364,36 @@ function! s:Dispatch(server, msg) abort
   if l:method ==? 'textDocument/publishDiagnostics'
     let l:file_path = lsc#uri#documentPath(a:msg["params"]['uri'])
     call lsc#common#DiagnosticsSetForFile(l:file_path, a:msg["params"]['diagnostics'])
-  else
-      echom "Unsupported msg: "
-      echom a:msg
+  elseif l:method ==? 'window/showMessage'
+    call lsc#message#show(a:msg["params"]['message'], a:msg["params"]['type'])
+  elseif l:method ==? 'window/showMessageRequest'
+    let l:response =
+        \ lsc#message#showRequest(a:msg["params"]['message'], a:msg["params"]['actions'])
+    call a:server.respond(msg["id"], l:response)
+  elseif l:method ==? 'window/logMessage'
+    if lsc#config#shouldEcho(a:server, a:msg["params"].type)
+      call lsc#message#log(a:msg["params"].message, a:msg["params"].type)
+    endif
+    call lsc#util#shift(a:server.logs, 100,
+        \ {'message': a:msg["params"].message, 'type': a:msg["params"].type})
+  elseif l:method ==? 'window/progress'
+    if has_key(a:msg["params"], 'message')
+      let l:full = a:msg["params"]['title'] . a:msg["params"]['message']
+      call lsc#message#show('Progress ' . l:full)
+    elseif has_key(a:msg["params"], 'done')
+      call lsc#message#show('Finished ' . a:msg["params"]['title'])
+    else
+      call lsc#message#show('Starting ' . a:msg["params"]['title'])
+    endif
+  elseif l:method ==? 'workspace/applyEdit'
+    let l:applied = lsc#edit#apply(a:msg["params"].edit)
+    let l:response = {'applied': l:applied}
+    call a:server.respond(msg["id"], l:response)
+  elseif l:method ==? 'workspace/configuration'
+    let l:items = a:msg["params"].items
+    let l:response = map(l:items, {_, item -> a:server.find_config(item)})
+    call a:server.respond(msg["id"], l:response)
+  elseif l:method =~? '\v^\$'
+    call lsc#config#handleNotification(a:server, l:method, a:msg["params"])
   endif
-  " elseif l:method ==? 'window/showMessage'
-  "   call lsc#message#show(a:params['message'], a:params['type'])
-  " elseif l:method ==? 'window/showMessageRequest'
-  "   let l:response =
-  "       \ lsc#message#showRequest(a:params['message'], a:params['actions'])
-  "   call a:server.respond(a:id, l:response)
-  " elseif l:method ==? 'window/logMessage'
-  "   if lsc#config#shouldEcho(a:server, a:params.type)
-  "     call lsc#message#log(a:params.message, a:params.type)
-  "   endif
-  "   call lsc#util#shift(a:server.logs, 100,
-  "       \ {'message': a:params.message, 'type': a:params.type})
-  " elseif l:method ==? 'window/progress'
-  "   if has_key(a:params, 'message')
-  "     let l:full = a:params['title'] . a:params['message']
-  "     call lsc#message#show('Progress ' . l:full)
-  "   elseif has_key(a:params, 'done')
-  "     call lsc#message#show('Finished ' . a:params['title'])
-  "   else
-  "     call lsc#message#show('Starting ' . a:params['title'])
-  "   endif
-  " elseif l:method ==? 'workspace/applyEdit'
-  "   let l:applied = lsc#edit#apply(a:params.edit)
-  "   let l:response = {'applied': l:applied}
-  "   call a:server.respond(a:id, l:response)
-  " elseif l:method ==? 'workspace/configuration'
-  "   let l:items = a:params.items
-  "   let l:response = map(l:items, {_, item -> a:server.find_config(item)})
-  "   call a:server.respond(a:id, l:response)
-  " elseif l:method =~? '\v^\$'
-  "   call lsc#config#handleNotification(a:server, l:method, a:params)
-  " endif
 endfunction
