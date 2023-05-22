@@ -25,7 +25,7 @@ function! lsc#protocol#open(command, on_message, on_err, on_exit) abort
       \ 'job_id' : l:channel.job_id
       \ }
 
-  function! l:c.request(method, params, callback, options) abort
+  function! l:c.request(method, params, callback) abort
     let l:message = s:Format(a:method, a:params)
     call ch_sendexpr(l:self.channel, l:message, {"callback": {channel, msg -> a:callback(msg)}})
   endfunction

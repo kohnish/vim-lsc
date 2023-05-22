@@ -69,19 +69,16 @@ function! s:startCompletion(isAuto) abort
   call lsc#file#flushChanges()
   let l:params = lsc#params#documentPosition()
   " TODO handle multiple servers
-  try
-    let l:server = lsc#server#forFileType(&filetype)[0]
-    " call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
-    "     \ lsc#common#GateResult('Complete',
-    "     \     function('<SID>OnResult', [a:isAuto]),
-    "     \     [function('<SID>OnSkip', [bufnr('%')])]))
-    call l:server.request('textDocument/completion', l:params,
-        \ lsc#common#GateResult('Complete',
-        \     function('<SID>OnResult', [a:isAuto]),
-        \     [function('<SID>OnSkip', [bufnr('%')])]))
-    catch
-        echo "Language server is dead"
-  endtry
+  let l:servers = lsc#server#forFileType(&filetype)
+  if len(l:servers) > 0
+      let l:server = l:servers[0]
+      call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
+      \ lsc#common#GateResult('Complete',
+      \     function('<SID>OnResult', [a:isAuto]),
+      \     [function('<SID>OnSkip', [bufnr('%')])]))
+  else
+       echom "startComletion: No language server"
+  endif
 endfunction
 
 function! s:OnResult(isAuto, completion) abort

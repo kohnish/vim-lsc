@@ -1,6 +1,7 @@
 vim9script
 
 import autoload "./util.vim"
+import autoload "./server.vim"
 
 var g_pending = {}
 var g_highlights_request = 0
@@ -155,8 +156,8 @@ export def IsInReference(references: list<any>): number
 enddef
 
 def CanHighlightReferences(): bool
-    for server in lsc#server#current()
-        if server.capabilities.referenceHighlights
+    for current_server in lsc#server#current()
+        if current_server.capabilities.referenceHighlights
             return true
         endif
     endfor
@@ -182,12 +183,8 @@ export def HighlightReferences(force_in_highlight: bool): void
     # var params = lsc#params#documentPosition()
     # var params = util.PlainDocPos()
     var params = util.DocPos()
-    var server = lsc#server#forFileType(&filetype)[0]
-    server.request('textDocument/documentHighlight', params, funcref(HandleHighlights, [g_highlights_request, getcurpos(), bufnr('%'), &filetype]))
-    # try
-    #     g_pending[&filetype] = server.request('textDocument/documentHighlight', params, funcref(HandleHighlights, [g_highlights_request, getcurpos(), bufnr('%'), &filetype]))
-    # catch
-    # endtry
+    var current_server = lsc#server#forFileType(&filetype)[0]
+    server.Request(current_server.channel, 'textDocument/documentHighlight', params, funcref(HandleHighlights, [g_highlights_request, getcurpos(), bufnr('%'), &filetype]))
 enddef
 
 export def Clean(): void

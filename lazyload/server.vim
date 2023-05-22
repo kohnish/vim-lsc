@@ -1,11 +1,15 @@
 vim9script
 
-def Request(server: dict<any>, method: string, params: dict<any>, Callback: func): void
-    var result = server.request(method, params, Callback)
-    if !result
-        lsc#message#error('Failed to call ' .. method)
-        lsc#message#error('Server status: ' .. lsc#server#status(&filetype))
-    endif
+def Format(method: string, params: dict<any>): dict<any>
+  return {'method': method, 'params': params}
+enddef
+
+def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
+    ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
+enddef
+
+def Request(channel: channel, method: string, params: dict<any>, Callback: func): void
+    Send(channel, method, params, Callback)
 enddef
 
 export def ServerForFileType(filetype: string): dict<any>
@@ -14,11 +18,11 @@ export def ServerForFileType(filetype: string): dict<any>
 enddef
 
 export def LspRequestWithServer(server: dict<any>, method: string, params: dict<any>, Callback: func): void
-    Request(server, method, params, Callback)
+    Request(server.channel, method, params, Callback)
 enddef
 
 export def LspRequest(method: string, params: dict<any>, Callback: func): void
     var server = ServerForFileType(&filetype)
-    Request(server, method, params, Callback)
+    Request(server.channel, method, params, Callback)
 enddef
 

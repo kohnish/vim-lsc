@@ -89,7 +89,7 @@ endfunction
 " was made because the server is not currently running.
 function! s:Kill(server, status, OnExit) abort
     try
-        return a:server.request('shutdown', v:null, funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]), {'sync': v:true})
+        return lsc#common#Send(a:server.channel, 'shutdown', v:null, funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]), {'sync': v:true})
     catch
         return v:false
     endtry
@@ -120,11 +120,7 @@ endfunction
 function! lsc#server#userCall(method, params, callback) abort
   " TODO handle multiple servers
   let l:server = lsc#server#forFileType(&filetype)[0]
-  let l:result = l:server.request(a:method, a:params, a:callback)
-  if !l:result
-    call lsc#message#error('Failed to call '.a:method)
-    call lsc#message#error('Server status: '.lsc#server#status(&filetype))
-  endif
+  call lsc#common#Send(l:server.channel, a:method, a:params, a:callback)
 endfunction
 
 " Start `server` if it isn't already running.
@@ -292,15 +288,6 @@ function! lsc#server#register(filetype, config) abort
       \ 'capabilities': lsc#capabilities#defaults()
       \}
   let l:server.languageId[a:filetype] = l:languageId
-  function! l:server.request(method, params, callback, ...) abort
-    "if l:self.status !=# 'running' | return v:false | endif
-    let l:params = lsc#config#messageHook(l:self, a:method, a:params)
-    if l:params is lsc#config#skip() | return v:false | endif
-    let l:Callback = lsc#config#responseHook(l:self, a:method, a:callback)
-    let l:options = a:0 > 0 ? a:1 : {}
-    call l:self._channel.request(a:method, l:params, l:Callback, l:options)
-    return v:true
-  endfunction
   function! l:server.notify(method, params) abort
     if l:self.status !=# 'running' | return v:false | endif
     let l:params = lsc#config#messageHook(l:self, a:method, a:params)
@@ -310,7 +297,7 @@ function! lsc#server#register(filetype, config) abort
   endfunction
   function! l:server._initialize(params, callback) abort
     let l:params = lsc#config#messageHook(l:self, 'initialize', a:params)
-    call l:self._channel.request('initialize', l:params, a:callback, {})
+    call l:self._channel.request('initialize', l:params, a:callback)
   endfunction
   function! l:server.respond(id, result) abort
     call l:self._channel.respond(a:id, a:result)

@@ -443,13 +443,10 @@ export def CompletionItems(base: string, lsp_items: list<any>): list<any>
     return prefix_case_matches + prefix_matches + substring_matches
 enddef
 
-# def Format(method: string, params: any): dict<any>
-#   var msg = {'method': method}
-#   if type(params) != type(v:null) | msg['params'] = params | endif
-#   return msg
-# enddef
+def Format(method: string, params: dict<any>): dict<any>
+  return {'method': method, 'params': params}
+enddef
 
-# export def Send(ch: channel, method: string, params: any, Cb: func): void
-#     # var out_msg = Format(method, params)
-#     # ch_sendexpr(ch, out_msg, {"callback": (channel, msg) => Cb(msg)})
-# enddef
+export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
+    ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
+enddef
