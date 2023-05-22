@@ -365,7 +365,8 @@ function! s:Dispatch(server, msg) abort
     let l:file_path = lsc#uri#documentPath(a:msg["params"]['uri'])
     call lsc#common#DiagnosticsSetForFile(l:file_path, a:msg["params"]['diagnostics'])
   else
-      echom "Unsupported msg: " .. msg
+      echom "Unsupported msg: "
+      echom a:msg
   endif
   " elseif l:method ==? 'window/showMessage'
   "   call lsc#message#show(a:params['message'], a:params['type'])
