@@ -33,6 +33,9 @@ function! lsc#protocol#open(command, on_message, on_err, on_exit) abort
     let l:message = s:Format(a:method, a:params)
     call ch_sendexpr(l:self.channel, l:message)
   endfunction
+  function! l:c.respond(id, result) abort
+    call ch_sendexpr(l:self._channel._channel, {'id': a:id, 'result': a:result})
+  endfunction
 
   return l:c
 endfunction
