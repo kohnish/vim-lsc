@@ -447,6 +447,21 @@ def Format(method: string, params: dict<any>): dict<any>
   return {'method': method, 'params': params}
 enddef
 
+
+var max_restart = 3
+var current_restart = 0
+export def ResetRestartCounter(): void
+    current_restart = 0
+enddef
 export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
+    if ch_status(ch) != "open"
+        if current_restart < max_restart
+            lsc#server#restart()
+            current_restart += 1
+        else
+            echom "Give up restarting language server"
+        endif
+        return
+    endif
     ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
 enddef

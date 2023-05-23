@@ -155,6 +155,7 @@ function! s:Start(server) abort
 endfunction
 
 function! s:OnInitialize(server, init_result) abort
+  call lsc#common#ResetRestartCounter()
   let a:server.status = 'running'
   call a:server.notify('initialized', {})
   if type(a:init_result) == type({}) && has_key(a:init_result, 'capabilities')

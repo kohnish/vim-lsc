@@ -1,15 +1,9 @@
 vim9script
 
-def Format(method: string, params: dict<any>): dict<any>
-  return {'method': method, 'params': params}
-enddef
-
-def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
-    ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
-enddef
+import autoload "../autoload/lsc/common.vim"
 
 def Request(channel: channel, method: string, params: dict<any>, Callback: func): void
-    Send(channel, method, params, Callback)
+   lsc#common#Send(channel, method, params, Callback)
 enddef
 
 export def ServerForFileType(filetype: string): dict<any>
