@@ -456,6 +456,7 @@ enddef
 export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
     if ch_status(ch) != "open"
         if current_restart < max_restart
+            echom "Restarting language server"
             lsc#server#restart()
             current_restart += 1
         else
