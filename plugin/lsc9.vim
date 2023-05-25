@@ -30,12 +30,20 @@ def IfEnabled(Cb: func): void
     Cb()
 enddef
 
+export def EnsureWinState()
+    util.WinDo('LSClientEnsureCurrentWindowState')
+enddef
+
+export def OnWinEnter()
+    timer_start(1, highlight.OnWinEnter)
+enddef
+
 augroup LSC9
     autocmd!
-    autocmd BufEnter * LSClientEnsureCurrentWindowState
-    autocmd WinEnter * timer_start(1, highlight.OnWinEnter)
+    autocmd BufEnter * IfEnabled(highlight.EnsureCurrentWindowState)
+    autocmd WinEnter * IfEnabled(OnWinEnter)
     # Window local state is only correctly maintained for the current tab.
-    autocmd TabEnter * util.WinDo('LSClientEnsureCurrentWindowState')
+    autocmd TabEnter * IfEnabled(EnsureWinState)
     # " Move is too heavy
     # " autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
     autocmd CursorHold * IfEnabled(diagnostics.CursorOnHold)
