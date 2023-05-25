@@ -87,7 +87,11 @@ enddef
 export def HighlightClear(): void
     if exists('w:lsc_diagnostic_matches')
         for current_match in w:lsc_diagnostic_matches
-            matchdelete(current_match)
+            try
+                matchdelete(current_match)
+            catch
+                echom "matchdelete error"
+            endtry
         endfor
     endif
     w:lsc_diagnostic_matches = []
