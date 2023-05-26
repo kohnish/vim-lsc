@@ -14,6 +14,10 @@ function! lsc#edit#findCodeActions(...) abort
 endfunction
 
 function! s:SelectAction(ActionFilter, msg) abort
+  if !has_key(a:msg, "result")
+      echom a:msg
+      return
+  endif
   let l:result = a:msg["result"]
   if type(l:result) != type([]) || len(l:result) == 0
     call lsc#message#show('No actions available')

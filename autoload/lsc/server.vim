@@ -97,10 +97,10 @@ endfunction
 
 function! s:HandleShutdownResponse(server, status, OnExit, result) abort
   let a:server.status = a:status
-  if has_key(a:server, '_channel')
+  if has_key(a:server, 'channel')
     " An early exit still could have remove the channel.
     " The status has been updated so `a:server.notify` would bail
-    call a:server._channel.notify('exit', v:null)
+    call a:server.notify('exit', v:null)
   endif
   if a:OnExit != v:null | call a:OnExit() | endif
 endfunction
@@ -114,6 +114,24 @@ function! lsc#server#restart() abort
   call lsc#server#disable(v:true)
 endfunction
 
+function! lsc#server#open(command, On_message, On_err, On_exit) abort
+  let l:job_options = {'in_mode': 'lsp',
+      \ 'out_mode': 'lsp',
+      \ 'noblock': 1,
+      \ 'out_cb': {_, message -> a:On_message(message)},
+      \ 'err_io': 'pipe', 'err_mode': 'nl',
+      \ 'err_cb': {_, message -> a:On_err(message)},
+      \ 'exit_cb': {_, __ -> a:On_exit()}}
+  let l:job = job_start(a:command, l:job_options)
+  " call ch_logfile("/var/tmp/t", "w")
+  let l:channel = job_getchannel(l:job)
+
+  if type(l:channel) == type(v:null)
+    return v:null
+  endif
+
+  return l:channel
+endfunction
 " A server call explicitly initiated by the user for the current buffer.
 "
 " Expects the call to succeed and shows an error if it does not.
@@ -125,17 +143,17 @@ endfunction
 
 " Start `server` if it isn't already running.
 function! s:Start(server) abort
-  if has_key(a:server, '_channel')
+  if has_key(a:server, 'channel')
     " Server is already running
     return
   endif
   let l:command = a:server.config.command
   let a:server.status = 'starting'
-  let a:server._channel = lsc#protocol#open(l:command,
+  let l:ch = lsc#server#open(l:command,
       \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
       \ a:server.on_err, a:server.on_exit)
-  let a:server.channel = a:server._channel.channel
-  if type(a:server._channel) == type(v:null)
+  let a:server.channel = l:ch
+  if type(a:server.channel) == type(v:null)
     let a:server.status = 'failed'
     return
   endif
@@ -218,7 +236,13 @@ function! lsc#server#filetypeActive(filetype) abort
 endfunction
 
 function! lsc#server#kill(job_id, filetypes) abort
-  call job_stop(a:job_id, "kill")
+  let l:channel = job_getchannel(a:job_id)
+  if (l:channel == "open")
+    call ch_close(l:channel)
+  endif
+  if (job_status(a:job_id) == "run")
+    call job_stop(a:job_id, "term")
+  endif
   call lsc#common#CleanAllMatchs()
   for l:filetype in a:filetypes
     call lsc#common#CleanAllForFile(l:filetype)
@@ -232,9 +256,9 @@ endfunction
 
 function! lsc#server#disable(do_restart) abort
   for l:server in values(s:servers)
-    call l:server.notify('exit', v:null)
-    if has_key(l:server, "_channel") && has_key(l:server._channel, "_channel") && has_key(l:server._channel._channel, "job_id")
-        let l:job_id = l:server._channel._channel.job_id
+    call l:server.notify('exit', {})
+    if has_key(l:server, "channel")
+        let l:job_id = ch_getjob(l:server.channel)
         let l:filetypes = l:server.filetypes
         call timer_start(100, {_->lsc#server#kill(l:job_id, l:filetypes)})
     endif
@@ -293,7 +317,7 @@ function! lsc#server#register(filetype, config) abort
     if l:self.status !=# 'running' | return v:false | endif
     let l:params = lsc#config#messageHook(l:self, a:method, a:params)
     if l:params is lsc#config#skip() | return v:false | endif
-    call l:self._channel.notify(a:method, l:params)
+    call lsc#common#Publish(l:self.channel, a:method, l:params)
     return v:true
   endfunction
   function! l:server._initialize(params, callback) abort
@@ -301,14 +325,13 @@ function! lsc#server#register(filetype, config) abort
     call lsc#common#Send(l:self.channel, 'initialize', l:params, a:callback)
   endfunction
   function! l:server.respond(id, result) abort
-    call l:self._channel.respond(a:id, a:result)
+    call lsc#common#Reply(l:self.channel, a:id, a:result)
   endfunction
   function! l:server.on_err(message) abort
     if get(l:self.config, 'suppress_stderr', v:false) | return | endif
     call lsc#message#error('StdErr from '.l:self.config.name.': '.a:message)
   endfunction
   function! l:server.on_exit() abort
-    unlet l:self._channel
     let l:old_status = l:self.status
     if l:old_status ==# 'starting'
       let l:self.status= 'failed'

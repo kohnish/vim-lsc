@@ -454,15 +454,36 @@ export def ResetRestartCounter(): void
     current_restart = 0
 enddef
 export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
-    if ch_status(ch) != "open"
-        if current_restart < max_restart
-            echom "Restarting language server"
-            lsc#server#restart()
-            current_restart += 1
-        else
-            echom "Give up restarting language server"
-        endif
-        return
+    # if ch_status(ch) != "open"
+    #     if current_restart < max_restart
+    #         echom "Restarting language server"
+    #         lsc#server#restart()
+    #         current_restart += 1
+    #     else
+    #         echom "Give up restarting language server"
+    #     endif
+    #     return
+    # endif
+    if ch_status(ch) == "open"
+        ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
+    else
+        echom "Invalid Send"
     endif
-    ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
+enddef
+
+export def Publish(ch: channel, method: string, params: dict<any>): void
+  if ch_status(ch) == "open"
+      var message = Format(method, params)
+      call ch_sendexpr(ch, message)
+   else
+      echom "Invalid Publish"
+  endif
+enddef
+
+export def Reply(ch: channel, id: number, result: string): void
+  if ch_status(ch) == "open"
+      call ch_sendexpr(ch, {'id': id, 'result': result})
+  else
+      echom "Invalid Reply"
+  endif
 enddef
