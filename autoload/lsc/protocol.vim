@@ -2,6 +2,7 @@ function! lsc#protocol#job_start(command, Callback, ErrCallback, OnExit) abort
   let l_c = {}
   let l:job_options = {'in_mode': 'lsp',
       \ 'out_mode': 'lsp',
+      \ 'noblock': 1,
       \ 'out_cb': {_, message -> a:Callback(message)},
       \ 'err_io': 'pipe', 'err_mode': 'nl',
       \ 'err_cb': {_, message -> a:ErrCallback(message)},

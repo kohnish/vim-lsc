@@ -360,7 +360,7 @@ function! s:Dispatch(server, msg) abort
   elseif l:method ==? 'window/showMessageRequest'
     let l:response =
         \ lsc#message#showRequest(a:msg["params"]['message'], a:msg["params"]['actions'])
-    call a:server.respond(msg["id"], l:response)
+    call a:server.respond(a:msg["id"], l:response)
   elseif l:method ==? 'window/logMessage'
     if lsc#config#shouldEcho(a:server, a:msg["params"].type)
       call lsc#message#log(a:msg["params"].message, a:msg["params"].type)
@@ -379,11 +379,11 @@ function! s:Dispatch(server, msg) abort
   elseif l:method ==? 'workspace/applyEdit'
     let l:applied = lsc#edit#apply(a:msg["params"].edit)
     let l:response = {'applied': l:applied}
-    call a:server.respond(msg["id"], l:response)
+    call a:server.respond(a:msg["id"], l:response)
   elseif l:method ==? 'workspace/configuration'
     let l:items = a:msg["params"].items
     let l:response = map(l:items, {_, item -> a:server.find_config(item)})
-    call a:server.respond(msg["id"], l:response)
+    call a:server.respond(a:msg["id"], l:response)
   elseif l:method =~? '\v^\$'
     call lsc#config#handleNotification(a:server, l:method, a:msg["params"])
   endif
