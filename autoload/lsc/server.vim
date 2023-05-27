@@ -22,6 +22,36 @@ if !exists('s:initialized')
   let s:initialized = v:true
 endif
 
+function s:Get_workspace_config(config, item) abort
+  if !has_key(a:config, 'workspace_config') | return v:null | endif
+  if !has_key(a:item, 'section') || empty(a:item.section)
+    return a:config.workspace_config
+  endif
+  let l:workspace_config = a:config.workspace_config
+  for l:part in split(a:item.section, '\.')
+    if !has_key(l:workspace_config, l:part)
+      return v:null
+    else
+      let l:workspace_config = l:workspace_config[l:part]
+    endif
+  endfor
+  return l:workspace_config
+endfunction
+
+function! s:Server_reset_state(filetypes) abort
+  let s:servers = {}
+  let s:initialized = v:false
+  call lsc#common#CleanAllMatchs()
+  for l:filetype in a:filetypes
+    call lsc#common#CleanAllForFile(l:filetype)
+  endfor
+endfunction
+
+function! s:Server_print_error(message, config) abort
+  if get(a:config, 'suppress_stderr', v:false) | return | endif
+  call lsc#message#error('StdErr from ' .. a:config.name .. a:message)
+endfunction
+
 function! lsc#server#start(server) abort
   let l:proj_root = getcwd()
   if exists('g:lsc_get_proj_root_func') && g:lsc_get_proj_root_func
@@ -57,7 +87,7 @@ function! lsc#server#exit() abort
   let l:exit_start = reltime()
   let l:pending = []
   for l:server in values(s:servers)
-      if s:Kill(l:server, funcref('<SID>OnExit', [l:server.config.name, l:pending]))
+      if s:Kill(l:server, { -> remove(l:pending, index(l:pending, l:server.config.name))})
           call add(l:pending, l:server.config.name)
       endif
   endfor
@@ -81,23 +111,19 @@ function! lsc#server#exit() abort
   return v:true
 endfunction
 
-function! s:OnExit(server_name, pending) abort
-  call remove(a:pending, index(a:pending, a:server_name))
-endfunction
-
 " Request a 'shutdown' then 'exit'.
 "
 " Calls `OnExit` after the exit is requested. Returns `v:false` if no request
 " was made because the server is not currently running.
-function! s:Kill(server, OnExit) abort
+function! s:Kill(server, AfterShutdownCb) abort
     if has_key(a:server, "channel") && ch_status(a:server.channel) == "open"
-         call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:OnExit]))
+         call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:AfterShutdownCb]))
          return v:true
     endif
     return v:false
 endfunction
 
-function! s:HandleShutdownResponse(server, OnExit, result) abort
+function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
   if has_key(a:server, 'channel')
     call lsc#common#Publish(a:server.channel, "exit", {})
     let l:exit_start = reltime()
@@ -121,7 +147,7 @@ function! s:HandleShutdownResponse(server, OnExit, result) abort
         endif
     endif
   endif
-  call a:OnExit()
+  call a:AfterShutdownCb()
 endfunction
 
 function! lsc#server#restart() abort
@@ -166,9 +192,11 @@ function! s:Start(server, root_dir) abort
   else
     let l:command = a:server.config.command
   endif
-  let l:ch = lsc#server#open(l:command,
-      \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
-      \ a:server.on_err, a:server.on_exit)
+  let l:ch = lsc#server#open(
+              \ l:command,
+              \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
+              \ {lsp_err_msg -> s:Server_print_error(lsp_err_msg, a:server.config)},
+              \ { -> s:Server_reset_state(a:server.filetypes)})
   let a:server.channel = l:ch
   if type(a:server.channel) == type(v:null)
     return
@@ -185,7 +213,9 @@ function! s:Start(server, root_dir) abort
       \ 'capabilities': s:ClientCapabilities(),
       \ 'trace': l:trace_level
       \}
-  call a:server._initialize(l:params, funcref('<SID>OnInitialize', [a:server]))
+
+  let l:params = lsc#config#messageHook(a:server, 'initialize', l:params)
+  call lsc#common#Send(a:server.channel, 'initialize', l:params, funcref('<SID>OnInitialize', [a:server]))
 endfunction
 
 function! s:OnInitialize(server, init_result) abort
@@ -252,8 +282,6 @@ endfunction
 
 function! lsc#server#disable(do_restart) abort
   call lsc#server#exit()
-  let s:servers = {}
-  let s:initialized = v:false
   if a:do_restart
     call LSCServerRegister()
   endif
@@ -261,6 +289,7 @@ endfunction
 
 function! lsc#server#register(filetype, config) abort
   let l:languageId = a:filetype
+
   if type(a:config) == type('')
     let l:config = {'command': a:config, 'name': a:config}
   elseif type(a:config) == type([])
@@ -282,6 +311,7 @@ function! lsc#server#register(filetype, config) abort
       let l:languageId = l:config.languageId
     endif
   endif
+
   let g:lsc_servers_by_filetype[a:filetype] = l:config.name
   if has_key(s:servers, l:config.name)
     let l:server = s:servers[l:config.name]
@@ -289,6 +319,7 @@ function! lsc#server#register(filetype, config) abort
     let l:server.languageId[a:filetype] = l:languageId
     return l:server
   endif
+
   let l:server = {
       \ 'logs': [],
       \ 'filetypes': [a:filetype],
@@ -297,44 +328,14 @@ function! lsc#server#register(filetype, config) abort
       \ 'capabilities': lsc#capabilities#defaults()
       \}
   let l:server.languageId[a:filetype] = l:languageId
+
   function! l:server.notify(method, params) abort
     let l:params = lsc#config#messageHook(l:self, a:method, a:params)
     if l:params is lsc#config#skip() | return v:false | endif
     call lsc#common#Publish(l:self.channel, a:method, l:params)
     return v:true
   endfunction
-  function! l:server._initialize(params, callback) abort
-    let l:params = lsc#config#messageHook(l:self, 'initialize', a:params)
-    call lsc#common#Send(l:self.channel, 'initialize', l:params, a:callback)
-  endfunction
-  function! l:server.respond(id, result) abort
-    call lsc#common#Reply(l:self.channel, a:id, a:result)
-  endfunction
-  function! l:server.on_err(message) abort
-    if get(l:self.config, 'suppress_stderr', v:false) | return | endif
-    call lsc#message#error('StdErr from '.l:self.config.name.': '.a:message)
-  endfunction
-  function! l:server.on_exit() abort
-    call lsc#common#CleanAllMatchs()
-    for l:filetype in l:self.filetypes
-      call lsc#common#CleanAllForFile(l:filetype)
-    endfor
-  endfunction
-  function! l:server.find_config(item) abort
-    if !has_key(l:self.config, 'workspace_config') | return v:null | endif
-    if !has_key(a:item, 'section') || empty(a:item.section)
-      return l:self.config.workspace_config
-    endif
-    let l:config = l:self.config.workspace_config
-    for l:part in split(a:item.section, '\.')
-      if !has_key(l:config, l:part)
-        return v:null
-      else
-        let l:config = l:config[l:part]
-      endif
-    endfor
-    return l:config
-  endfunction
+
   let s:servers[l:config.name] = l:server
   return l:server
 endfunction
@@ -349,7 +350,7 @@ function! s:Dispatch(server, msg) abort
   elseif l:method ==? 'window/showMessageRequest'
     let l:response =
         \ lsc#message#showRequest(a:msg["params"]['message'], a:msg["params"]['actions'])
-    call a:server.respond(a:msg["id"], l:response)
+    call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
   elseif l:method ==? 'window/logMessage'
     if lsc#config#shouldEcho(a:server, a:msg["params"].type)
       call lsc#message#log(a:msg["params"].message, a:msg["params"].type)
@@ -368,11 +369,11 @@ function! s:Dispatch(server, msg) abort
   elseif l:method ==? 'workspace/applyEdit'
     let l:applied = lsc#edit#apply(a:msg["params"].edit)
     let l:response = {'applied': l:applied}
-    call a:server.respond(a:msg["id"], l:response)
+    call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
   elseif l:method ==? 'workspace/configuration'
     let l:items = a:msg["params"].items
-    let l:response = map(l:items, {_, item -> a:server.find_config(item)})
-    call a:server.respond(a:msg["id"], l:response)
+    let l:response = map(l:items, {_, item -> s:Get_workspace_config(a:server.config, item)})
+    call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
   elseif l:method =~? '\v^\$'
     call lsc#config#handleNotification(a:server, l:method, a:msg["params"])
   endif
