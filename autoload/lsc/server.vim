@@ -145,7 +145,11 @@ function! s:Start(server, root_dir) abort
     " Server is already running
     return
   endif
-  let l:command = a:server.config.command
+  if type( a:server.config.command) == type({_ -> _})
+    let l:command = a:server.config.command()
+  else
+    let l:command = a:server.config.command
+  endif
   let a:server.status = 'starting'
   let l:ch = lsc#server#open(l:command,
       \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
@@ -276,6 +280,8 @@ function! lsc#server#register(filetype, config) abort
     let l:config = {'command': a:config, 'name': a:config}
   elseif type(a:config) == type([])
     let l:config = {'command': a:config, 'name': string(a:config)}
+  elseif type(a:config) == type({_ -> _})
+    let l:config = {'command': a:config, 'name': a:config()}
   else
     if type(a:config) != type({})
       throw 'Server configuration must be an executable or a dict'
