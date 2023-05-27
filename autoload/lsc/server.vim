@@ -23,16 +23,27 @@ if !exists('s:initialized')
 endif
 
 function! lsc#server#start(server) abort
+  " When a custom global dir is set such as g:lsc_kotlin_project_root
+  " Useful for multi-language projects with a different root
   let lang_proj_root_var_str = "g:lsc_" .. &filetype .. "_project_root"
   if exists(lang_proj_root_var_str)
-    let orig_dir = getcwd()
     execute "let lang_proj_root = " .. lang_proj_root_var_str
-    execute "cd " .. lang_proj_root
-    call s:Start(a:server)
-    execute "cd " .. orig_dir
-  else
-    call s:Start(a:server)
+    call s:Start(a:server, lang_proj_root)
+    return
   endif
+
+  " Get project root by current file by calling user function
+  " Useful for opening a file from nowhere
+  if exists('g:lsc_derive_proj_root_by_file_path') && g:lsc_derive_proj_root_by_file_path
+    let l:proj_root = LSClientDeriveProjRootFunc(expand('%:p'))
+    if !empty(l:proj_root)
+        call s:Start(a:server, l:proj_root)
+        return
+    endif
+  endif
+
+  " Default
+  call s:Start(a:server, getcwd())
 endfunction
 
 function! lsc#server#status(filetype) abort
@@ -142,7 +153,7 @@ function! lsc#server#userCall(method, params, callback) abort
 endfunction
 
 " Start `server` if it isn't already running.
-function! s:Start(server) abort
+function! s:Start(server, root_dir) abort
   if has_key(a:server, 'channel')
     " Server is already running
     return
@@ -165,7 +176,7 @@ function! s:Start(server) abort
   endif
   let l:params = {'processId': getpid(),
       \ 'clientInfo': {'name': 'vim-lsc'},
-      \ 'rootUri': lsc#uri#documentUri(lsc#file#cwd()),
+      \ 'rootUri': lsc#uri#documentUri(a:root_dir),
       \ 'capabilities': s:ClientCapabilities(),
       \ 'trace': l:trace_level
       \}
@@ -350,9 +361,6 @@ function! lsc#server#register(filetype, config) abort
     for l:filetype in l:self.filetypes
       call lsc#common#CleanAllForFile(l:filetype)
     endfor
-    if l:old_status ==# 'restarting'
-      call s:Start(l:self)
-    endif
   endfunction
   function! l:server.find_config(item) abort
     if !has_key(l:self.config, 'workspace_config') | return v:null | endif
