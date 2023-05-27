@@ -72,12 +72,12 @@ function! lsc#server#exit() abort
   if len(l:pending) > 0
       echo "Shutting down " .. len(l:pending) .. " language server(s)"
       let l:reported = []
-      while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 10.0
+      while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 5.0
           if reltimefloat(reltime(l:exit_start)) >= 0.1 && l:pending != l:reported
               echo 'Waiting for language server exit: ' .. join(l:pending, ', ')
               let l:reported = copy(l:pending)
           endif
-          sleep 1000m
+          sleep 100m
       endwhile
       let l:len_servers = len(l:pending)
       if (l:len_servers) > 0
@@ -111,7 +111,7 @@ function! s:HandleShutdownResponse(server, status, OnExit, result) abort
     call lsc#common#Publish(a:server.channel, "exit", {})
     let l:exit_start = reltime()
     while ch_status(a:server.channel) == "open" && reltimefloat(reltime(l:exit_start)) <= 3.0
-        sleep 300m
+        sleep 100m
     endwhile
     if ch_status(a:server.channel) == "open"
         echom "Force shutting down"
