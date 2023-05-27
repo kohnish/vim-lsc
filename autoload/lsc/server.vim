@@ -70,7 +70,7 @@ function! lsc#server#exit() abort
       endif
   endfor
   if len(l:pending) > 0
-      echom "Shutting down " .. len(l:pending) .. " language server(s)"
+      echo "Shutting down " .. len(l:pending) .. " language server(s)"
       let l:reported = []
       while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 10.0
           if reltimefloat(reltime(l:exit_start)) >= 0.1 && l:pending != l:reported
