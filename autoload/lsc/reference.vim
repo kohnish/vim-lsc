@@ -17,6 +17,10 @@ function! lsc#reference#goToDefinition(mods, issplit) abort
 endfunction
 
 function! s:GoTo(label, mods, issplit, result) abort
+  if !has_key(a:result, "result")
+      echom a:result
+      return
+  endif
   let l:result = a:result["result"]
   if type(l:result) == type(v:null) ||
       \ (type(l:result) == type([]) && len(l:result) == 0)
