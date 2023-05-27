@@ -58,23 +58,35 @@ endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
 function! lsc#server#exit() abort
+  call lsc#common#CleanAllMatchs()
   let l:exit_start = reltime()
   let l:pending = []
   for l:server in values(s:servers)
-    if s:Kill(l:server, 'exiting',
-        \ funcref('<SID>OnExit', [l:server.config.name, l:pending]))
-      call add(l:pending, l:server.config.name)
-    endif
+      for l:filetype in l:server.filetypes
+          call lsc#common#CleanAllForFile(l:filetype)
+      endfor
+      if s:Kill(l:server, 'exiting', funcref('<SID>OnExit', [l:server.config.name, l:pending]))
+          call add(l:pending, l:server.config.name)
+      endif
   endfor
-  let l:reported = []
-  while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 0.5
-     if reltimefloat(reltime(l:exit_start)) >= 0.1 && l:pending != l:reported
-      echo 'Waiting for language server exit: '.join(l:pending, ', ')
-      let l:reported = copy(l:pending)
-     endif
-    sleep 100m
-  endwhile
-  return len(l:pending) == 0
+  if len(l:pending) > 0
+      echom "Shutting down " .. len(l:pending) .. " language server(s)"
+      let l:reported = []
+      while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 10.0
+          if reltimefloat(reltime(l:exit_start)) >= 0.1 && l:pending != l:reported
+              echo 'Waiting for language server exit: ' .. join(l:pending, ', ')
+              let l:reported = copy(l:pending)
+          endif
+          sleep 1000m
+      endwhile
+      let l:len_servers = len(l:pending)
+      if (l:len_servers) > 0
+          echom "Failed to shut down " .. len(l:pending) .. " language server(s)"
+          return v:false
+      endif
+      echom "Shutdown successful"
+  endif
+  return v:true
 endfunction
 
 function! s:OnExit(server_name, pending) abort
@@ -86,21 +98,39 @@ endfunction
 " Calls `OnExit` after the exit is requested. Returns `v:false` if no request
 " was made because the server is not currently running.
 function! s:Kill(server, status, OnExit) abort
-    try
-        return lsc#common#Send(a:server.channel, 'shutdown', v:null, funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]), {'sync': v:true})
-    catch
-        return v:false
-    endtry
+    if has_key(a:server, "channel") && ch_status(a:server.channel) == "open"
+         call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]))
+         return v:true
+    endif
+    return v:false
 endfunction
 
 function! s:HandleShutdownResponse(server, status, OnExit, result) abort
   let a:server.status = a:status
   if has_key(a:server, 'channel')
-    " An early exit still could have remove the channel.
-    " The status has been updated so `a:server.notify` would bail
-    call a:server.notify('exit', v:null)
+    call lsc#common#Publish(a:server.channel, "exit", {})
+    let l:exit_start = reltime()
+    while ch_status(a:server.channel) == "open" && reltimefloat(reltime(l:exit_start)) <= 3.0
+        sleep 300m
+    endwhile
+    if ch_status(a:server.channel) == "open"
+        echom "Force shutting down"
+        let l:job_id = ch_getjob(a:server.channel)
+        let l:channel = job_getchannel(l:job_id)
+        if (l:channel == "open")
+          call ch_close(l:channel)
+        endif
+        sleep 100ms
+        if (job_status(l:job_id) == "run")
+          call job_stop(l:job_id, "term")
+        endif
+        sleep 100ms
+        if (job_status(l:job_id) == "run")
+          call job_stop(l:job_id, "kill")
+        endif
+    endif
   endif
-  if a:OnExit != v:null | call a:OnExit() | endif
+  call a:OnExit()
 endfunction
 
 function! lsc#server#clear() abort
@@ -245,10 +275,6 @@ function! lsc#server#kill(job_id, filetypes) abort
   if (job_status(a:job_id) == "run")
     call job_stop(a:job_id, "term")
   endif
-  call lsc#common#CleanAllMatchs()
-  for l:filetype in a:filetypes
-    call lsc#common#CleanAllForFile(l:filetype)
-  endfor
 endfunction
 
 function! lsc#server#reset_start() abort
@@ -257,14 +283,15 @@ function! lsc#server#reset_start() abort
 endfunction
 
 function! lsc#server#disable(do_restart) abort
-  for l:server in values(s:servers)
-    call l:server.notify('exit', {})
-    if has_key(l:server, "channel")
-        let l:job_id = ch_getjob(l:server.channel)
-        let l:filetypes = l:server.filetypes
-        call timer_start(100, {_->lsc#server#kill(l:job_id, l:filetypes)})
-    endif
-  endfor
+  call lsc#server#exit()
+  " for l:server in values(s:servers)
+  "   call l:server.notify('exit', {})
+  "   if has_key(l:server, "channel")
+  "       let l:job_id = ch_getjob(l:server.channel)
+  "       let l:filetypes = l:server.filetypes
+  "       call timer_start(100, {_->lsc#server#kill(l:job_id, l:filetypes)})
+  "   endif
+  " endfor
   if a:do_restart
     call timer_start(1000, {_->lsc#server#reset_start()})
   endif

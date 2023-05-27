@@ -467,17 +467,13 @@ export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
     if ch_status(ch) == "open"
         ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
     else
-        echom "Invalid Send"
+        echom "Invalid Send for " .. method .. ", channel status: " .. ch_status(ch)
     endif
 enddef
 
 export def Publish(ch: channel, method: string, params: dict<any>): void
-  if ch_status(ch) == "open"
       var message = Format(method, params)
       call ch_sendexpr(ch, message)
-   else
-      echom "Invalid Publish"
-  endif
 enddef
 
 export def Reply(ch: channel, id: number, result: string): void
