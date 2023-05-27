@@ -23,10 +23,18 @@ command! LSClientHighlightUpdate highlight.Update()
 # command! LSClientWindowDiagnostics call lsc#diagnostics#showLocationList()
 # command! LSClientLineDiagnostics call lsc#diagnostics#echoForLine()
 
+def IsChannelActiveForFileType(filetype: string): bool
+  try
+    return ch_status(lsc#server#servers()[g:lsc_servers_by_filetype[filetype]].channel) == "open"
+  catch
+  endtry
+  return false
+enddef
+
 def IfEnabled(Cb: func): void
     if !has_key(g:lsc_servers_by_filetype, &filetype) | return | endif
     if !&modifiable | return | endif
-    if !lsc#server#filetypeActive(&filetype) | return | endif
+    if !IsChannelActiveForFileType(&filetype) | return | endif
     Cb()
 enddef
 

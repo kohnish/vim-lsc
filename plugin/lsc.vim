@@ -141,6 +141,13 @@ augroup LSC
   endif
 augroup END
 
+function s:IsChannelActiveForFileType(filetype)
+  try
+    return ch_status(lsc#server#servers()[g:lsc_servers_by_filetype[a:filetype]].channel) == "open"
+  catch
+  endtry
+  return v:false
+endfunction
 " Run `function` if LSC is enabled for the current filetype.
 "
 " This should only be used for the autocommands which are known to only fire for
@@ -148,8 +155,17 @@ augroup END
 function! s:IfEnabled(function, ...) abort
   if !has_key(g:lsc_servers_by_filetype, &filetype) | return | endif
   if !&modifiable | return | endif
-  if !lsc#server#filetypeActive(&filetype) | return | endif
+  if !s:IsChannelActiveForFileType(&filetype) | return | endif
   call call(a:function, a:000)
+endfunction
+
+function s:HasConfingForFileType(filetype)
+  try
+    let l:server = lsc#server#servers()[g:lsc_servers_by_filetype[a:filetype]]
+    return get(l:server.config, 'enabled', v:true)
+  catch
+  endtry
+  return v:false
 endfunction
 
 function! s:OnOpen() abort
@@ -157,7 +173,7 @@ function! s:OnOpen() abort
   if expand('%') =~# '\vfugitive:///' | return | endif
   call lsc#config#mapKeys()
   if !&modifiable | return | endif
-  if !lsc#server#filetypeActive(&filetype) | return | endif
+  if !s:HasConfingForFileType(&filetype) | return | endif
   call lsc#file#onOpen()
 endfunction
 
