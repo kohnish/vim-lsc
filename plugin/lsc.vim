@@ -41,7 +41,7 @@ command! -nargs=? LSClientFindCodeActions
     \ call lsc#edit#findCodeActions(lsc#edit#filterActions(<args>))
 command! LSClientRestartServer call lsc#server#restart()
 command! LSClientDisable call lsc#server#disable(v:false)
-command! LSClientEnable call lsc#server#enable()
+command! LSClientEnable call lsc#server#restart()
 command! LSClientDisableDiagnosticHighlights call <SID>DisableHighlights()
 command! LSClientEnableDiagnosticHighlights call <SID>EnableHighlights()
 
@@ -68,7 +68,7 @@ function! RegisterLanguageServer(filetype, config) abort
   if !get(l:server.config, 'enabled', v:true) | return | endif
   let l:buffers = s:BuffersOfType(a:filetype)
   if empty(l:buffers) | return | endif
-  if l:server.status ==# 'running'
+  if has_key(l:server, "channel") && ch_status(l:server.channel) == "open"
     for l:buffer in l:buffers
       call lsc#file#track(l:server, l:buffer, a:filetype)
     endfor

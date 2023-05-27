@@ -33,10 +33,6 @@ function! lsc#server#start(server) abort
   call s:Start(a:server, l:proj_root)
 endfunction
 
-function! lsc#server#status(filetype) abort
-  return s:servers[g:lsc_servers_by_filetype[a:filetype]].status
-endfunction
-
 function! lsc#server#servers() abort
   return s:servers
 endfunction
@@ -58,14 +54,10 @@ endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
 function! lsc#server#exit() abort
-  call lsc#common#CleanAllMatchs()
   let l:exit_start = reltime()
   let l:pending = []
   for l:server in values(s:servers)
-      for l:filetype in l:server.filetypes
-          call lsc#common#CleanAllForFile(l:filetype)
-      endfor
-      if s:Kill(l:server, 'exiting', funcref('<SID>OnExit', [l:server.config.name, l:pending]))
+      if s:Kill(l:server, funcref('<SID>OnExit', [l:server.config.name, l:pending]))
           call add(l:pending, l:server.config.name)
       endif
   endfor
@@ -97,16 +89,15 @@ endfunction
 "
 " Calls `OnExit` after the exit is requested. Returns `v:false` if no request
 " was made because the server is not currently running.
-function! s:Kill(server, status, OnExit) abort
+function! s:Kill(server, OnExit) abort
     if has_key(a:server, "channel") && ch_status(a:server.channel) == "open"
-         call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:status, a:OnExit]))
+         call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:OnExit]))
          return v:true
     endif
     return v:false
 endfunction
 
-function! s:HandleShutdownResponse(server, status, OnExit, result) abort
-  let a:server.status = a:status
+function! s:HandleShutdownResponse(server, OnExit, result) abort
   if has_key(a:server, 'channel')
     call lsc#common#Publish(a:server.channel, "exit", {})
     let l:exit_start = reltime()
@@ -131,11 +122,6 @@ function! s:HandleShutdownResponse(server, status, OnExit, result) abort
     endif
   endif
   call a:OnExit()
-endfunction
-
-function! lsc#server#clear() abort
-  let s:servers = {}
-  let s:initialized = v:false
 endfunction
 
 function! lsc#server#restart() abort
@@ -180,13 +166,11 @@ function! s:Start(server, root_dir) abort
   else
     let l:command = a:server.config.command
   endif
-  let a:server.status = 'starting'
   let l:ch = lsc#server#open(l:command,
       \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
       \ a:server.on_err, a:server.on_exit)
   let a:server.channel = l:ch
   if type(a:server.channel) == type(v:null)
-    let a:server.status = 'failed'
     return
   endif
   if exists('g:lsc_trace_level') &&
@@ -206,7 +190,6 @@ endfunction
 
 function! s:OnInitialize(server, init_result) abort
   call lsc#common#ResetRestartCounter()
-  let a:server.status = 'running'
   call a:server.notify('initialized', {})
   if type(a:init_result) == type({}) && has_key(a:init_result, 'capabilities')
     let a:server.capabilities =
@@ -267,38 +250,13 @@ function! lsc#server#filetypeActive(filetype) abort
   endtry
 endfunction
 
-function! lsc#server#kill(job_id, filetypes) abort
-  let l:channel = job_getchannel(a:job_id)
-  if (l:channel == "open")
-    call ch_close(l:channel)
-  endif
-  if (job_status(a:job_id) == "run")
-    call job_stop(a:job_id, "term")
-  endif
-endfunction
-
-function! lsc#server#reset_start() abort
-  call lsc#server#clear()
-  call LSCServerRegister()
-endfunction
-
 function! lsc#server#disable(do_restart) abort
   call lsc#server#exit()
-  " for l:server in values(s:servers)
-  "   call l:server.notify('exit', {})
-  "   if has_key(l:server, "channel")
-  "       let l:job_id = ch_getjob(l:server.channel)
-  "       let l:filetypes = l:server.filetypes
-  "       call timer_start(100, {_->lsc#server#kill(l:job_id, l:filetypes)})
-  "   endif
-  " endfor
+  let s:servers = {}
+  let s:initialized = v:false
   if a:do_restart
-    call timer_start(1000, {_->lsc#server#reset_start()})
+    call LSCServerRegister()
   endif
-endfunction
-
-function! lsc#server#enable() abort
-    call lsc#server#restart()
 endfunction
 
 function! lsc#server#register(filetype, config) abort
@@ -331,12 +289,7 @@ function! lsc#server#register(filetype, config) abort
     let l:server.languageId[a:filetype] = l:languageId
     return l:server
   endif
-  let l:initial_status = 'not started'
-  if !get(l:config, 'enabled', v:true)
-    let l:initial_status = 'disabled'
-  endif
   let l:server = {
-      \ 'status': l:initial_status,
       \ 'logs': [],
       \ 'filetypes': [a:filetype],
       \ 'languageId': {},
@@ -345,7 +298,6 @@ function! lsc#server#register(filetype, config) abort
       \}
   let l:server.languageId[a:filetype] = l:languageId
   function! l:server.notify(method, params) abort
-    if l:self.status !=# 'running' | return v:false | endif
     let l:params = lsc#config#messageHook(l:self, a:method, a:params)
     if l:params is lsc#config#skip() | return v:false | endif
     call lsc#common#Publish(l:self.channel, a:method, l:params)
@@ -363,20 +315,6 @@ function! lsc#server#register(filetype, config) abort
     call lsc#message#error('StdErr from '.l:self.config.name.': '.a:message)
   endfunction
   function! l:server.on_exit() abort
-    let l:old_status = l:self.status
-    if l:old_status ==# 'starting'
-      let l:self.status= 'failed'
-      let l:message = 'Failed to initialize server "'.l:self.config.name.'".'
-      if l:self.config.name != string(l:self.config.command)
-        let l:message .= ' Failing command is: '.string(l:self.config.command)
-      endif
-      call lsc#message#error(l:message)
-    elseif l:old_status ==# 'exiting'
-      let l:self.status= 'exited'
-    elseif l:old_status ==# 'running'
-      let l:self.status = 'unexpected exit'
-      call lsc#message#error('Command exited unexpectedly: '.l:self.config.name)
-    endif
     call lsc#common#CleanAllMatchs()
     for l:filetype in l:self.filetypes
       call lsc#common#CleanAllForFile(l:filetype)

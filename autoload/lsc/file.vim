@@ -37,7 +37,7 @@ function! lsc#file#onOpen() abort
     let l:bufnr = bufnr('%')
     for l:server in lsc#server#forFileType(&filetype)
       if !get(l:server.config, 'enabled', v:true) | continue | endif
-      if l:server.status ==# 'running'
+      if has_key(l:server, "channel") && ch_status(l:server.channel) == "open"
         call s:DidOpen(l:server, l:bufnr, l:file_path, &filetype)
       else
         call lsc#server#start(l:server)
