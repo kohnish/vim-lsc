@@ -23,27 +23,14 @@ if !exists('s:initialized')
 endif
 
 function! lsc#server#start(server) abort
-  " When a custom global dir is set such as g:lsc_kotlin_project_root
-  " Useful for multi-language projects with a different root
-  let lang_proj_root_var_str = "g:lsc_" .. &filetype .. "_project_root"
-  if exists(lang_proj_root_var_str)
-    execute "let lang_proj_root = " .. lang_proj_root_var_str
-    call s:Start(a:server, lang_proj_root)
-    return
-  endif
-
-  " Get project root by current file by calling user function
-  " Useful for opening a file from nowhere
-  if exists('g:lsc_derive_proj_root_by_file_path') && g:lsc_derive_proj_root_by_file_path
-    let l:proj_root = LSClientDeriveProjRootFunc(expand('%:p'))
-    if !empty(l:proj_root)
-        call s:Start(a:server, l:proj_root)
-        return
+  let l:proj_root = getcwd()
+  if exists('g:lsc_get_proj_root_func') && g:lsc_get_proj_root_func
+    let l:user_proj_root = LSClientGetProjRootFunc()
+    if !empty(l:user_proj_root)
+        let l:proj_root = l:user_proj_root
     endif
   endif
-
-  " Default
-  call s:Start(a:server, getcwd())
+  call s:Start(a:server, l:proj_root)
 endfunction
 
 function! lsc#server#status(filetype) abort
