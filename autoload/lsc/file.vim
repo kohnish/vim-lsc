@@ -56,7 +56,7 @@ function! lsc#file#onClose(full_path, filetype) abort
   if !lsc#server#filetypeActive(a:filetype) | return | endif
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
   for l:server in lsc#server#forFileType(a:filetype)
-    call l:server.notify('textDocument/didClose', l:params)
+    call lsc#common#Publish(l:server.channel, 'textDocument/didClose', l:params)
   endfor
 endfunction
 
@@ -65,7 +65,7 @@ function! lsc#file#onWrite(full_path, filetype) abort
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
   for l:server in lsc#server#forFileType(a:filetype)
     if !l:server.capabilities.textDocumentSync.sendDidSave | continue | endif
-    call l:server.notify('textDocument/didSave', l:params)
+    call lsc#common#Publish(l:server.channel, l:params)
   endfor
 endfunction
 
@@ -89,14 +89,13 @@ function! s:DidOpen(server, bufnr, file_path, filetype) abort
       \    'languageId': a:server.languageId[a:filetype],
       \   }
       \ }
-  if a:server.notify('textDocument/didOpen', l:params)
-    let s:file_versions[a:file_path] = l:version
-    if get(g:, 'lsc_enable_incremental_sync', v:true)
-        \ && a:server.capabilities.textDocumentSync.incremental
-      let s:file_content[a:file_path] = l:buffer_content
-    endif
-    doautocmd <nomodeline> User LSCOnChangesFlushed
+  call lsc#common#Publish(a:server.channel, 'textDocument/didOpen', l:params)
+  let s:file_versions[a:file_path] = l:version
+  if get(g:, 'lsc_enable_incremental_sync', v:true)
+      \ && a:server.capabilities.textDocumentSync.incremental
+    let s:file_content[a:file_path] = l:buffer_content
   endif
+  doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction
 
 " Mark all files of type `filetype` as untracked.
@@ -141,7 +140,7 @@ function! s:FlushIfChanged(file_path, filetype) abort
 
     let l:server = lsc#server#forFileType(a:filetype)[0]
     let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:server.capabilities.textDocumentSync.incremental)
-    call l:server.notify('textDocument/didChange', l:params)
+    call lsc#common#Publish(l:server.channel, 'textDocument/didChange', l:params)
     doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction
 

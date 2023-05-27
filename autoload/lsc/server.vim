@@ -220,13 +220,13 @@ endfunction
 
 function! s:OnInitialize(server, init_result) abort
   call lsc#common#ResetRestartCounter()
-  call a:server.notify('initialized', {})
+  call lsc#common#Publish(a:server.channel, 'initialized', {})
   if type(a:init_result) == type({}) && has_key(a:init_result, 'capabilities')
     let a:server.capabilities =
         \ lsc#capabilities#normalize(a:init_result.capabilities)
   endif
   if has_key(a:server.config, 'workspace_config')
-    call a:server.notify('workspace/didChangeConfiguration', {
+    call lsc#common#Publish(a:server.channel, 'workspace/didChangeConfiguration', {
         \ 'settings': a:server.config.workspace_config
         \})
   endif
@@ -327,13 +327,6 @@ function! lsc#server#register(filetype, config) abort
       \ 'capabilities': lsc#capabilities#defaults()
       \}
   let l:server.languageId[a:filetype] = l:languageId
-
-  function! l:server.notify(method, params) abort
-    let l:params = lsc#config#messageHook(l:self, a:method, a:params)
-    if l:params is lsc#config#skip() | return v:false | endif
-    call lsc#common#Publish(l:self.channel, a:method, l:params)
-    return v:true
-  endfunction
 
   let s:servers[l:config.name] = l:server
   return l:server
