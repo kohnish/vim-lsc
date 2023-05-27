@@ -39,12 +39,12 @@ function s:Get_workspace_config(config, item) abort
 endfunction
 
 function! s:Server_reset_state(filetypes) abort
-  let s:servers = {}
-  let s:initialized = v:false
   call lsc#common#CleanAllMatchs()
   for l:filetype in a:filetypes
     call lsc#common#CleanAllForFile(l:filetype)
   endfor
+  let s:servers = {}
+  let s:initialized = v:false
 endfunction
 
 function! s:Server_print_error(message, config) abort
