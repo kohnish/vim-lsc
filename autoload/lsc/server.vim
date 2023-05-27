@@ -321,7 +321,6 @@ function! lsc#server#register(filetype, config) abort
   endif
 
   let l:server = {
-      \ 'logs': [],
       \ 'filetypes': [a:filetype],
       \ 'languageId': {},
       \ 'config': l:config,
@@ -355,8 +354,6 @@ function! s:Dispatch(server, msg) abort
     if lsc#config#shouldEcho(a:server, a:msg["params"].type)
       call lsc#message#log(a:msg["params"].message, a:msg["params"].type)
     endif
-    call lsc#util#shift(a:server.logs, 100,
-        \ {'message': a:msg["params"].message, 'type': a:msg["params"].type})
   elseif l:method ==? 'window/progress'
     if has_key(a:msg["params"], 'message')
       let l:full = a:msg["params"]['title'] . a:msg["params"]['message']
