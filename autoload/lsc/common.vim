@@ -454,16 +454,16 @@ export def ResetRestartCounter(): void
     current_restart = 0
 enddef
 export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
-    # if ch_status(ch) != "open"
-    #     if current_restart < max_restart
-    #         echom "Restarting language server"
-    #         lsc#server#restart()
-    #         current_restart += 1
-    #     else
-    #         echom "Give up restarting language server"
-    #     endif
-    #     return
-    # endif
+    if ch_status(ch) != "open"
+        if current_restart < max_restart
+            echom "Restarting language server"
+            lsc#server#restart()
+            current_restart += 1
+        else
+            echom "Give up restarting language server"
+        endif
+        return
+    endif
     if ch_status(ch) == "open"
         ch_sendexpr(ch, Format(method, params), {"callback": (channel, msg) => Cb(msg)})
     else
