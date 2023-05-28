@@ -7,6 +7,12 @@ import autoload "../../lazyload/diagnostics.vim"
 import autoload "../../lazyload/cursor.vim"
 import autoload "../../lazyload/signature_help.vim"
 
+var g_null_channel: channel
+
+export def NullChannel(): channel
+    return g_null_channel
+enddef
+
 export def IsCompletable(): bool
     var pos = col(".")
     var line = getline(".")

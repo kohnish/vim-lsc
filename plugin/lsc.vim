@@ -68,7 +68,7 @@ function! RegisterLanguageServer(filetype, config) abort
   if !get(l:server.config, 'enabled', v:true) | return | endif
   let l:buffers = s:BuffersOfType(a:filetype)
   if empty(l:buffers) | return | endif
-  if has_key(l:server, "channel") && ch_status(l:server.channel) == "open"
+  if ch_status(l:server.channel) == "open"
     for l:buffer in l:buffers
       call lsc#file#track(l:server, l:buffer, a:filetype)
     endfor

@@ -94,7 +94,7 @@ endfunction
 " Calls `OnExit` after the exit is requested. Returns `v:false` if no request
 " was made because the server is not currently running.
 function! s:Kill(server, AfterShutdownCb) abort
-    if has_key(a:server, "channel") && ch_status(a:server.channel) == "open"
+    if ch_status(a:server.channel) == "open"
          call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:AfterShutdownCb]))
          return v:true
     endif
@@ -102,28 +102,26 @@ function! s:Kill(server, AfterShutdownCb) abort
 endfunction
 
 function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
-  if has_key(a:server, 'channel')
-    call lsc#common#Publish(a:server.channel, "exit", {})
-    let l:exit_start = reltime()
-    while ch_status(a:server.channel) == "open" && reltimefloat(reltime(l:exit_start)) <= 3.0
-        sleep 100m
-    endwhile
-    if ch_status(a:server.channel) == "open"
-        call lsc#message#error("Forcing shutdown")
-        let l:job_id = ch_getjob(a:server.channel)
-        let l:channel = job_getchannel(l:job_id)
-        if (l:channel == "open")
-          call ch_close(l:channel)
-        endif
-        sleep 100ms
-        if (job_status(l:job_id) == "run")
-          call job_stop(l:job_id, "term")
-        endif
-        sleep 100ms
-        if (job_status(l:job_id) == "run")
-          call job_stop(l:job_id, "kill")
-        endif
-    endif
+  call lsc#common#Publish(a:server.channel, "exit", {})
+  let l:exit_start = reltime()
+  while ch_status(a:server.channel) == "open" && reltimefloat(reltime(l:exit_start)) <= 3.0
+      sleep 100m
+  endwhile
+  if ch_status(a:server.channel) == "open"
+      call lsc#message#error("Forcing shutdown")
+      let l:job_id = ch_getjob(a:server.channel)
+      let l:channel = job_getchannel(l:job_id)
+      if (l:channel == "open")
+        call ch_close(l:channel)
+      endif
+      sleep 100ms
+      if (job_status(l:job_id) == "run")
+        call job_stop(l:job_id, "term")
+      endif
+      sleep 100ms
+      if (job_status(l:job_id) == "run")
+        call job_stop(l:job_id, "kill")
+      endif
   endif
   call lsc#message#log(a:server.config.name .. " has shut down", 3)
   call a:AfterShutdownCb()
@@ -162,7 +160,7 @@ endfunction
 
 " Start `server` if it isn't already running.
 function! s:Start(server, root_dir) abort
-  if has_key(a:server, 'channel') && ch_status(a:server.channel) == "open"
+  if ch_status(a:server.channel) == "open"
     call lsc#message#log("Server is already running", 3)
     return
   endif
@@ -302,11 +300,11 @@ function! lsc#server#register(filetype, config) abort
 
   let l:server = {
       \ 'filetypes': [a:filetype],
-      \ 'languageId': {},
+      \ 'languageId': {a:filetype: l:languageId},
       \ 'config': l:config,
-      \ 'capabilities': lsc#capabilities#defaults()
+      \ 'capabilities': lsc#capabilities#defaults(),
+      \ 'channel': lsc#common#NullChannel()
       \}
-  let l:server.languageId[a:filetype] = l:languageId
 
   let s:servers[l:config.name] = l:server
   return l:server
