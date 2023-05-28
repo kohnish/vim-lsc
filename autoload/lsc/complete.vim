@@ -1,43 +1,4 @@
-" Use InsertCharPre to reliably know what is typed, but don't send the
-" completion request until the file reflects the inserted character. Track typed
-" characters in `s:next_char` and use CursorMovedI to act on the change.
-"
-" Every typed character can potentially start a completion request:
-" - "Trigger" characters (as specified during initialization) always start a
-"   completion request when they are typed
-" - Characters that match '\w' start a completion in words of at least length 3
-
-function! lsc#complete#insertCharPre() abort
-  let s:next_char = v:char
-endfunction
-
-let s:sighelp_timer = -1
-function! lsc#complete#sig_help_with_timer() abort
-    call lsc#common#GetSignatureHelp()
-    let s:sighelp_timer = -1
-endfunction
-
-function! lsc#complete#textChanged() abort
-  if &paste | return | endif
-  if !g:lsc_enable_autocomplete | return | endif
-  " This may be <BS> or similar if not due to a character typed
-  if empty(s:next_char) | return | endif
-  call s:typedCharacter()
-  let s:next_char = ''
-  " Might help input becoming slower.
-  if s:sighelp_timer == -1
-      let s:sighelp_timer = timer_start(200, {_->lsc#complete#sig_help_with_timer()})
-  endif
-endfunction
-
-function! s:typedCharacter() abort
-  if lsc#common#IsCompletable()
-    call s:startCompletion(v:true)
-  endif
-endfunction
-
 if !exists('s:initialized')
-  let s:next_char = ''
   let s:initialized = v:true
 endif
 
@@ -48,12 +9,6 @@ function! lsc#complete#clean(filetype) abort
     call setbufvar(l:buffer.bufnr, 'lsc_is_completing', v:false)
   endfor
 endfunction
-
-augroup LscCompletion
-  autocmd!
-  autocmd CompleteDone * let b:lsc_is_completing = v:false
-      \ | silent! unlet b:lsc_completion | let s:next_char = ''
-augroup END
 
 function! s:startCompletion(isAuto) abort
   let b:lsc_is_completing = v:true
@@ -66,7 +21,7 @@ function! s:startCompletion(isAuto) abort
   \     [function('<SID>OnSkip', [bufnr('%')])]))
 endfunction
 
-function! s:OnResult(isAuto, completion) abort
+function! lsc#complete#OnResult(isAuto, completion) abort
   let l:items = a:completion.result.items
   if (a:isAuto)
     call s:SuggestCompletions(l:items)
@@ -75,7 +30,7 @@ function! s:OnResult(isAuto, completion) abort
   endif
 endfunction
 
-function! s:OnSkip(bufnr, completion) abort
+function! lsc#complete#OnSkip(bufnr, completion) abort
   call setbufvar(a:bufnr, 'lsc_is_completing', v:false)
 endfunction
 
@@ -107,27 +62,5 @@ function! s:SetCompleteOpt() abort
     " touching other like `preview`
     setl completeopt-=longest
     setl completeopt+=menu,menuone,noinsert
-  endif
-endfunction
-
-function! lsc#complete#complete(findstart, base) abort
-  if a:findstart
-    if !exists('b:lsc_completion')
-      let l:searchStart = reltime()
-      call s:startCompletion(v:false)
-      let l:timeout = get(g:, 'lsc_complete_timeout', 5)
-      while !exists('b:lsc_completion')
-            \ && reltimefloat(reltime(l:searchStart)) <= l:timeout
-        sleep 100m
-      endwhile
-      if !exists('b:lsc_completion') || len(b:lsc_completion) == 0
-        return -3
-      endif
-      return  lsc#common#FindStart(b:lsc_completion) - 1
-    endif
-  else
-    " We'll get an error if b:lsc_completion doesn't exist, which is good,
-    " we want to be vocal about such failures.
-    return s:CompletionItems(a:base, b:lsc_completion)
   endif
 endfunction

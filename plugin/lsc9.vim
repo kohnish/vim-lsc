@@ -9,6 +9,7 @@ import autoload "../lazyload/format.vim"
 import autoload "../lazyload/highlight.vim"
 import autoload "../lazyload/util.vim"
 import autoload "../lazyload/cursor.vim"
+import autoload "../lazyload/complete.vim"
 
 command! LSClientDiagnosticHover diagnostics.DiagHover()
 command! LSClientIncomingCalls hierarchy.CallHierarchy("incoming")
@@ -58,4 +59,6 @@ augroup LSC9
     autocmd WinEnter * IfEnabled(diagnostics.CursorOnWinEnter)
     autocmd User LSCOnChangesFlushed IfEnabled(diagnostics.CursorOnChangesFlushed)
     autocmd WinLeave,InsertEnter * IfEnabled(cursor.Clean)
+    autocmd TextChangedI * IfEnabled(complete.TextChanged)
+    autocmd InsertCharPre * IfEnabled(complete.InsertCharPre)
 augroup END
