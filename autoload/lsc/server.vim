@@ -131,24 +131,6 @@ function! lsc#server#restart() abort
   call lsc#server#disable(v:true)
 endfunction
 
-function! lsc#server#open(command, On_message, On_err, On_exit) abort
-  let l:job_options = {'in_mode': 'lsp',
-      \ 'out_mode': 'lsp',
-      \ 'noblock': 1,
-      \ 'out_cb': {_, message -> a:On_message(message)},
-      \ 'err_io': 'pipe', 'err_mode': 'nl',
-      \ 'err_cb': {_, message -> a:On_err(message)},
-      \ 'exit_cb': {_, __ -> a:On_exit()}}
-  let l:job = job_start(a:command, l:job_options)
-  " call ch_logfile("/var/tmp/t", "w")
-  let l:channel = job_getchannel(l:job)
-
-  if type(l:channel) == type(v:null)
-    return v:null
-  endif
-
-  return l:channel
-endfunction
 " A server call explicitly initiated by the user for the current buffer.
 "
 " Expects the call to succeed and shows an error if it does not.
@@ -164,22 +146,28 @@ function! s:Start(server, root_dir) abort
     call lsc#message#log("Server is already running", 3)
     return
   endif
-  if type( a:server.config.command) == type({_ -> _})
+  if type(a:server.config.command) == type({_ -> _})
     let l:command = a:server.config.command()
   else
     let l:command = a:server.config.command
   endif
-  let l:ch = lsc#server#open(
-              \ l:command,
-              \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
-              \ {lsp_err_msg -> s:Server_print_error(lsp_err_msg, a:server.config)},
-              \ { -> lsc#common#Buffers_reset_state(a:server.filetypes)})
-  let a:server.channel = l:ch
-  if type(a:server.channel) == type(v:null)
+
+  let a:server.channel = job_getchannel(job_start(l:command, {
+              \ 'in_mode': 'lsp',
+              \ 'out_mode': 'lsp',
+              \ 'err_io': 'pipe',
+              \ 'err_mode': 'nl',
+              \ 'noblock': 1,
+              \ 'out_cb': {_, lsp_message -> s:Dispatch(a:server, lsp_message)},
+              \ 'err_cb': {_, lsp_err_msg -> s:Server_print_error(lsp_err_msg, a:server.config)},
+              \ 'exit_cb': {_,__ -> lsc#common#Buffers_reset_state(a:server.filetypes)}
+              \ }
+              \ ))
+  if string(a:server.channel) == 'channel fail'
     return
   endif
-  if exists('g:lsc_trace_level') &&
-      \ index(['off', 'messages', 'verbose'], g:lsc_trace_level) >= 0
+
+  if exists('g:lsc_trace_level') && index(['off', 'messages', 'verbose'], g:lsc_trace_level) >= 0
     let l:trace_level = g:lsc_trace_level
   else
     let l:trace_level = 'off'
@@ -190,7 +178,6 @@ function! s:Start(server, root_dir) abort
       \ 'capabilities': s:ClientCapabilities(),
       \ 'trace': l:trace_level
       \}
-
   let l:params = lsc#config#messageHook(a:server, 'initialize', l:params)
   call lsc#common#Send(a:server.channel, 'initialize', l:params, funcref('<SID>OnInitialize', [a:server]))
 endfunction
