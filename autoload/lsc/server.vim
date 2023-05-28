@@ -83,21 +83,18 @@ function! lsc#server#exit() abort
       endif
   endfor
   if len(l:pending) > 0
-      echo "Shutting down " .. len(l:pending) .. " language server(s)"
       let l:reported = []
       while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 5.0
           if reltimefloat(reltime(l:exit_start)) >= 0.1 && l:pending != l:reported
-              echo 'Waiting for language server exit: ' .. join(l:pending, ', ')
               let l:reported = copy(l:pending)
           endif
           sleep 100m
       endwhile
       let l:len_servers = len(l:pending)
       if (l:len_servers) > 0
-          echom "Failed to shut down " .. len(l:pending) .. " language server(s)"
+          call lsc#message#error("Failed to shut down " .. len(l:pending) .. " language server(s)")
           return v:false
       endif
-      echom "Shutdown successful"
   endif
   return v:true
 endfunction
@@ -122,7 +119,7 @@ function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
         sleep 100m
     endwhile
     if ch_status(a:server.channel) == "open"
-        echom "Force shutting down"
+        call lsc#message#error("Forcing shutdown")
         let l:job_id = ch_getjob(a:server.channel)
         let l:channel = job_getchannel(l:job_id)
         if (l:channel == "open")
@@ -138,6 +135,7 @@ function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
         endif
     endif
   endif
+  call lsc#message#log(a:server.config.name .. " has shut down", 3)
   call a:AfterShutdownCb()
 endfunction
 
@@ -175,7 +173,7 @@ endfunction
 " Start `server` if it isn't already running.
 function! s:Start(server, root_dir) abort
   if has_key(a:server, 'channel') && ch_status(a:server.channel) == "open"
-    echom "Server is already running"
+    call lsc#message#log("Server is already running", 3)
     return
   endif
   if type( a:server.config.command) == type({_ -> _})
@@ -222,6 +220,7 @@ function! s:OnInitialize(server, init_result) abort
         \})
   endif
   call lsc#file#trackAll(a:server)
+  call lsc#message#log(a:server.config.name .. " is ready", 3)
 endfunction
 
 " Missing value means no support
