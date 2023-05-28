@@ -417,3 +417,23 @@ export def Buffers_reset_state(filetypes: list<any>): void
         lsc#common#CleanAllForFile(filetype)
     endfor
 enddef
+
+export def FileOnChange(...args: list<string>): void
+    var file_path = lsc#common#FullAbsPath()
+    var filetype = &filetype
+    if len(args) == 1
+        file_path = args[0]
+        filetype = getbufvar(lsc#file#bufnr(file_path), '&filetype')
+    endif
+    if has_key(lsc#file#flush_timers(), file_path)
+        timer_stop(lsc#file#flush_timers()[file_path])
+    endif
+    var timers = lsc#file#flush_timers()
+    timers[file_path] = timer_start(get(g:, 'lsc_change_debounce_time', 500),
+                \ (_) => lsc#file#flush_if_changed(file_path, filetype),
+                \ {'repeat': 1})
+enddef
+
+export def FileFlushChanges(): void
+    lsc#file#flush_if_changed(lsc#common#FullAbsPath(), &filetype)
+enddef

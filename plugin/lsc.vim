@@ -118,46 +118,13 @@ augroup LSC
   " autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
 
   autocmd BufNewFile,BufReadPost * call <SID>OnOpen()
-  autocmd TextChanged,TextChangedI,CompleteDone *
-      \ call <SID>IfEnabled('lsc#file#onChange')
-  autocmd BufLeave * call <SID>IfEnabled('lsc#file#flushChanges')
   autocmd BufUnload * call <SID>OnClose()
   autocmd BufWritePost * call <SID>OnWrite()
-
-  " " Move is too heavy
-  " " autocmd CursorMoved * call <SID>IfEnabled('lsc#cursor#onMove')
-  " autocmd CursorHold * call <SID>IfEnabled('lsc#cursor#onHold')
-  " autocmd WinEnter * call <SID>IfEnabled('lsc#cursor#onWinEnter')
-  " autocmd WinLeave,InsertEnter * call <SID>IfEnabled('lsc#cursor#clean')
-  " autocmd User LSCOnChangesFlushed
-  "     \ call <SID>IfEnabled('lsc#cursor#onChangesFlushed')
-
-  " autocmd TextChangedI * call <SID>IfEnabled('lsc#complete#textChanged')
-  " autocmd InsertCharPre * call <SID>IfEnabled('lsc#complete#insertCharPre')
-
   autocmd VimLeave * call lsc#server#exit()
   if exists('##ExitPre')
     autocmd ExitPre * let g:_lsc_is_exiting = v:true
   endif
 augroup END
-
-function s:IsChannelActiveForFileType(filetype)
-  try
-    return ch_status(lsc#server#servers()[g:lsc_servers_by_filetype[a:filetype]].channel) == "open"
-  catch
-  endtry
-  return v:false
-endfunction
-" Run `function` if LSC is enabled for the current filetype.
-"
-" This should only be used for the autocommands which are known to only fire for
-" the current buffer where '&filetype' can be trusted.
-function! s:IfEnabled(function, ...) abort
-  if !has_key(g:lsc_servers_by_filetype, &filetype) | return | endif
-  if !&modifiable | return | endif
-  if !s:IsChannelActiveForFileType(&filetype) | return | endif
-  call call(a:function, a:000)
-endfunction
 
 function s:HasConfingForFileType(filetype)
   try

@@ -25,7 +25,7 @@ enddef
 
 def StartCompletion(isAuto: bool): void
     b:lsc_is_completing = true
-    lsc#file#flushChanges()
+    lsc#common#FileFlushChanges()
     var params = lsc#params#documentPosition()
     var server = lsc#server#forFileType(&filetype)
     lsc#common#Send(server.channel, 'textDocument/completion', params,

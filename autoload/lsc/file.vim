@@ -10,6 +10,10 @@ if !exists('s:initialized')
   let s:normalized_paths = {}
 endif
 
+function lsc#file#flush_timers() abort
+    return s:flush_timers
+endfunction
+
 " Send a 'didOpen' message for all open buffers with a tracked file type for a
 " running server.
 function! lsc#file#trackAll(server) abort
@@ -32,7 +36,7 @@ endfunction
 function! lsc#file#onOpen() abort
   let l:file_path = lsc#common#FullAbsPath()
   if has_key(s:file_versions, l:file_path)
-    call lsc#file#flushChanges()
+    call lsc#common#FileFlushChanges()
   else
     let l:bufnr = bufnr('%')
     let l:server = lsc#server#forFileType(&filetype)
@@ -65,11 +69,6 @@ function! lsc#file#onWrite(full_path, filetype) abort
   if l:server.capabilities.textDocumentSync.sendDidSave
     call lsc#common#Publish(l:server.channel, l:params)
   endif
-endfunction
-
-" Flushes changes for the current buffer.
-function! lsc#file#flushChanges() abort
-  call s:FlushIfChanged(lsc#common#FullAbsPath(), &filetype)
 endfunction
 
 " Send the 'didOpen' message for a file.
@@ -109,26 +108,9 @@ function! lsc#file#clean(filetype) abort
   endfor
 endfunction
 
-function! lsc#file#onChange(...) abort
-  if a:0 >= 1
-    let l:file_path = a:1
-    let l:filetype = getbufvar(lsc#file#bufnr(l:file_path), '&filetype')
-  else
-    let l:file_path = lsc#common#FullAbsPath()
-    let l:filetype = &filetype
-  endif
-  if has_key(s:flush_timers, l:file_path)
-    call timer_stop(s:flush_timers[l:file_path])
-  endif
-  let s:flush_timers[l:file_path] =
-      \ timer_start(get(g:, 'lsc_change_debounce_time', 500),
-      \   {_->s:FlushIfChanged(file_path, filetype)},
-      \   {'repeat': 1})
-endfunction
-
 " Flushes only if `onChange` had previously been called for the file and those
 " changes aren't flushed yet, and the file is tracked by at least one server.
-function! s:FlushIfChanged(file_path, filetype) abort
+function! lsc#file#flush_if_changed(file_path, filetype) abort
     if !has_key(s:flush_timers, a:file_path) | return | endif
     if !has_key(s:file_versions, a:file_path) | return | endif
 

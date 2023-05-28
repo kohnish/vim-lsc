@@ -32,6 +32,9 @@ def IsChannelActiveForFileType(filetype: string): bool
   return false
 enddef
 
+
+# This should only be used for the autocommands which are known to only fire for
+# the current buffer where '&filetype' can be trusted.
 def IfEnabled(Cb: func): void
     if !has_key(g:lsc_servers_by_filetype, &filetype) | return | endif
     if !&modifiable | return | endif
@@ -61,4 +64,6 @@ augroup LSC9
     autocmd WinLeave,InsertEnter * IfEnabled(cursor.Clean)
     autocmd TextChangedI * IfEnabled(complete.TextChanged)
     autocmd InsertCharPre * IfEnabled(complete.InsertCharPre)
+    autocmd TextChanged,TextChangedI,CompleteDone * IfEnabled(lsc#common#FileOnChange)
+    autocmd BufLeave * IfEnabled(lsc#common#FileFlushChanges)
 augroup END

@@ -1,7 +1,7 @@
 let s:popup_id = 0
 
 function! lsc#reference#goToDeclaration(mods, issplit) abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/declaration',
       \ lsc#params#documentPosition(),
       \ lsc#common#GateResult('GoTo',
@@ -9,7 +9,7 @@ function! lsc#reference#goToDeclaration(mods, issplit) abort
 endfunction
 
 function! lsc#reference#goToDefinition(mods, issplit) abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/definition',
       \ lsc#params#documentPosition(),
       \ lsc#common#GateResult('GoTo',
@@ -63,7 +63,7 @@ endfunction
 
 
 function! lsc#reference#findReferences() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentPosition()
   let l:params.context = {'includeDeclaration': v:true}
   call lsc#server#userCall('textDocument/references', l:params,
@@ -71,7 +71,7 @@ function! lsc#reference#findReferences() abort
 endfunction
 
 function! lsc#reference#findImplementations() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/implementation',
       \ lsc#params#documentPosition(),
       \ function('<SID>setQuickFixLocations', ['implementations']))
@@ -144,7 +144,7 @@ function! s:goTo(file, line, character, mods, issplit) abort
 endfunction
 
 function! lsc#reference#hover() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentPosition()
   call lsc#server#userCall('textDocument/hover', l:params,
       \ function('<SID>showHover', [s:hasOpenHover()]))
@@ -296,7 +296,7 @@ endfunction
 " Request a list of symbols in the current document and populate the quickfix
 " list.
 function! lsc#reference#documentSymbols() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/documentSymbol',
       \ lsc#params#textDocument(),
       \ function('<SID>setQuickFixSymbols'))

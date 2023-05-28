@@ -4,7 +4,7 @@ function! lsc#edit#findCodeActions(...) abort
   else
     let l:ActionFilter = function('<SID>ActionMenu')
   endif
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentRange()
   let l:params.context = {'diagnostics': lsc#common#DiagForLine(lsc#common#FullAbsPath(), line('.') - 1)}
 
@@ -78,7 +78,7 @@ function! s:ActionMenu(actions, OnSelected) abort
 endfunction
 
 function! lsc#edit#rename(...) abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   if a:0 >= 1
     let l:new_name = a:1
   else
@@ -97,7 +97,13 @@ endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.
 function! lsc#edit#apply(msg) abort
-  let l:workspace_edit = a:msg
+  if has_key(a:msg, "result")
+      " Rename
+      let l:workspace_edit = a:msg["result"]
+  else
+      " Action
+      let l:workspace_edit = a:msg
+  endif
   if !get(g:, 'lsc_enable_apply_edit', v:true) | return v:false | endif
   if !has_key(l:workspace_edit, 'changes')
       \ && !has_key(l:workspace_edit, 'documentChanges')
@@ -159,7 +165,7 @@ function! s:ApplyAll(changes) abort
     endif
     execute l:cmd
     if !&hidden | update | endif
-    call lsc#file#onChange(l:file_path)
+    call lsc#common#FileOnChange(l:file_path)
   endfor
 endfunction
 

@@ -12,7 +12,7 @@ endfunction
 
 function! s:startCompletion(isAuto) abort
   let b:lsc_is_completing = v:true
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentPosition()
   let l:server = lsc#server#forFileType(&filetype)
   call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
