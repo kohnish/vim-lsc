@@ -1,4 +1,7 @@
 vim9script
+
+import autoload "./signature_help.vim"
+
 # Use InsertCharPre to reliably know what is typed, but don't send the
 # completion request until the file reflects the inserted character. Track typed
 # characters in `s:next_char` and use CursorMovedI to act on the change.
@@ -16,7 +19,7 @@ export def InsertCharPre(): void
 enddef
 
 def Sig_help_with_timer(): void
-    lsc#common#GetSignatureHelp()
+    signature_help.SignatureHelp()
     g_sighelp_timer = -1
 enddef
 

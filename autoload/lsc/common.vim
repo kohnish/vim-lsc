@@ -322,10 +322,6 @@ export def GateResult(name: string, Callback: func, vargs: list<any>): func
     return gates.CreateOrGet(name, Callback, vargs)
 enddef
 
-export def GetSignatureHelp(): void
-     signature_help.SignatureHelp()
-enddef
-
 export def DiagForLine(file: string, line: number): list<any>
     return cursor.ForLine(diagnostics.ForFile(file).lsp_diagnostics, file, line)
 enddef
@@ -400,7 +396,7 @@ export def CompletionItems(base: string, lsp_items: list<any>): list<any>
 enddef
 
 def Format(method: string, params: dict<any>): dict<any>
-  return {'method': method, 'params': params}
+    return {'method': method, 'params': params}
 enddef
 
 export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
@@ -408,7 +404,7 @@ export def Send(ch: channel, method: string, params: dict<any>, Cb: func): void
 enddef
 
 export def Publish(ch: channel, method: string, params: dict<any>): void
-      call ch_sendexpr(ch, Format(method, params))
+    call ch_sendexpr(ch, Format(method, params))
 enddef
 
 export def Reply(ch: channel, id: number, result: string): void
@@ -416,8 +412,8 @@ export def Reply(ch: channel, id: number, result: string): void
 enddef
 
 export def Buffers_reset_state(filetypes: list<any>): void
-  lsc#common#CleanAllMatchs()
-  for filetype in filetypes
-    lsc#common#CleanAllForFile(filetype)
-  endfor
+    lsc#common#CleanAllMatchs()
+    for filetype in filetypes
+        lsc#common#CleanAllForFile(filetype)
+    endfor
 enddef
