@@ -276,56 +276,6 @@ export def QflistTrimRoot(info: dict<any>): list<any>
     return modified_qflist
 enddef
 
-def Incomplete(buffer: list<any>): bool
-    if len(buffer) == 1 | return false | endif
-    var first = remove(buffer, 0)
-    var second = remove(buffer, 0)
-    call insert(buffer, first .. second)
-    return true
-enddef
-
-def ContentLength(headers: list<any>): number
-    for header in headers
-        if header =~? '^Content-Length'
-            var parts = split(header, ':')
-            var length = parts[1]
-            if length[0] ==# ' ' | length = length[1 : ] | endif
-            return str2nr(length)
-        endif
-    endfor
-    return -1
-enddef
-
-export def Dispatch(message: dict<any>, OnMessage: func, callbacks: dict<any>): void
-    if !empty(callbacks)
-        echom "Assert: callback array should be empty"
-    endif
-    if has_key(message, 'method')
-        var method = message.method
-        var params = has_key(message, 'params') ? message.params : {}
-        var id = has_key(message, 'id') ? message.id : v:null
-        OnMessage(message)
-    elseif has_key(message, 'error')
-        var error = message.error
-        var msg = has_key(error, 'message') ? error.message : string(error)
-        lsc#message#error(msg)
-    elseif has_key(message, 'id')
-        var call_id = message['id']
-        if has_key(callbacks, call_id)
-            var Callback = callbacks[call_id][0]
-            unlet callbacks[call_id]
-            Callback(get(message, 'result', v:null))
-        endif
-    else
-        call lsc#message#error('Unknown message type: ' .. string(message))
-    endif
-enddef
-
-export def Consume(server: dict<any>): bool
-    Dispatch(server._buffer[0], server._on_message, server._callbacks)
-    return false
-enddef
-
 export def OsNormalisePath(path: string): string
     if has('win32')
         return substitute(path, '\\', '/', 'g')
@@ -471,4 +421,3 @@ export def Buffers_reset_state(filetypes: list<any>): void
     lsc#common#CleanAllForFile(filetype)
   endfor
 enddef
-
