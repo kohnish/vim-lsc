@@ -287,12 +287,12 @@ function! lsc#server#register(filetype, config) abort
 
   let l:server = {
       \ 'filetypes': [a:filetype],
-      \ 'languageId': {a:filetype: l:languageId},
+      \ 'languageId': {},
       \ 'config': l:config,
       \ 'capabilities': lsc#capabilities#defaults(),
       \ 'channel': lsc#common#NullChannel()
       \}
-
+  let l:server.languageId[a:filetype] = l:languageId
   let s:servers[l:config.name] = l:server
   return l:server
 endfunction
