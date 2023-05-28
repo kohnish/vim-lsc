@@ -407,7 +407,7 @@ export def Publish(ch: channel, method: string, params: dict<any>): void
     call ch_sendexpr(ch, Format(method, params))
 enddef
 
-export def Reply(ch: channel, id: number, result: string): void
+export def Reply(ch: channel, id: number, result: any): void
     ch_sendexpr(ch, {'id': id, 'result': result})
 enddef
 

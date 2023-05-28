@@ -322,7 +322,6 @@ function! s:Dispatch(server, msg) abort
     endif
   elseif l:method ==? 'workspace/applyEdit'
     let l:applied = lsc#edit#apply(a:msg["params"].edit)
-    let l:response = {'applied': l:applied}
     call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
   elseif l:method ==? 'workspace/configuration'
     let l:items = a:msg["params"].items
