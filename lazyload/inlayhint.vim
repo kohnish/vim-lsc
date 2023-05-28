@@ -10,7 +10,12 @@ def InlayHintExists(bnr: number): bool
     return exists('b:inlayhint_prop_list') && !empty(b:inlayhint_prop_list)
 enddef
 
-def InlayHintCb(bnr: number, text_edits: list<dict<any>>): void
+def InlayHintCb(bnr: number, msg: dict<any>): void
+    if !has_key(msg, "result")
+        echom msg
+        return
+    endif
+    var text_edits = msg["result"]
     b:inlayhint_waiting = false
     if b:inlayhint_cancel
         b:inlayhint_cancel = false
