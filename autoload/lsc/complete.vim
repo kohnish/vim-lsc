@@ -49,15 +49,6 @@ function! lsc#complete#clean(filetype) abort
   endfor
 endfunction
 
-function! s:isTrigger(char) abort
-  for l:server in lsc#server#current()
-    if index(l:server.capabilities.completion.triggerCharacters, a:char) >= 0
-      return v:true
-    endif
-  endfor
-  return v:false
-endfunction
-
 augroup LscCompletion
   autocmd!
   autocmd CompleteDone * let b:lsc_is_completing = v:false
@@ -68,17 +59,11 @@ function! s:startCompletion(isAuto) abort
   let b:lsc_is_completing = v:true
   call lsc#file#flushChanges()
   let l:params = lsc#params#documentPosition()
-  " TODO handle multiple servers
-  let l:servers = lsc#server#forFileType(&filetype)
-  if len(l:servers) > 0
-      let l:server = l:servers[0]
-      call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
-      \ lsc#common#GateResult('Complete',
-      \     function('<SID>OnResult', [a:isAuto]),
-      \     [function('<SID>OnSkip', [bufnr('%')])]))
-  else
-       echom "startComletion: No language server"
-  endif
+  let l:server = lsc#server#forFileType(&filetype)
+  call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
+  \ lsc#common#GateResult('Complete',
+  \     function('<SID>OnResult', [a:isAuto]),
+  \     [function('<SID>OnSkip', [bufnr('%')])]))
 endfunction
 
 function! s:OnResult(isAuto, completion) abort

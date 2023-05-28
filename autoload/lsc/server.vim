@@ -58,19 +58,9 @@ function! lsc#server#servers() abort
   return s:servers
 endfunction
 
-" Returns a list of the servers for the current filetype.
-"
-" For now there will only ever be 1 or no values in this list.
-function! lsc#server#current() abort
-  return lsc#server#forFileType(&filetype)
-endfunction
-
-" Returns a list of the servers for [filetype].
-"
-" For now there will only ever be 1 or no values in this list.
 function! lsc#server#forFileType(filetype) abort
   if !has_key(g:lsc_servers_by_filetype, a:filetype) | return [] | endif
-  return [s:servers[g:lsc_servers_by_filetype[a:filetype]]]
+  return s:servers[g:lsc_servers_by_filetype[a:filetype]]
 endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
@@ -166,7 +156,7 @@ endfunction
 " Expects the call to succeed and shows an error if it does not.
 function! lsc#server#userCall(method, params, callback) abort
   " TODO handle multiple servers
-  let l:server = lsc#server#forFileType(&filetype)[0]
+  let l:server = lsc#server#forFileType(&filetype)
   call lsc#common#Send(l:server.channel, a:method, a:params, a:callback)
 endfunction
 

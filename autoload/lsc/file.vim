@@ -35,14 +35,13 @@ function! lsc#file#onOpen() abort
     call lsc#file#flushChanges()
   else
     let l:bufnr = bufnr('%')
-    for l:server in lsc#server#forFileType(&filetype)
-      if !get(l:server.config, 'enabled', v:true) | continue | endif
-      if has_key(l:server, "channel") && ch_status(l:server.channel) == "open"
-        call s:DidOpen(l:server, l:bufnr, l:file_path, &filetype)
-      else
-        call lsc#server#start(l:server)
-      endif
-    endfor
+    let l:server = lsc#server#forFileType(&filetype)
+    if !get(l:server.config, 'enabled', v:true) | continue | endif
+    if has_key(l:server, "channel") && ch_status(l:server.channel) == "open"
+      call s:DidOpen(l:server, l:bufnr, l:file_path, &filetype)
+    else
+      call lsc#server#start(l:server)
+    endif
   endif
 endfunction
 
@@ -55,18 +54,17 @@ function! lsc#file#onClose(full_path, filetype) abort
   endif
   if !lsc#server#filetypeActive(a:filetype) | return | endif
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
-  for l:server in lsc#server#forFileType(a:filetype)
-    call lsc#common#Publish(l:server.channel, 'textDocument/didClose', l:params)
-  endfor
+  let l:server = lsc#server#forFileType(a:filetype)
+  call lsc#common#Publish(l:server.channel, 'textDocument/didClose', l:params)
 endfunction
 
 " Send a `textDocument/didSave` notification if the server may be interested.
 function! lsc#file#onWrite(full_path, filetype) abort
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
-  for l:server in lsc#server#forFileType(a:filetype)
-    if !l:server.capabilities.textDocumentSync.sendDidSave | continue | endif
+  let l:server = lsc#server#forFileType(a:filetype)
+  if l:server.capabilities.textDocumentSync.sendDidSave
     call lsc#common#Publish(l:server.channel, l:params)
-  endfor
+  endif
 endfunction
 
 " Flushes changes for the current buffer.
@@ -138,7 +136,7 @@ function! s:FlushIfChanged(file_path, filetype) abort
     call timer_stop(s:flush_timers[a:file_path])
     unlet s:flush_timers[a:file_path]
 
-    let l:server = lsc#server#forFileType(a:filetype)[0]
+    let l:server = lsc#server#forFileType(a:filetype)
     let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:server.capabilities.textDocumentSync.incremental)
     call lsc#common#Publish(l:server.channel, 'textDocument/didChange', l:params)
     doautocmd <nomodeline> User LSCOnChangesFlushed

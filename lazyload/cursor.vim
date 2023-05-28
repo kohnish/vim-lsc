@@ -155,14 +155,14 @@ export def IsInReference(references: list<any>): number
     return -1
 enddef
 
-def CanHighlightReferences(): bool
-    for current_server in lsc#server#current()
-        if current_server.capabilities.referenceHighlights
-            return true
-        endif
-    endfor
-    return false
-enddef
+# def CanHighlightReferences(): bool
+#     for current_server in lsc#server#current()
+#         if current_server.capabilities.referenceHighlights
+#             return true
+#         endif
+#     endfor
+#     return false
+# enddef
 
 def ConvertReference(reference: dict<any>): dict<any>
     return {'ranges': lsc#convert#rangeToHighlights(reference.range)}
@@ -183,7 +183,7 @@ export def HighlightReferences(force_in_highlight: bool): void
     # var params = lsc#params#documentPosition()
     # var params = util.PlainDocPos()
     var params = util.DocPos()
-    var current_server = lsc#server#forFileType(&filetype)[0]
+    var current_server = lsc#server#forFileType(&filetype)
     server.Request(current_server.channel, 'textDocument/documentHighlight', params, funcref(HandleHighlights, [g_highlights_request, getcurpos(), bufnr('%'), &filetype]))
 enddef
 
