@@ -475,3 +475,11 @@ enddef
 export def Reply(ch: channel, id: number, result: string): void
     ch_sendexpr(ch, {'id': id, 'result': result})
 enddef
+
+export def Buffers_reset_state(filetypes: list<any>): void
+  lsc#common#CleanAllMatchs()
+  for filetype in filetypes
+    lsc#common#CleanAllForFile(filetype)
+  endfor
+enddef
+

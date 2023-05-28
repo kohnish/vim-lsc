@@ -38,15 +38,6 @@ function s:Get_workspace_config(config, item) abort
   return l:workspace_config
 endfunction
 
-function! s:Server_reset_state(filetypes) abort
-  call lsc#common#CleanAllMatchs()
-  for l:filetype in a:filetypes
-    call lsc#common#CleanAllForFile(l:filetype)
-  endfor
-  let s:servers = {}
-  let s:initialized = v:false
-endfunction
-
 function! s:Server_print_error(message, config) abort
   if get(a:config, 'suppress_stderr', v:false) | return | endif
   call lsc#message#error('StdErr from ' .. a:config.name .. a:message)
@@ -183,8 +174,8 @@ endfunction
 
 " Start `server` if it isn't already running.
 function! s:Start(server, root_dir) abort
-  if has_key(a:server, 'channel')
-    " Server is already running
+  if has_key(a:server, 'channel') && ch_status(a:server.channel) == "open"
+    echom "Server is already running"
     return
   endif
   if type( a:server.config.command) == type({_ -> _})
@@ -196,7 +187,7 @@ function! s:Start(server, root_dir) abort
               \ l:command,
               \ {lsp_message -> s:Dispatch(a:server, lsp_message)},
               \ {lsp_err_msg -> s:Server_print_error(lsp_err_msg, a:server.config)},
-              \ { -> s:Server_reset_state(a:server.filetypes)})
+              \ { -> lsc#common#Buffers_reset_state(a:server.filetypes)})
   let a:server.channel = l:ch
   if type(a:server.channel) == type(v:null)
     return
