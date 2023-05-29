@@ -137,6 +137,12 @@ function! s:Start(server, root_dir) abort
     let l:command = a:server.config.command
   endif
 
+  let l:exec = split(l:command)[0]
+  if !executable(l:exec)
+      call lsc#message#log(l:exec .. " is not executable", 3)
+      return
+  endif
+
   let a:server.channel = job_getchannel(job_start(l:command, {
               \ 'in_mode': 'lsp',
               \ 'out_mode': 'lsp',
