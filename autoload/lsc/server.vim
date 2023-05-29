@@ -63,77 +63,48 @@ function! lsc#server#forFileType(filetype) abort
   return s:servers[g:lsc_servers_by_filetype[a:filetype]]
 endfunction
 
-" Wait for all running servers to shut down with a 5 second timeout.
-function! lsc#server#exit() abort
-  let l:exit_start = reltime()
-  let l:pending = []
+function! s:ExitServer(channel, msg)
+    call lsc#common#Publish(a:channel, "exit", {})
+endfunction
+
+function! s:CheckExit(servers, exit_start, do_restart, timer_id)
   for l:server in values(s:servers)
-      if s:Kill(l:server, { -> remove(l:pending, index(l:pending, l:server.config.name))})
-          call add(l:pending, l:server.config.name)
+      if ch_status(l:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= 3.0
+          call timer_start(100, funcref('<SID>CheckExit', [s:servers, a:exit_start, a:do_restart]))
+          return
       endif
   endfor
-  if len(l:pending) > 0
-      let l:reported = []
-      while len(l:pending) > 0 && reltimefloat(reltime(l:exit_start)) <= 5.0
-          if reltimefloat(reltime(l:exit_start)) >= 0.1 && l:pending != l:reported
-              let l:reported = copy(l:pending)
+  for l:server in values(s:servers)
+      if ch_status(l:server.channel) == "open"
+          call lsc#message#error("Forcing shutdown")
+          let l:job_id = ch_getjob(l:server.channel)
+          let l:channel = job_getchannel(l:job_id)
+          if (l:channel == "open")
+            call ch_close(l:channel)
           endif
-          sleep 100m
-      endwhile
-      let l:len_servers = len(l:pending)
-      if (l:len_servers) > 0
-          call lsc#message#error("Failed to shut down " .. len(l:pending) .. " language server(s)")
-          return v:false
+          sleep 100ms
+          if (job_status(l:job_id) == "run")
+            call job_stop(l:job_id, "term")
+          endif
+          sleep 100ms
+          if (job_status(l:job_id) == "run")
+            call job_stop(l:job_id, "kill")
+          endif
       endif
+  endfor
+  if a:do_restart
+      call LSCServerRegister()
   endif
-  return v:true
 endfunction
 
-" Request a 'shutdown' then 'exit'.
-"
-" Calls `OnExit` after the exit is requested. Returns `v:false` if no request
-" was made because the server is not currently running.
-function! s:Kill(server, AfterShutdownCb) abort
-    if ch_status(a:server.channel) == "open"
-         call lsc#common#Send(a:server.channel, 'shutdown', {}, funcref('<SID>HandleShutdownResponse', [a:server, a:AfterShutdownCb]))
-         return v:true
-    endif
-    return v:false
-endfunction
-
-function! s:CheckExit(server, AfterShutdownCb, exit_start, timer)
-  if ch_status(a:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= 3.0
-      call timer_start(100, funcref('<SID>CheckExit', [a:server, a:AfterShutdownCb, a:exit_start]))
-      return
-  endif
-  if ch_status(a:server.channel) == "open"
-      call lsc#message#error("Forcing shutdown")
-      let l:job_id = ch_getjob(a:server.channel)
-      let l:channel = job_getchannel(l:job_id)
-      if (l:channel == "open")
-        call ch_close(l:channel)
+" Wait for all running servers to shut down with a 5 second timeout.
+function! lsc#server#exit(do_restart) abort
+  for l:server in values(s:servers)
+      if ch_status(l:server.channel) == "open"
+           call lsc#common#Send(l:server.channel, 'shutdown', {}, funcref('<SID>ExitServer', [l:server.channel]))
       endif
-      sleep 100ms
-      if (job_status(l:job_id) == "run")
-        call job_stop(l:job_id, "term")
-      endif
-      sleep 100ms
-      if (job_status(l:job_id) == "run")
-        call job_stop(l:job_id, "kill")
-      endif
-  endif
-  call lsc#message#log(a:server.config.name .. " has shut down", 3)
-  call a:AfterShutdownCb()
-endfunction
-
-function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
-  call lsc#common#Publish(a:server.channel, "exit", {})
-  let l:exit_start = reltime()
-  call timer_start(0, funcref('<SID>CheckExit', [a:server, a:AfterShutdownCb, l:exit_start]))
-endfunction
-
-function! lsc#server#restart() abort
-  call lsc#server#disable(v:true)
+  endfor
+  call timer_start(0, funcref('<SID>CheckExit', [s:servers, reltime(), a:do_restart]))
 endfunction
 
 " A server call explicitly initiated by the user for the current buffer.
@@ -247,13 +218,6 @@ function! lsc#server#filetypeActive(filetype) abort
   catch
     return v:false
   endtry
-endfunction
-
-function! lsc#server#disable(do_restart) abort
-  call lsc#server#exit()
-  if a:do_restart
-    call LSCServerRegister()
-  endif
 endfunction
 
 function! lsc#server#register(filetype, config) abort

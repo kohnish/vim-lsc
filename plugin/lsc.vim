@@ -39,9 +39,9 @@ command! -nargs=? LSClientWorkspaceSymbol
     \ call lsc#search#workspaceSymbol(<q-args>)
 command! -nargs=? LSClientFindCodeActions
     \ call lsc#edit#findCodeActions(lsc#edit#filterActions(<args>))
-command! LSClientRestartServer call lsc#server#restart()
-command! LSClientDisable call lsc#server#disable(v:false)
-command! LSClientEnable call lsc#server#restart()
+command! LSClientRestartServer call lsc#server#exit(v:true)
+command! LSClientDisable call lsc#server#exit(v:false)
+command! LSClientEnable call lsc#server#exit(v:true)
 command! LSClientDisableDiagnosticHighlights call <SID>DisableHighlights()
 command! LSClientEnableDiagnosticHighlights call <SID>EnableHighlights()
 
@@ -120,7 +120,7 @@ augroup LSC
   autocmd BufNewFile,BufReadPost * call <SID>OnOpen()
   autocmd BufUnload * call <SID>OnClose()
   autocmd BufWritePost * call <SID>OnWrite()
-  autocmd VimLeave * call lsc#server#exit()
+  autocmd VimLeave * call lsc#server#exit(v:false)
   if exists('##ExitPre')
     autocmd ExitPre * let g:_lsc_is_exiting = v:true
   endif
