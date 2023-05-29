@@ -22,6 +22,50 @@ if !exists('s:initialized')
   let s:initialized = v:true
 endif
 
+function! s:BuffersOfType(filetype) abort
+  let l:buffers = []
+  for l:buffer in getbufinfo({'bufloaded': v:true})
+    if getbufvar(l:buffer.bufnr, '&filetype') == a:filetype &&
+        \ getbufvar(l:buffer.bufnr, '&modifiable') &&
+        \ l:buffer.name !~# '\v^fugitive:///'
+      call add(l:buffers, l:buffer)
+    endif
+  endfor
+  return l:buffers
+endfunction
+
+" RegisterLanguageServer
+"
+" Registers a command as the server to start the first time a file with type
+" filetype is seen. As long as the server is running it won't be restarted on
+" subsequent appearances of this file type. If the server exits it will be
+" restarted the next time a window or tab is entered with this file type.
+function! lsc#server#RegisterLanguageServer(filetype, config) abort
+  let l:server = lsc#server#register(a:filetype, a:config)
+  if !get(l:server.config, 'enabled', v:true) | return | endif
+  let l:buffers = s:BuffersOfType(a:filetype)
+  if empty(l:buffers) | return | endif
+  if ch_status(l:server.channel) == "open"
+    for l:buffer in l:buffers
+      call lsc#file#track(l:server, l:buffer, a:filetype)
+    endfor
+  else
+    call lsc#server#start(l:server)
+  endif
+endfunction
+
+function! s:LSCServerRegister()
+    let cfg = {}
+    if exists('g:lsc_server_commands')
+      let cfg = g:lsc_server_commands
+    endif
+    for [s:filetype, s:config] in items(cfg)
+        if type(s:config) == type({}) || type(s:config) == type({_ -> _}) || executable(split(s:config)[0])
+            call lsc#server#RegisterLanguageServer(s:filetype, s:config)
+        endif
+    endfor
+endfunction
+
 function s:Get_workspace_config(config, item) abort
   if !has_key(a:config, 'workspace_config') | return v:null | endif
   if !has_key(a:item, 'section') || empty(a:item.section)
@@ -99,7 +143,7 @@ function! s:CheckExit(servers, exit_start, do_restart, timer_id)
   if a:do_restart
       let g:lsc_disabled = 0
       call lsc#config#mapKeys()
-      call LSCServerRegister()
+      call s:LSCServerRegister()
   else
       let g:lsc_disabled = 1
       call lsc#config#UnmapKeys()

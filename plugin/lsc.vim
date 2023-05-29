@@ -57,38 +57,6 @@ function! LSCServerStatus() abort
   return lsc#server#status(&filetype)
 endfunction
 
-" RegisterLanguageServer
-"
-" Registers a command as the server to start the first time a file with type
-" filetype is seen. As long as the server is running it won't be restarted on
-" subsequent appearances of this file type. If the server exits it will be
-" restarted the next time a window or tab is entered with this file type.
-function! RegisterLanguageServer(filetype, config) abort
-  let l:server = lsc#server#register(a:filetype, a:config)
-  if !get(l:server.config, 'enabled', v:true) | return | endif
-  let l:buffers = s:BuffersOfType(a:filetype)
-  if empty(l:buffers) | return | endif
-  if ch_status(l:server.channel) == "open"
-    for l:buffer in l:buffers
-      call lsc#file#track(l:server, l:buffer, a:filetype)
-    endfor
-  else
-    call lsc#server#start(l:server)
-  endif
-endfunction
-
-function! s:BuffersOfType(filetype) abort
-  let l:buffers = []
-  for l:buffer in getbufinfo({'bufloaded': v:true})
-    if getbufvar(l:buffer.bufnr, '&filetype') == a:filetype &&
-        \ getbufvar(l:buffer.bufnr, '&modifiable') &&
-        \ l:buffer.name !~# '\v^fugitive:///'
-      call add(l:buffers, l:buffer)
-    endif
-  endfor
-  return l:buffers
-endfunction
-
 function! s:DisableHighlights() abort
   let g:lsc_enable_highlights = v:false
   call lsc#util#winDo('call lsc#highlights#clear()')
@@ -144,7 +112,7 @@ function! s:OnOpen() abort
           let cfg = g:lsc_server_commands
       endif
       try
-          call RegisterLanguageServer(&filetype, cfg[&filetype])
+          call lsc#server#RegisterLanguageServer(&filetype, cfg[&filetype])
       catch
       endtry
   endif
