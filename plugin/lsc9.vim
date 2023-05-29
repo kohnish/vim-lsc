@@ -42,6 +42,10 @@ def IfEnabled(Cb: func): void
     Cb()
 enddef
 
+export def EnsureBufState()
+    highlight.EnsureCurrentWindowState()
+enddef
+
 export def EnsureWinState()
     util.WinDo('LSClientEnsureCurrentWindowState')
 enddef
@@ -60,7 +64,7 @@ enddef
 
 augroup LSC9
     autocmd!
-    autocmd BufEnter * IfEnabled(highlight.EnsureCurrentWindowState)
+    autocmd BufEnter * IfEnabled(EnsureBufState)
     autocmd WinEnter * IfEnabled(OnWinEnter)
     # Window local state is only correctly maintained for the current tab.
     autocmd TabEnter * IfEnabled(EnsureWinState)
