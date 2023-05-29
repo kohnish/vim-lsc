@@ -1,3 +1,5 @@
+" ToDo: Move to autoload
+
 function! g:LSCServerRegister()
     let cfg = {}
     if exists('g:lsc_server_commands')
@@ -10,4 +12,4 @@ function! g:LSCServerRegister()
     endfor
 endfunction
 
-call LSCServerRegister()
+" call LSCServerRegister()

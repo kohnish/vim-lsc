@@ -135,14 +135,23 @@ function s:HasConfingForFileType(filetype)
 endfunction
 
 function! s:OnOpen() abort
-  if !has_key(g:lsc_servers_by_filetype, &filetype) | return | endif
-  if expand('%') =~# '\vfugitive:///' | return | endif
-  call lsc#config#mapKeys()
+  if exists('g:lsc_disabled') && g:lsc_disabled | return | endif
   if !&modifiable | return | endif
+  if expand('%') =~# '\vfugitive:///' | return | endif
+  if !has_key(g:lsc_servers_by_filetype, &filetype)
+      let cfg = {}
+      if exists('g:lsc_server_commands')
+        let cfg = g:lsc_server_commands
+      endif
+      for [s:filetype, s:config] in items(cfg)
+          if s:filetype == &filetype
+              call RegisterLanguageServer(s:filetype, s:config)
+              break
+          endif
+      endfor
+  endif
   if !s:HasConfingForFileType(&filetype) | return | endif
-  if exists('g:lsc_disabled') && g:lsc_disabled
-      return
-   endif
+  call lsc#config#mapKeys()
   call lsc#file#onOpen()
 endfunction
 
