@@ -141,14 +141,12 @@ function! s:OnOpen() abort
   if !has_key(g:lsc_servers_by_filetype, &filetype)
       let cfg = {}
       if exists('g:lsc_server_commands')
-        let cfg = g:lsc_server_commands
+          let cfg = g:lsc_server_commands
       endif
-      for [s:filetype, s:config] in items(cfg)
-          if s:filetype == &filetype
-              call RegisterLanguageServer(s:filetype, s:config)
-              break
-          endif
-      endfor
+      try
+          call RegisterLanguageServer(&filetype, cfg[&filetype])
+      catch
+      endtry
   endif
   if !s:HasConfingForFileType(&filetype) | return | endif
   call lsc#config#mapKeys()

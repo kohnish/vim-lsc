@@ -139,7 +139,6 @@ function! s:Start(server, root_dir) abort
 
   let l:exec = split(l:command)[0]
   if !executable(l:exec)
-      call lsc#message#log(l:exec .. " is not executable", 3)
       return
   endif
 
