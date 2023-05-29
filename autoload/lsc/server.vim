@@ -101,11 +101,10 @@ function! s:Kill(server, AfterShutdownCb) abort
     return v:false
 endfunction
 
-function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
-  call lsc#common#Publish(a:server.channel, "exit", {})
-  let l:exit_start = reltime()
-  while ch_status(a:server.channel) == "open" && reltimefloat(reltime(l:exit_start)) <= 3.0
-      sleep 100m
+function! s:CheckExit(server, AfterShutdownCb, exit_start, timer)
+  while ch_status(a:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= 3.0
+      call timer_start(100, funcref('<SID>CheckExit', [a:server, a:AfterShutdownCb, a:exit_start]))
+      return
   endwhile
   if ch_status(a:server.channel) == "open"
       call lsc#message#error("Forcing shutdown")
@@ -125,6 +124,12 @@ function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
   endif
   call lsc#message#log(a:server.config.name .. " has shut down", 3)
   call a:AfterShutdownCb()
+endfunction
+
+function! s:HandleShutdownResponse(server, AfterShutdownCb, result) abort
+  call lsc#common#Publish(a:server.channel, "exit", {})
+  let l:exit_start = reltime()
+  call timer_start(0, funcref('<SID>CheckExit', [a:server, a:AfterShutdownCb, l:exit_start]))
 endfunction
 
 function! lsc#server#restart() abort
