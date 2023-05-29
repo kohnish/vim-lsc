@@ -102,10 +102,10 @@ function! s:Kill(server, AfterShutdownCb) abort
 endfunction
 
 function! s:CheckExit(server, AfterShutdownCb, exit_start, timer)
-  while ch_status(a:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= 3.0
+  if ch_status(a:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= 3.0
       call timer_start(100, funcref('<SID>CheckExit', [a:server, a:AfterShutdownCb, a:exit_start]))
       return
-  endwhile
+  endif
   if ch_status(a:server.channel) == "open"
       call lsc#message#error("Forcing shutdown")
       let l:job_id = ch_getjob(a:server.channel)
