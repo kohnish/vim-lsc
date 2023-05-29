@@ -93,7 +93,13 @@ function! s:CheckExit(servers, exit_start, do_restart, timer_id)
       endif
   endfor
   if a:do_restart
+      let g:lsc_disabled = 0
+      call lsc#config#mapKeys()
       call LSCServerRegister()
+  else
+      let g:lsc_disabled = 1
+      call lsc#config#UnmapKeys()
+      call lsc#message#log("vim-lsc has been disabled", 3)
   endif
 endfunction
 

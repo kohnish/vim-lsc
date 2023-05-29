@@ -50,6 +50,14 @@ export def OnWinEnter()
     timer_start(1, highlight.OnWinEnter)
 enddef
 
+export def OnClose()
+  if g:_lsc_is_exiting | return | endif
+  var filetype = getbufvar(str2nr(expand('<abuf>')), '&filetype')
+  if !has_key(g:lsc_servers_by_filetype, filetype) | return | endif
+  var full_path = lsc#file#normalize(expand('<afile>:p'))
+  lsc#file#onClose(full_path, filetype)
+enddef
+
 augroup LSC9
     autocmd!
     autocmd BufEnter * IfEnabled(highlight.EnsureCurrentWindowState)
@@ -66,4 +74,5 @@ augroup LSC9
     autocmd InsertCharPre * IfEnabled(complete.InsertCharPre)
     autocmd TextChanged,TextChangedI,CompleteDone * IfEnabled(lsc#common#FileOnChange)
     autocmd BufLeave * IfEnabled(lsc#common#FileFlushChanges)
+    autocmd BufUnload * IfEnabled(OnClose)
 augroup END

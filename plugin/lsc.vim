@@ -118,7 +118,6 @@ augroup LSC
   " autocmd TabEnter * call lsc#util#winDo('call LSCEnsureCurrentWindowState()')
 
   autocmd BufNewFile,BufReadPost * call <SID>OnOpen()
-  autocmd BufUnload * call <SID>OnClose()
   autocmd BufWritePost * call <SID>OnWrite()
   autocmd VimLeave * call lsc#server#exit(v:false)
   if exists('##ExitPre')
@@ -141,6 +140,9 @@ function! s:OnOpen() abort
   call lsc#config#mapKeys()
   if !&modifiable | return | endif
   if !s:HasConfingForFileType(&filetype) | return | endif
+  if exists('g:lsc_disabled') && g:lsc_disabled
+      return
+   endif
   call lsc#file#onOpen()
 endfunction
 

@@ -4,7 +4,6 @@ if !exists('s:initialized')
       \ 'GoToDefinition': '<C-]>',
       \ 'GoToDefinitionSplit': ['<C-W>]', '<C-W><C-]>'],
       \ 'GoToDeclaration': 'gd',
-      \ 'GoToDeclarationSplit': ['<C-W>]', '<C-W>gd'],
       \ 'FindReferences': 'gr',
       \ 'IncomingCalls': 'gi',
       \ 'OutgoingCalls': 'gn',
@@ -93,6 +92,60 @@ function! lsc#config#mapKeys() abort
       endif
     endif
   endif
+endfunction
+
+function! lsc#config#UnmapKeys() abort
+  if !exists('g:lsc_auto_map')
+      \ || (type(g:lsc_auto_map) == type(v:true) && !g:lsc_auto_map)
+      \ || (type(g:lsc_auto_map) == type(0) && !g:lsc_auto_map)
+    return
+  endif
+  let l:maps = s:ApplyDefaults(g:lsc_auto_map)
+  if type(l:maps) != type({})
+    call lsc#message#error('g:lsc_auto_map must be a bool or dict')
+    return
+  endif
+
+  for l:command in [
+      \ 'GoToDefinition',
+      \ 'GoToDefinitionSplit',
+      \ 'GoToDeclaration',
+      \ 'GoToDeclarationSplit',
+      \ 'FindReferences',
+      \ 'IncomingCalls',
+      \ 'OutgoingCalls',
+      \ 'NextReference',
+      \ 'PreviousReference',
+      \ 'FindImplementations',
+      \ 'FindCodeActions',
+      \ 'ShowHover',
+      \ 'DocumentSymbol',
+      \ 'WorkspaceSymbol',
+      \ 'SignatureHelp',
+      \ 'SwitchSourceHeader',
+      \] + (get(g:, 'lsc_enable_apply_edit', 1) ? ['Rename'] : [])
+    let l:lhs = get(l:maps, l:command, [])
+    if type(l:lhs) != type('') && type(l:lhs) != type([])
+      continue
+    endif
+    for l:m in type(l:lhs) == type([]) ? l:lhs : [l:lhs]
+      echom 'unmap <buffer>' .. l:m
+      execute ':unmap <buffer>' .. l:m
+    endfor
+  endfor
+  " if has_key(l:maps, 'Completion') &&
+  "     \ type(l:maps['Completion']) == type('') &&
+  "     \ len(l:maps['Completion']) > 0
+  "   execute 'setlocal '.l:maps['Completion'].'=lsc#complete#complete'
+  " endif
+  " if has_key(l:maps, 'ShowHover')
+  "   let l:show_hover = l:maps['ShowHover']
+  "   if type(l:show_hover) == type(v:true) || type(l:show_hover) == type(0)
+  "     if l:show_hover
+  "       setlocal keywordprg=:LSClientShowHover
+  "     endif
+  "   endif
+  " endif
 endfunction
 
 " Wraps [Callback] with a function that will first translate a result through a
