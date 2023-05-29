@@ -117,7 +117,6 @@ endfunction
 "
 " Expects the call to succeed and shows an error if it does not.
 function! lsc#server#userCall(method, params, callback) abort
-  " TODO handle multiple servers
   let l:server = lsc#server#forFileType(&filetype)
   call lsc#common#Send(l:server.channel, a:method, a:params, a:callback)
 endfunction
