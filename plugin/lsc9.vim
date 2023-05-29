@@ -50,8 +50,8 @@ export def EnsureWinState()
     util.WinDo('LSClientEnsureCurrentWindowState')
 enddef
 
-export def OnWinEnter()
-    timer_start(1, highlight.OnWinEnter)
+export def OnWinEnterTimer()
+    timer_start(1, (timer_id) => highlight.HighlightOnWinEnter())
 enddef
 
 export def OnClose()
@@ -65,7 +65,7 @@ enddef
 augroup LSC9
     autocmd!
     autocmd BufEnter * IfEnabled(EnsureBufState)
-    autocmd WinEnter * IfEnabled(OnWinEnter)
+    autocmd WinEnter * IfEnabled(OnWinEnterTimer)
     # Window local state is only correctly maintained for the current tab.
     autocmd TabEnter * IfEnabled(EnsureWinState)
     # " Move is too heavy

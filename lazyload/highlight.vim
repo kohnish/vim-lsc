@@ -67,7 +67,7 @@ export def EnsureCurrentWindowState(): void
     diagnostics.CursorOnWinEnter()
 enddef
 
-export def OnWinEnter(timer_arg: any): void
+export def HighlightOnWinEnter(): void
     if exists('w:lsc_window_initialized')
         return
     endif
