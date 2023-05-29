@@ -262,12 +262,13 @@ enddef
 export def QflistTrimRoot(info: dict<any>): list<any>
     var items = getqflist()
     var modified_qflist = []
-    if (len(items) > 0 && exists('g:lsc_proj_dir'))
+    var proj_root = lsc#server#proj_root()
+    if len(items) > 0 && !empty(proj_root)
         for idx in range(info.start_idx - 1, info.end_idx - 1)
             var line = ""
             var file_path = fnamemodify(bufname(items[idx].bufnr), ':p:.')
-            if file_path[0 : len(g:lsc_proj_dir) - 1] ==# g:lsc_proj_dir
-                file_path = file_path[len(g:lsc_proj_dir) + 1 :]
+            if file_path[0 : len(proj_root) - 1] ==# proj_root
+                file_path = file_path[len(proj_root) + 1 :]
             endif
             line = line .. file_path .. " || " .. items[idx].lnum .. " || " .. trim(items[idx].text)
             add(modified_qflist, line)

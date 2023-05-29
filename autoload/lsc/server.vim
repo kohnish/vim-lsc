@@ -43,7 +43,7 @@ function! s:Server_print_error(message, config) abort
   call lsc#message#error('StdErr from ' .. a:config.name .. a:message)
 endfunction
 
-function! lsc#server#start(server) abort
+function! lsc#server#proj_root() abort
   let l:proj_root = getcwd()
   if exists('g:lsc_get_proj_root_func') && g:lsc_get_proj_root_func
     let l:user_proj_root = LSClientGetProjRootFunc()
@@ -51,7 +51,11 @@ function! lsc#server#start(server) abort
         let l:proj_root = l:user_proj_root
     endif
   endif
-  call s:Start(a:server, l:proj_root)
+  return l:proj_root
+endfunction
+
+function! lsc#server#start(server) abort
+  call s:Start(a:server, lsc#server#proj_root())
 endfunction
 
 function! lsc#server#servers() abort
