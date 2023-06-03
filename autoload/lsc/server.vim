@@ -153,12 +153,16 @@ endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
 function! lsc#server#exit(do_restart) abort
+  let l:sent = v:false
   for l:server in values(s:servers)
       if ch_status(l:server.channel) == "open"
            call lsc#common#Send(l:server.channel, 'shutdown', {}, funcref('<SID>ExitServer', [l:server.channel]))
+           let l:sent = v:true
       endif
   endfor
-  call timer_start(0, funcref('<SID>CheckExit', [s:servers, reltime(), a:do_restart]))
+  if l:sent
+    call timer_start(0, funcref('<SID>CheckExit', [s:servers, reltime(), a:do_restart]))
+  endif
 endfunction
 
 " A server call explicitly initiated by the user for the current buffer.
