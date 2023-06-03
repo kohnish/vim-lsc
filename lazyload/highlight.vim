@@ -5,9 +5,9 @@ import autoload "./cursor.vim"
 
 def CreateLocationList(window_id: number, items: list<any>): void
     setloclist(window_id, [], ' ', {
-                \ 'title': 'LSC Diagnostics',
-                \ 'items': items,
-                \ })
+        'title': 'LSC Diagnostics',
+        'items': items,
+    })
     var new_id = getloclist(window_id, {'id': 0}).id
     settabwinvar(0, window_id, 'lsc_location_list_id', new_id)
 enddef
@@ -15,9 +15,9 @@ enddef
 def UpdateLocationList(window_id: number, items: list<any>): void
     var list_id = gettabwinvar(0, window_id, 'lsc_location_list_id', -1)
     setloclist(window_id, [], 'r', {
-                \ 'id': list_id,
-                \ 'items': items,
-                \ })
+        'id': list_id,
+        'items': items,
+    })
 enddef
 
 export def DiagnosticsClear(): void

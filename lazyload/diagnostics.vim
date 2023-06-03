@@ -38,11 +38,11 @@ export def ShowInQuickFix(): void
     var diags = AllDiagnostics()
     if len(diags) > 0
         setqflist([], ' ', {
-                    \ 'items': AllDiagnostics(),
-                    \ 'title': 'LSC Diagnostics',
-                    \ 'context': {'client': 'LSC'},
-                    \ 'quickfixtextfunc': 'lsc#common#QflistTrimRoot',
-                    \ })
+                     'items': AllDiagnostics(),
+                     'title': 'LSC Diagnostics',
+                     'context': {'client': 'LSC'},
+                     'quickfixtextfunc': 'lsc#common#QflistTrimRoot',
+                     })
         copen
     else
         log.Error("No diagnostics results")
@@ -79,8 +79,7 @@ def ShowDiagnostic(): void
     var diagnostic = cursor.UnderCursor(cursor.DiagnosticsByLine(diag_obj))
     if has_key(diagnostic, 'message')
         var max_width = &columns - 1 
-        var has_ruler = &ruler &&
-                    \ (&laststatus == 0 || (&laststatus == 1 && winnr('$') < 2))
+        var has_ruler = &ruler && (&laststatus == 0 || (&laststatus == 1 && winnr('$') < 2))
         if has_ruler | max_width -= 18 | endif
         if &showcmd | max_width -= 11 | endif
         var message = strtrans(diagnostic.message)

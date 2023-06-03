@@ -52,10 +52,10 @@ export def DiagnosticsHighlights(self: dict<any>): list<any>
         self._highlights = []
         for diagnostic in self.lsp_diagnostics
             add(self._highlights, {
-                        \ 'group': SeverityGroup(diagnostic.severity),
-                        \ 'severity': diagnostic.severity,
-                        \ 'ranges': lsc#convert#rangeToHighlights(diagnostic.range),
-                        \ })
+                'group': SeverityGroup(diagnostic.severity),
+                'severity': diagnostic.severity,
+                'ranges': lsc#convert#rangeToHighlights(diagnostic.range),
+            })
         endfor
     endif
     return self._highlights
@@ -81,11 +81,11 @@ export def DiagnosticsListItems(self: dict<any>, file_path: string): list<any>
         endif
         for diagnostic in self.lsp_diagnostics
             var item = {
-                        \ 'lnum': diagnostic.range.start.line + 1,
-                        \ 'col': diagnostic.range.start.character + 1,
-                        \ 'text': DiagnosticMessage(diagnostic),
-                        \ 'type': SeverityType(diagnostic.severity)
-                        \ }
+                'lnum': diagnostic.range.start.line + 1,
+                'col': diagnostic.range.start.character + 1,
+                'text': DiagnosticMessage(diagnostic),
+                'type': SeverityType(diagnostic.severity)
+            }
             extend(item, file_ref)
             add(self._list_items, item)
         endfor
@@ -113,8 +113,7 @@ export def UnderCursor(file_diagnostics: dict<any>): dict<any>
     var closest_is_within = false
     for diagnostic in file_diagnostics[line]
         var range = diagnostic.range
-        var is_within = range.start.character < col &&
-                    \ (range.end.line >= line || range.end.character > col)
+        var is_within = range.start.character < col && (range.end.line >= line || range.end.character > col)
         if closest_is_within && !is_within
             continue
         endif
@@ -144,9 +143,7 @@ export def IsInReference(references: list<any>): number
     var idx = 0
     for reference in references
         for range in reference.ranges
-            if line == range[0]
-                        \ && col >= range[1]
-                        \ && col < range[1] + range[2]
+            if line == range[0] && col >= range[1] && col < range[1] + range[2]
                 return idx
             endif
         endfor
@@ -246,10 +243,10 @@ export def DiagnosticsByLine(self: dict<any>): dict<any>
                 line = self._by_line[start_line]
             endif
             var simple = {
-                        \ 'message': DiagnosticMessage(diagnostic),
-                        \ 'range': diagnostic.range,
-                        \ 'severity': SeverityLabel(diagnostic.severity),
-                        \ }
+                'message': DiagnosticMessage(diagnostic),
+                'range': diagnostic.range,
+                'severity': SeverityLabel(diagnostic.severity),
+            }
             add(line, simple)
         endfor
         for val in values(self._by_line)

@@ -29,9 +29,9 @@ def StartCompletion(isAuto: bool): void
     var params = lsc#params#documentPosition()
     var server = lsc#server#forFileType(&filetype)
     lsc#common#Send(server.channel, 'textDocument/completion', params,
-                \ lsc#common#GateResult('Complete',
-                \ funcref(lsc#complete#OnResult, [isAuto]),
-                \ [funcref(lsc#complete#OnSkip, [bufnr('%')])]))
+        lsc#common#GateResult('Complete',
+            funcref(lsc#complete#OnResult, [isAuto]),
+            [funcref(lsc#complete#OnSkip, [bufnr('%')])]))
 enddef
 
 def TypedCharacter(): void

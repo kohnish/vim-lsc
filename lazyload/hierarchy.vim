@@ -63,26 +63,26 @@ enddef
 def Number_to_treeitem(id: number): dict<any>
     var label = b:nodes[id]["query"]["item"]["name"]
     return {
-                \ 'command': () => Command_callback(id),
-                \ 'collapsibleState': len(b:integer_tree[id]) > 0 ? 'collapsed' : 'none',
-                \ 'label': label,
-                \ }
+        'command': () => Command_callback(id),
+        'collapsibleState': len(b:integer_tree[id]) > 0 ? 'collapsed' : 'none',
+        'label': label,
+    }
 enddef
 
 def GetChildren(Render_children_nodes: func, ignition: dict<any>, object_id: number): void
     if !empty(ignition)
         b:ctx = {
-                    \ "server": ignition["server"],
-                    \ "original_win_id": ignition["original_win_id"],
-                    \ "hierarchy_call": ignition["hierarchy_call"],
-                    \ "hierarchy_result_key": ignition["hierarchy_result_key"],
-                    \ }
+            "server": ignition["server"],
+            "original_win_id": ignition["original_win_id"],
+            "hierarchy_call": ignition["hierarchy_call"],
+            "hierarchy_result_key": ignition["hierarchy_result_key"],
+        }
         b:nodes = {
-                    \ 0: { "query": ignition["query"] }
-                    \ }
+            0: { "query": ignition["query"] }
+        }
         b:integer_tree = {
-                    \ 0: [],
-                    \ }
+            0: [],
+        }
     endif
     var children = [0]
     if object_id != -1
@@ -148,9 +148,9 @@ enddef
 
 def OpenTreeWindow(ignition: dict<any>): void
     var provider = {
-                \ 'getChildren': GetChildren,
-                \ 'getTreeItem': GetTreeItem,
-                \ }
+        'getChildren': GetChildren,
+        'getTreeItem': GetTreeItem,
+    }
 
     var buf_name_prefix = "Call hierarchy ("
     var buf_name = buf_name_prefix .. ignition["mode"] .. ")"
@@ -182,13 +182,13 @@ def PrepHierarchyCb(mode_info: dict<any>, msg: dict<any>): void
     var results = msg["result"]
     if len(results) > 0
         var ignition = {
-                    \ "server": server.ServerForFileType(&filetype),
-                    \ "original_win_id": win_getid(),
-                    \ "query": {"item": results[0]},
-                    \ "mode": mode_info["name"],
-                    \ "hierarchy_call": mode_info["call_name"],
-                    \ "hierarchy_result_key": mode_info["result_key"],
-                    \ }
+            "server": server.ServerForFileType(&filetype),
+            "original_win_id": win_getid(),
+            "query": {"item": results[0]},
+            "mode": mode_info["name"],
+            "hierarchy_call": mode_info["call_name"],
+            "hierarchy_result_key": mode_info["result_key"],
+        }
         OpenTreeWindow(ignition)
     else
         log.Error("No results for " .. mode_info["call_name"])
@@ -204,9 +204,9 @@ export def CallHierarchy(mode: string): void
         result_key = "to"
     endif
     var mode_info = {
-                \ "name": mode,
-                \ "call_name": hierarchy_call,
-                \ "result_key": result_key
-                \ }
+        "name": mode,
+        "call_name": hierarchy_call,
+        "result_key": result_key
+    }
     server.LspRequest(prep_req, util.DocPos(), function(PrepHierarchyCb, [mode_info]))
 enddef

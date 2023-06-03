@@ -69,7 +69,7 @@ export def ShowHelp(signatureHelp_result: any): void
         endif
     endif
     if exists("b:sig_popup_id")
-       popup_close(b:sig_popup_id)
+        popup_close(b:sig_popup_id)
     endif
     b:sig_popup_id = popup_atcursor(signature.label, {"line": "cursor-2"})
     var popup_win_id = winbufnr(b:sig_popup_id)

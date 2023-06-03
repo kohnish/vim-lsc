@@ -86,13 +86,9 @@ export def Uri(): string
 enddef
 
 export def DocPos(): dict<any>
-    return { 'textDocument': {'uri': Uri()},
-                \ 'position': {'line': line('.') - 1, 'character': col('.') - 1}
-                \ }
+    return {'textDocument': {'uri': Uri()}, 'position': {'line': line('.') - 1, 'character': col('.') - 1}}
 enddef
 
 export def PlainDocPos(): dict<any>
-    return { 'textDocument': {'uri': Uri()},
-                \ 'position': {'line': line('.'), 'character': col('.')}
-                \ }
+    return {'textDocument': {'uri': Uri()}, 'position': {'line': line('.'), 'character': col('.')}}
 enddef

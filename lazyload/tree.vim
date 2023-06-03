@@ -8,7 +8,7 @@ def Node_new(tree: dict<any>, object_id: number, tree_item: dict<any>): dict<any
         'collapsed': tree_item.collapsibleState ==? 'collapsed',
         'lazy_open': tree_item.collapsibleState !=? 'none',
         'children': [],
-        }
+    }
 enddef
 
 def Render_children_nodes(node: dict<any>, children_list: list<number>): void
@@ -130,5 +130,5 @@ export def New_tree(provider: dict<any>, ignition: dict<any>): dict<any>
         'index': [],
         'provider': provider,
         'ignition': ignition,
-        }
+    }
 enddef

@@ -3,7 +3,7 @@ vim9script
 import autoload "../autoload/lsc/common.vim"
 
 def Request(channel: channel, method: string, params: dict<any>, Callback: func): void
-   lsc#common#Send(channel, method, params, Callback)
+    lsc#common#Send(channel, method, params, Callback)
 enddef
 
 export def ServerForFileType(filetype: string): dict<any>
