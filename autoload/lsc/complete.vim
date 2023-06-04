@@ -1,7 +1,3 @@
-if !exists('s:initialized')
-  let s:initialized = v:true
-endif
-
 " Clean state associated with a server.
 function! lsc#complete#clean(filetype) abort
   for l:buffer in getbufinfo({'bufloaded': v:true})

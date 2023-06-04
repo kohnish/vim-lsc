@@ -1,14 +1,7 @@
-if !exists('s:initialized')
-  let s:initialized = v:true
-  " file path -> file version
-  let s:file_versions = {}
-  " file path -> file content
-  let s:file_content = {}
-  " file path -> flush timer
-  let s:flush_timers = {}
-  " full file path -> buffer name
-  let s:normalized_paths = {}
-endif
+let s:file_versions = {}
+let s:file_content = {}
+let s:flush_timers = {}
+let s:normalized_paths = {}
 
 function lsc#file#flush_timers() abort
     return s:flush_timers

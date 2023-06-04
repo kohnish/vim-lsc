@@ -1,24 +1,21 @@
-if !exists('s:initialized')
-  let s:initialized = v:true
-  let s:default_maps = {
-      \ 'GoToDefinition': '<C-]>',
-      \ 'GoToDefinitionSplit': ['<C-W>]', '<C-W><C-]>'],
-      \ 'GoToDeclaration': 'gd',
-      \ 'FindReferences': 'gr',
-      \ 'IncomingCalls': 'gi',
-      \ 'OutgoingCalls': 'gn',
-      \ 'FindImplementations': 'gI',
-      \ 'FindCodeActions': 'ga',
-      \ 'Rename': 'gR',
-      \ 'ShowHover': v:true,
-      \ 'DocumentSymbol': 'go',
-      \ 'WorkspaceSymbol': 'gS',
-      \ 'SignatureHelp': 'gm',
-      \ 'Completion': 'completefunc',
-      \ 'SwitchSourceHeader': 'gs',
-      \}
-  let s:skip_marker = {}
-endif
+let s:default_maps = {
+    \ 'GoToDefinition': '<C-]>',
+    \ 'GoToDefinitionSplit': ['<C-W>]', '<C-W><C-]>'],
+    \ 'GoToDeclaration': 'gd',
+    \ 'FindReferences': 'gr',
+    \ 'IncomingCalls': 'gi',
+    \ 'OutgoingCalls': 'gn',
+    \ 'FindImplementations': 'gI',
+    \ 'FindCodeActions': 'ga',
+    \ 'Rename': 'gR',
+    \ 'ShowHover': v:true,
+    \ 'DocumentSymbol': 'go',
+    \ 'WorkspaceSymbol': 'gS',
+    \ 'SignatureHelp': 'gm',
+    \ 'Completion': 'completefunc',
+    \ 'SwitchSourceHeader': 'gs',
+    \}
+let s:skip_marker = {}
 
 function! s:ApplyDefaults(config) abort
   if type(a:config) == type(v:true) || type(a:config) == type(0)

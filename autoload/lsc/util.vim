@@ -1,7 +1,4 @@
-if !exists('s:initialized')
-  let s:au_group_id = 0
-  let s:initialized = v:true
-endif
+let s:au_group_id = 0
 
 " Run `command` in all windows, keeping old open window.
 function! lsc#util#winDo(command) abort

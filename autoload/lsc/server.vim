@@ -1,26 +1,4 @@
-if !exists('s:initialized')
-  " server name -> server info.
-  "
-  " Server name defaults to the command string.
-  "
-  " Info contains:
-  " - status. Possible statuses are:
-  "   [disabled, not started,
-  "    starting, running, restarting,
-  "    exiting,  exited, unexpected exit, failed]
-  " - capabilities. Configuration for client/server interaction.
-  " - filetypes. List of filetypes handled by this server.
-  " - logs. The last 100 logs from `window/logMessage`.
-  " - config. Config dict. Contains:
-  "   - name: Same as the key into `s:servers`
-  "   - command: Executable
-  "   - enabled: (optional) Whether the server should be started.
-  "   - message_hooks: (optional) Functions call to override params
-  "   - workspace_config: (optional) Arbitrary data to send as
-  "     `workspace/didChangeConfiguration` settings on startup.
-  let s:servers = {}
-  let s:initialized = v:true
-endif
+let s:servers = {}
 
 function! s:BuffersOfType(filetype) abort
   let l:buffers = []
