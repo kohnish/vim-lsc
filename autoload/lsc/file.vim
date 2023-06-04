@@ -1,10 +1,13 @@
 let s:file_versions = {}
 let s:file_content = {}
-let s:flush_timers = {}
 let s:normalized_paths = {}
 
-function lsc#file#flush_timers() abort
-    return s:flush_timers
+function lsc#file#file_versions() abort
+    return s:file_versions
+endfunction
+
+function lsc#file#file_content() abort
+    return s:file_content
 endfunction
 
 " Send a 'didOpen' message for all open buffers with a tracked file type for a
@@ -98,23 +101,6 @@ function! lsc#file#clean(filetype) abort
       endif
     endif
   endfor
-endfunction
-
-" Flushes only if `onChange` had previously been called for the file and those
-" changes aren't flushed yet, and the file is tracked by at least one server.
-function! lsc#file#flush_if_changed(file_path, filetype) abort
-    if !has_key(s:flush_timers, a:file_path) | return | endif
-    if !has_key(s:file_versions, a:file_path) | return | endif
-
-    let s:file_versions[a:file_path] += 1
-    call timer_stop(s:flush_timers[a:file_path])
-    unlet s:flush_timers[a:file_path]
-
-    let l:server = lsc#server#forFileType(a:filetype)
-    let l:inc_sync = get(g:, 'lsc_enable_incremental_sync', v:true) && l:server.capabilities.textDocumentSync.incremental
-    let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:inc_sync)
-    call lsc#common#Publish(l:server.channel, 'textDocument/didChange', l:params)
-    doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction
 
 function! lsc#file#version() abort

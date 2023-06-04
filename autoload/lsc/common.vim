@@ -421,6 +421,7 @@ export def Buffers_reset_state(filetypes: list<any>): void
     endfor
 enddef
 
+var g_flush_timers = {}
 export def FileOnChange(...args: list<string>): void
     var file_path = lsc#common#FullAbsPath()
     var filetype = &filetype
@@ -428,15 +429,32 @@ export def FileOnChange(...args: list<string>): void
         file_path = args[0]
         filetype = getbufvar(lsc#file#bufnr(file_path), '&filetype')
     endif
-    if has_key(lsc#file#flush_timers(), file_path)
-        timer_stop(lsc#file#flush_timers()[file_path])
+    if has_key(g_flush_timers, file_path)
+        timer_stop(g_flush_timers[file_path])
     endif
-    var timers = lsc#file#flush_timers()
-    timers[file_path] = timer_start(get(g:, 'lsc_change_debounce_time', 500),
-                \ (_) => lsc#file#flush_if_changed(file_path, filetype),
+    g_flush_timers[file_path] = timer_start(get(g:, 'lsc_change_debounce_time', 500),
+                \ (_) => File_flush_if_changed(file_path, filetype),
                 \ {'repeat': 1})
 enddef
 
-export def FileFlushChanges(): void
-    lsc#file#flush_if_changed(lsc#common#FullAbsPath(), &filetype)
+def File_flush_if_changed(file_path: string, filetype: string): void
+    var file_versions = lsc#file#file_versions()
+    if !has_key(g_flush_timers, file_path) | return | endif
+    if !has_key(file_versions, file_path) | return | endif
+
+    file_versions[file_path] += 1
+    timer_stop(g_flush_timers[file_path])
+    unlet g_flush_timers[file_path]
+
+    var server = lsc#server#forFileType(filetype)
+    var file_content = lsc#file#file_content()
+    var inc_sync = get(g:, 'lsc_enable_incremental_sync', true) && server.capabilities.textDocumentSync.incremental
+    var params = lsc#common#GetDidChangeParam(file_versions, file_path, file_content, inc_sync)
+    call lsc#common#Publish(server.channel, 'textDocument/didChange', params)
+    doautocmd <nomodeline> User LSCOnChangesFlushed
 enddef
+
+export def FileFlushChanges(): void
+    File_flush_if_changed(lsc#common#FullAbsPath(), &filetype)
+enddef
+
