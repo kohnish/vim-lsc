@@ -458,3 +458,63 @@ export def FileFlushChanges(): void
     File_flush_if_changed(lsc#common#FullAbsPath(), &filetype)
 enddef
 
+def Handle_publishDiagnostics(server: dict<any>, msg: dict<any>): void
+    var file_path = lsc#uri#documentPath(msg["params"]['uri'])
+    lsc#common#DiagnosticsSetForFile(file_path, msg["params"]['diagnostics'])
+enddef
+
+def Handle_showMessage(server: dict<any>, msg: dict<any>): void
+    lsc#message#show(msg["params"]['message'], msg["params"]['type'])
+enddef
+
+def Handle_showMessageRequest(server: dict<any>, msg: dict<any>): void
+    var response = lsc#message#showRequest(msg["params"]['message'], msg["params"]['actions'])
+    lsc#common#Reply(server.channel, msg["id"], response)
+enddef
+
+def Handle_logMessage(server: dict<any>, msg: dict<any>): void
+    if lsc#config#shouldEcho(server, msg["params"].type)
+        lsc#message#log(msg["params"] .. msg["params"]['message'], msg["params"].type)
+    endif
+enddef
+
+def Handle_progress(server: dict<any>, msg: dict<any>): void
+    if has_key(msg["params"], 'message')
+        var full = msg["params"]['title'] .. msg["params"]['message']
+        lsc#message#show('Progress ' .. full)
+    elseif has_key(msg["params"], 'done')
+        lsc#message#show('Finished ' .. msg["params"]['title'])
+    else
+        lsc#message#show('Starting ' .. msg["params"]['title'])
+    endif
+enddef
+
+def Handle_applyEdit(server: dict<any>, msg: dict<any>): void
+    var applied = lsc#edit#apply(msg["params"].edit)
+    lsc#common#Reply(server.channel, msg["id"], applied)
+enddef
+
+def Handle_configuration(server: dict<any>, msg: dict<any>): void
+    var items = msg["params"].items
+    var response = map(items, (_, item) => lsc#server#Get_workspace_config(server.config, item))
+    lsc#common#Reply(server.channel, msg["id"], response)
+enddef
+
+var g_notify_cb_dict = {
+    "textDocument/publishDiagnostics": Handle_publishDiagnostics,
+    "window/showMessage": Handle_showMessage,
+    "window/showMessageRequest": Handle_showMessageRequest,
+    "window/logMessage": Handle_logMessage,
+    "window/progress": Handle_progress,
+    "workspace/applyEdit": Handle_applyEdit,
+    "workspace/configuration": Handle_configuration,
+}
+
+export def Dispatch(server: dict<any>, msg: dict<any>): void
+    var method = msg["method"]
+    try
+        g_notify_cb_dict[method](server, msg)
+    catch  /^Vim\%((\a\+)\)\=:E716:/
+        lsc#config#handleNotification(server, method, msg["params"])
+    endtry
+enddef

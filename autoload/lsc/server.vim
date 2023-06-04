@@ -54,7 +54,7 @@ function! s:LSCServerRegister()
     endfor
 endfunction
 
-function s:Get_workspace_config(config, item) abort
+function lsc#server#Get_workspace_config(config, item) abort
   if !has_key(a:config, 'workspace_config') | return v:null | endif
   if !has_key(a:item, 'section') || empty(a:item.section)
     return a:config.workspace_config
@@ -187,7 +187,7 @@ function! s:Start(server, root_dir) abort
               \ 'err_io': 'pipe',
               \ 'err_mode': 'nl',
               \ 'noblock': 1,
-              \ 'out_cb': {_, lsp_message -> s:Dispatch(a:server, lsp_message)},
+              \ 'out_cb': {_, lsp_message -> lsc#common#Dispatch(a:server, lsp_message)},
               \ 'err_cb': {_, lsp_err_msg -> s:Server_print_error(lsp_err_msg, a:server.config)},
               \ 'exit_cb': {_,__ -> lsc#common#Buffers_reset_state(a:server.filetypes)}
               \ }
@@ -237,6 +237,9 @@ function! s:ClientCapabilities() abort
     \   'applyEdit': l:applyEdit,
     \   'configuration': v:true,
     \ },
+    \ 'general': {
+    \    'positionEncodings': ['utf-8']
+    \ },
     \ 'textDocument': {
     \   'synchronization': {
     \     'willSave': v:false,
@@ -264,39 +267,6 @@ function! s:ClientCapabilities() abort
     \ 'offsetEncoding': ['utf-8'],
     \}
 endfunction
-    " \ 'workspace': {
-    " \   'applyEdit': l:applyEdit,
-    " \   'configuration': v:true,
-    " \ },
-    " \ 'general': {
-    " \    'positionEncodings': ['utf-8']
-    " \ },
-    " \ 'textDocument': {
-    " \   'synchronization': {
-    " \     'willSave': v:false,
-    " \     'willSaveWaitUntil': v:false,
-    " \     'didSave': v:false,
-    " \   },
-    " \   'completion': {
-    " \     'completionItem': {
-    " \       'snippetSupport': g:lsc_enable_snippet_support,
-    " \       'deprecatedSupport': v:true,
-    " \       'tagSupport': {
-    " \         'valueSet': [1],
-    " \       },
-    " \      },
-    " \   },
-    " \   'definition': {'dynamicRegistration': v:false},
-    " \   'codeAction': {
-    " \     'codeActionLiteralSupport': {
-    " \       'codeActionKind': {'valueSet': ['quickfix', 'refactor', 'source']}
-    " \     }
-    " \   },
-    " \   'hover': {'contentFormat': ['plaintext', 'markdown']},
-    " \   'signatureHelp': {'dynamicRegistration': v:false},
-    " \ },
-    " \ 'offsetEncoding': ['utf-8'],
-    " \}
 
 function! lsc#server#filetypeActive(filetype) abort
   try
@@ -350,40 +320,4 @@ function! lsc#server#register(filetype, config) abort
   let l:server.languageId[a:filetype] = l:languageId
   let s:servers[l:config.name] = l:server
   return l:server
-endfunction
-
-function! s:Dispatch(server, msg) abort
-  let l:method = a:msg["method"]
-  if l:method ==? 'textDocument/publishDiagnostics'
-    let l:file_path = lsc#uri#documentPath(a:msg["params"]['uri'])
-    call lsc#common#DiagnosticsSetForFile(l:file_path, a:msg["params"]['diagnostics'])
-  elseif l:method ==? 'window/showMessage'
-    call lsc#message#show(a:msg["params"]['message'], a:msg["params"]['type'])
-  elseif l:method ==? 'window/showMessageRequest'
-    let l:response =
-        \ lsc#message#showRequest(a:msg["params"]['message'], a:msg["params"]['actions'])
-    call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
-  elseif l:method ==? 'window/logMessage'
-    if lsc#config#shouldEcho(a:server, a:msg["params"].type)
-      call lsc#message#log(a:msg["params"].message, a:msg["params"].type)
-    endif
-  elseif l:method ==? 'window/progress'
-    if has_key(a:msg["params"], 'message')
-      let l:full = a:msg["params"]['title'] . a:msg["params"]['message']
-      call lsc#message#show('Progress ' . l:full)
-    elseif has_key(a:msg["params"], 'done')
-      call lsc#message#show('Finished ' . a:msg["params"]['title'])
-    else
-      call lsc#message#show('Starting ' . a:msg["params"]['title'])
-    endif
-  elseif l:method ==? 'workspace/applyEdit'
-    let l:applied = lsc#edit#apply(a:msg["params"].edit)
-    call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
-  elseif l:method ==? 'workspace/configuration'
-    let l:items = a:msg["params"].items
-    let l:response = map(l:items, {_, item -> s:Get_workspace_config(a:server.config, item)})
-    call lsc#common#Reply(a:server.channel, a:msg["id"], l:response)
-  elseif l:method =~? '\v^\$'
-    call lsc#config#handleNotification(a:server, l:method, a:msg["params"])
-  endif
 endfunction
