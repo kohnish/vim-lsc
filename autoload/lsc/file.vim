@@ -118,7 +118,7 @@ function! lsc#file#flush_if_changed(file_path, filetype) abort
     unlet s:flush_timers[a:file_path]
 
     let l:server = lsc#server#forFileType(a:filetype)
-    let l:inc_sync = get(g:, 'lsc_enable_incremental_sync', v:true) && a:server.capabilities.textDocumentSync.incremental
+    let l:inc_sync = get(g:, 'lsc_enable_incremental_sync', v:true) && l:server.capabilities.textDocumentSync.incremental
     let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:inc_sync)
     call lsc#common#Publish(l:server.channel, 'textDocument/didChange', l:params)
     doautocmd <nomodeline> User LSCOnChangesFlushed
