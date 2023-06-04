@@ -119,8 +119,9 @@ function! s:RestartOrDisable(do_restart)
 endfunction
 
 function! s:CheckExit(servers, exit_start, do_restart, timer_id)
+  let l:max_wait =  get(g:, 'lsc_max_exit_wait_sec_float', 3.0)
   for l:server in values(s:servers)
-      if ch_status(l:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= 3.0
+      if ch_status(l:server.channel) == "open" && reltimefloat(reltime(a:exit_start)) <= l:max_wait
           call timer_start(100, funcref('<SID>CheckExit', [s:servers, a:exit_start, a:do_restart]))
           return
       endif
@@ -129,21 +130,12 @@ function! s:CheckExit(servers, exit_start, do_restart, timer_id)
       if ch_status(l:server.channel) == "open"
           call lsc#message#error("Forcing shutdown")
           let l:job_id = ch_getjob(l:server.channel)
-          let l:channel = job_getchannel(l:job_id)
-          if (l:channel == "open")
-            call ch_close(l:channel)
-          endif
-          sleep 100ms
-          if (job_status(l:job_id) == "run")
-            call job_stop(l:job_id, "term")
-          endif
-          sleep 100ms
           if (job_status(l:job_id) == "run")
             call job_stop(l:job_id, "kill")
           endif
       endif
   endfor
-  call s:RestartOrDisable(a:do_restart)
+  call timer_start(100, {_ -> s:RestartOrDisable(a:do_restart)})
 endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
