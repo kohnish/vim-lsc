@@ -474,7 +474,8 @@ enddef
 
 def Handle_logMessage(server: dict<any>, msg: dict<any>): void
     if lsc#config#shouldEcho(server, msg["params"].type)
-        lsc#message#log(msg["params"] .. msg["params"]['message'], msg["params"].type)
+        lsc#message#log(msg["params"], msg["params"].type)
+        echom msg
     endif
 enddef
 
