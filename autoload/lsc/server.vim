@@ -12,6 +12,16 @@ function! s:BuffersOfType(filetype) abort
   return l:buffers
 endfunction
 
+function lsc#server#server_null() abort
+    return {
+      \ 'filetypes': [],
+      \ 'languageId': {},
+      \ 'config': {},
+      \ 'capabilities': {},
+      \ 'channel': lsc#common#NullChannel()
+      \}
+endfunction
+
 " RegisterLanguageServer
 "
 " Registers a command as the server to start the first time a file with type
@@ -85,12 +95,27 @@ function! lsc#server#servers() abort
 endfunction
 
 function! lsc#server#forFileType(filetype) abort
-  if !has_key(g:lsc_servers_by_filetype, a:filetype) | return [] | endif
-  return s:servers[g:lsc_servers_by_filetype[a:filetype]]
+  try
+    return s:servers[g:lsc_servers_by_filetype[a:filetype]]
+  catch
+  endtry
+  return lsc#server#server_null()
 endfunction
 
 function! s:ExitServer(channel, msg)
     call lsc#common#Publish(a:channel, "exit", {})
+endfunction
+
+function! s:RestartOrDisable(do_restart)
+  if a:do_restart
+      let g:lsc_disabled = 0
+      call lsc#config#mapKeys()
+      call s:LSCServerRegister()
+  else
+      let g:lsc_disabled = 1
+      call lsc#config#UnmapKeys()
+      call lsc#message#log("vim-lsc has been disabled", 3)
+  endif
 endfunction
 
 function! s:CheckExit(servers, exit_start, do_restart, timer_id)
@@ -118,15 +143,7 @@ function! s:CheckExit(servers, exit_start, do_restart, timer_id)
           endif
       endif
   endfor
-  if a:do_restart
-      let g:lsc_disabled = 0
-      call lsc#config#mapKeys()
-      call s:LSCServerRegister()
-  else
-      let g:lsc_disabled = 1
-      call lsc#config#UnmapKeys()
-      call lsc#message#log("vim-lsc has been disabled", 3)
-  endif
+  call s:RestartOrDisable(a:do_restart)
 endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
@@ -138,17 +155,21 @@ function! lsc#server#exit(do_restart) abort
            let l:sent = v:true
       endif
   endfor
+
   if l:sent
     call timer_start(0, funcref('<SID>CheckExit', [s:servers, reltime(), a:do_restart]))
+  else
+    call s:RestartOrDisable(a:do_restart)
   endif
 endfunction
 
-" A server call explicitly initiated by the user for the current buffer.
-"
-" Expects the call to succeed and shows an error if it does not.
 function! lsc#server#userCall(method, params, callback) abort
   let l:server = lsc#server#forFileType(&filetype)
-  call lsc#common#Send(l:server.channel, a:method, a:params, a:callback)
+  if ch_status(l:server.channel) == "open"
+    call lsc#common#Send(l:server.channel, a:method, a:params, a:callback)
+  else
+    call lsc#message#log("Language server is not running", 3)
+  endif
 endfunction
 
 " Start `server` if it isn't already running.

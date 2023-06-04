@@ -6,17 +6,6 @@ function! lsc#complete#clean(filetype) abort
   endfor
 endfunction
 
-function! s:startCompletion(isAuto) abort
-  let b:lsc_is_completing = v:true
-  call lsc#common#FileFlushChanges()
-  let l:params = lsc#params#documentPosition()
-  let l:server = lsc#server#forFileType(&filetype)
-  call lsc#common#Send(l:server.channel, 'textDocument/completion', l:params,
-  \ lsc#common#GateResult('Complete',
-  \     function('<SID>OnResult', [a:isAuto]),
-  \     [function('<SID>OnSkip', [bufnr('%')])]))
-endfunction
-
 function! lsc#complete#OnResult(isAuto, completion) abort
   if !has_key(a:completion, "result")
       echom a:completion

@@ -31,5 +31,5 @@ enddef
 
 export def Alternative(): void
     var params = {'uri': util.Uri()}
-    server.LspRequest('textDocument/switchSourceHeader', params, SwitchToAlternative)
+    server.UserRequest('textDocument/switchSourceHeader', params, SwitchToAlternative)
 enddef

@@ -144,8 +144,6 @@ enddef
 
 def OnWrite(): void
     var filetype = getbufvar(str2nr(expand('<abuf>')), '&filetype')
-    if !has_key(g:lsc_servers_by_filetype, filetype) | return | endif
-    if !lsc#server#filetypeActive(filetype) | return | endif
     var full_path = expand('<afile>:p')
     lsc#file#onWrite(full_path, filetype)
 enddef
@@ -168,7 +166,7 @@ augroup LSC
     autocmd BufLeave * IfEnabled(lsc#common#FileFlushChanges)
     autocmd BufUnload * IfEnabled(OnClose)
     autocmd BufNewFile,BufReadPost * OnOpen()
-    autocmd BufWritePost * OnWrite()
+    autocmd BufWritePost * IfEnabled(OnWrite)
     autocmd VimLeave * lsc#server#exit(v:false)
     if exists('##ExitPre')
         autocmd ExitPre * g:_lsc_is_exiting = v:true

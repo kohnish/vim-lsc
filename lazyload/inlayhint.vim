@@ -59,7 +59,7 @@ export def InlayHintReq(): void
         }
     }
     b:inlayhint_waiting = true
-    server.LspRequest('clangd/inlayHints', params, function(InlayHintCb, [bufnr('')]))
+    server.UserRequest('clangd/inlayHints', params, function(InlayHintCb, [bufnr('')]))
 enddef
 
 export def ClearInlayHint(bnr: number): void

@@ -57,7 +57,7 @@ def Command_callback(id: number): void
         return
     endif
     var param = b:nodes[id]["query"]
-    server.LspRequestWithServer(b:ctx["server"], b:ctx["hierarchy_call"], param, function(OpenHierarchyCallNode, [id, param]))
+    server.Request(b:ctx["server"].channel, b:ctx["hierarchy_call"], param, function(OpenHierarchyCallNode, [id, param]))
 enddef
 
 def Number_to_treeitem(id: number): dict<any>
@@ -208,5 +208,5 @@ export def CallHierarchy(mode: string): void
         "call_name": hierarchy_call,
         "result_key": result_key
     }
-    server.LspRequest(prep_req, lsc#params#documentPosition(), function(PrepHierarchyCb, [mode_info]))
+    server.UserRequest(prep_req, lsc#params#documentPosition(), function(PrepHierarchyCb, [mode_info]))
 enddef

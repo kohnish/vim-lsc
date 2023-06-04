@@ -183,7 +183,7 @@ def FormatRequest(arg: any): void
     if exists('g:lsc_format_options')
         params['options'] = g:lsc_format_options
     endif
-    server.LspRequest('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
+    server.UserRequest('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
     timer_start(1000, Reset_format_delay)
 enddef
 
