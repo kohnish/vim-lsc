@@ -5,6 +5,10 @@ import autoload "./util.vim"
 
 var g_format_delay = false
 
+def Reset_format_delay(arg: any): void
+    g_format_delay = false
+enddef
+
 def GetLineByteFromPos(bnr: number, pos: dict<number>): number
     var col: number = pos.character
     # When on the first character, we can ignore the difference between byte and
@@ -95,6 +99,7 @@ enddef
 def FormatCb(bnr: number, msg: dict<any>): void
     var text_edits = msg["result"]
     if text_edits->empty()
+        timer_start(1000, Reset_format_delay)
         return
     endif
 
@@ -170,27 +175,23 @@ def FormatCb(bnr: number, msg: dict<any>): void
     # bnr->deletebufline(bnr->getbufinfo()[0].linecount)
     # endif
     setpos('.', orig_cursor_pos)
+    timer_start(1000, Reset_format_delay)
 enddef
 
-def Reset_format_delay(arg: any): void
-    g_format_delay = false
-enddef
-
-def FormatRequest(arg: any): void
-    g_format_delay = true
+def FormatRequest(): void
     var params: dict<any>
     params = { 'textDocument': { 'uri': util.Uri() } }
     if exists('g:lsc_format_options')
         params['options'] = g:lsc_format_options
     endif
     server.UserRequest('textDocument/formatting', params, function(FormatCb, [bufnr('')]))
-    timer_start(1000, Reset_format_delay)
 enddef
 
 export def Format(): void
     if g_format_delay
-        timer_start(1000, FormatRequest)
+        lsc#message#log("Still finishing up the last format request", 3)
     else
-        FormatRequest(0)
+        g_format_delay = true
+        FormatRequest()
     endif
 enddef
