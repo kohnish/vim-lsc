@@ -208,5 +208,5 @@ export def CallHierarchy(mode: string): void
         "call_name": hierarchy_call,
         "result_key": result_key
     }
-    server.LspRequest(prep_req, util.DocPos(), function(PrepHierarchyCb, [mode_info]))
+    server.LspRequest(prep_req, lsc#params#documentPosition(), function(PrepHierarchyCb, [mode_info]))
 enddef

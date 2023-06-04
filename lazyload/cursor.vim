@@ -177,9 +177,7 @@ export def HighlightReferences(force_in_highlight: bool): void
     #     return
     # endif
     # g_highlights_request += 1
-    # var params = lsc#params#documentPosition()
-    # var params = util.PlainDocPos()
-    var params = util.DocPos()
+    var params = lsc#params#documentPosition()
     var current_server = lsc#server#forFileType(&filetype)
     server.Request(current_server.channel, 'textDocument/documentHighlight', params, funcref(HandleHighlights, [g_highlights_request, getcurpos(), bufnr('%'), &filetype]))
 enddef

@@ -67,7 +67,7 @@ function! lsc#file#onWrite(full_path, filetype) abort
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
   let l:server = lsc#server#forFileType(a:filetype)
   if l:server.capabilities.textDocumentSync.sendDidSave
-    call lsc#common#Publish(l:server.channel, l:params)
+    call lsc#common#Publish(l:server.channel, 'textDocument/didSave', l:params)
   endif
 endfunction
 
@@ -82,14 +82,13 @@ function! s:DidOpen(server, bufnr, file_path, filetype) abort
   let l:params = {'textDocument':
       \   {'uri': lsc#uri#documentUri(a:file_path),
       \    'version': l:version,
-      \    'text': join(l:buffer_content, "\n")."\n",
+      \    'text': join(l:buffer_content, "\n") .. "\n",
       \    'languageId': a:server.languageId[a:filetype],
       \   }
       \ }
   call lsc#common#Publish(a:server.channel, 'textDocument/didOpen', l:params)
   let s:file_versions[a:file_path] = l:version
-  if get(g:, 'lsc_enable_incremental_sync', v:true)
-      \ && a:server.capabilities.textDocumentSync.incremental
+  if get(g:, 'lsc_enable_incremental_sync', v:true) && a:server.capabilities.textDocumentSync.incremental
     let s:file_content[a:file_path] = l:buffer_content
   endif
   doautocmd <nomodeline> User LSCOnChangesFlushed
@@ -119,7 +118,8 @@ function! lsc#file#flush_if_changed(file_path, filetype) abort
     unlet s:flush_timers[a:file_path]
 
     let l:server = lsc#server#forFileType(a:filetype)
-    let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:server.capabilities.textDocumentSync.incremental)
+    let l:inc_sync = get(g:, 'lsc_enable_incremental_sync', v:true) && a:server.capabilities.textDocumentSync.incremental
+    let l:params = lsc#common#GetDidChangeParam(s:file_versions, a:file_path, s:file_content, l:inc_sync)
     call lsc#common#Publish(l:server.channel, 'textDocument/didChange', l:params)
     doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction

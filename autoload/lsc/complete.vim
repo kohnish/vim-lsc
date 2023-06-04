@@ -22,6 +22,10 @@ function! s:startCompletion(isAuto) abort
 endfunction
 
 function! lsc#complete#OnResult(isAuto, completion) abort
+  if !has_key(a:completion, "result")
+      echom a:completion
+      return
+  endif
   let l:items = a:completion.result.items
   if (a:isAuto)
     call s:SuggestCompletions(l:items)

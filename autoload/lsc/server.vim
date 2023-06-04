@@ -221,10 +221,10 @@ function! s:Start(server, root_dir) abort
 endfunction
 
 function! s:OnInitialize(server, init_result) abort
+  let l:result = a:init_result["result"]
   call lsc#common#Publish(a:server.channel, 'initialized', {})
-  if type(a:init_result) == type({}) && has_key(a:init_result, 'capabilities')
-    let a:server.capabilities =
-        \ lsc#capabilities#normalize(a:init_result.capabilities)
+  if has_key(l:result, 'capabilities')
+    let a:server.capabilities = lsc#capabilities#normalize(l:result.capabilities)
   endif
   if has_key(a:server.config, 'workspace_config')
     call lsc#common#Publish(a:server.channel, 'workspace/didChangeConfiguration', {
@@ -269,9 +269,43 @@ function! s:ClientCapabilities() abort
     \   },
     \   'hover': {'contentFormat': ['plaintext', 'markdown']},
     \   'signatureHelp': {'dynamicRegistration': v:false},
-    \ }
+    \ },
+    \ 'offsetEncoding': ['utf-8'],
     \}
 endfunction
+    " \ 'workspace': {
+    " \   'applyEdit': l:applyEdit,
+    " \   'configuration': v:true,
+    " \ },
+    " \ 'general': {
+    " \    'positionEncodings': ['utf-8']
+    " \ },
+    " \ 'textDocument': {
+    " \   'synchronization': {
+    " \     'willSave': v:false,
+    " \     'willSaveWaitUntil': v:false,
+    " \     'didSave': v:false,
+    " \   },
+    " \   'completion': {
+    " \     'completionItem': {
+    " \       'snippetSupport': g:lsc_enable_snippet_support,
+    " \       'deprecatedSupport': v:true,
+    " \       'tagSupport': {
+    " \         'valueSet': [1],
+    " \       },
+    " \      },
+    " \   },
+    " \   'definition': {'dynamicRegistration': v:false},
+    " \   'codeAction': {
+    " \     'codeActionLiteralSupport': {
+    " \       'codeActionKind': {'valueSet': ['quickfix', 'refactor', 'source']}
+    " \     }
+    " \   },
+    " \   'hover': {'contentFormat': ['plaintext', 'markdown']},
+    " \   'signatureHelp': {'dynamicRegistration': v:false},
+    " \ },
+    " \ 'offsetEncoding': ['utf-8'],
+    " \}
 
 function! lsc#server#filetypeActive(filetype) abort
   try
