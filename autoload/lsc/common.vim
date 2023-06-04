@@ -170,8 +170,8 @@ def ContentsDiff(old: list<any>, new: list<any>): dict<any>
 
     var result = {
                 \ 'range': {
-                \ 'start': {'line': start_line + 1, 'character': start_char},
-                \ 'end': {'line': adj_end_line + 1, 'character': adj_end_char}
+                \ 'start': {'line': start_line, 'character': start_char},
+                \ 'end': {'line': adj_end_line, 'character': adj_end_char}
                 \ },
                 \ 'text': text,
                 \ 'rangeLength': length
@@ -185,9 +185,10 @@ export def GetDidChangeParam(file_versions: dict<any>, file_path: string, file_c
     var params = {}
     if incremental
         var old_content = file_content[file_path]
-        # ToDo: fix it. broken
-        # var change = ContentsDiff(old_content, current_content)
-        var change = lsc#diff#compute(old_content, current_content)
+        var change = ContentsDiff(old_content, current_content)
+        # ToDo: remove diff.vim later
+        # var change = lsc#diff#compute(old_content, current_content)
+        echom change
         file_content[file_path] = current_content
         var incremental_params = copy(document_params)
         incremental_params.contentChanges = [change]
