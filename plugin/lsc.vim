@@ -10,6 +10,7 @@ import autoload "../lazyload/highlight.vim"
 import autoload "../lazyload/util.vim"
 import autoload "../lazyload/cursor.vim"
 import autoload "../lazyload/complete.vim"
+import autoload "../lazyload/fold.vim"
 
 g:_lsc_is_exiting = false
 
@@ -75,6 +76,7 @@ command! -nargs=? LSClientFindCodeActions lsc#edit#findCodeActions(lsc#edit#filt
 command! LSClientRestartServer lsc#server#exit(v:true)
 command! LSClientDisable lsc#server#exit(v:false)
 command! LSClientEnable lsc#server#exit(v:true)
+command! LSClientFold fold.FoldRange()
 command! -nargs=? LSClientRename lsc#edit#rename(<args>)
 
 def IsChannelActiveForFileType(filetype: string): bool
