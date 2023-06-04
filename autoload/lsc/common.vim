@@ -473,10 +473,10 @@ def Handle_showMessageRequest(server: dict<any>, msg: dict<any>): void
 enddef
 
 def Handle_logMessage(server: dict<any>, msg: dict<any>): void
-    if lsc#config#shouldEcho(server, msg["params"].type)
-        lsc#message#log(msg["params"], msg["params"].type)
-        echom msg
-    endif
+    # if lsc#config#shouldEcho(server, msg["params"].type)
+        # lsc#message#log(msg["params"], msg["params"].type)
+        echo msg
+    # endif
 enddef
 
 def Handle_progress(server: dict<any>, msg: dict<any>): void
