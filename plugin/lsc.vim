@@ -115,18 +115,13 @@ def OnOpen(): void
     lsc#file#onOpen()
 enddef
 
-# This should only be used for the autocommands which are known to only fire for
-# the current buffer where '&filetype' can be trusted.
-def IfActive(Cb: func): void
-    if IsChannelActiveForFileType(&filetype)
+def IfEnabled(Cb: func): void
+    var filetype = getbufvar(str2nr(expand('<abuf>')), '&filetype')
+    if !has_key(g:lsc_servers_by_filetype, filetype) | return | endif
+    if !&modifiable | return | endif
+    if IsChannelActiveForFileType(filetype)
         Cb()
     endif
-enddef
-
-def IfEnabled(Cb: func): void
-    if !has_key(g:lsc_servers_by_filetype, &filetype) | return | endif
-    if !&modifiable | return | endif
-    timer_start(1, (timer_id) => IfActive(Cb))
 enddef
 
 def EnsureBufState()
