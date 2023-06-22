@@ -169,7 +169,7 @@ augroup LSC
     autocmd BufUnload * IfEnabled(OnClose)
     autocmd BufNewFile,BufReadPost * OnOpen()
     autocmd BufWritePost * IfEnabled(OnWrite)
-    autocmd VimLeave * lsc#server#exit(v:false)
+    autocmd VimLeavePre * lsc#server#exit(v:false)
     if exists('##ExitPre')
         autocmd ExitPre * g:_lsc_is_exiting = v:true
     endif
