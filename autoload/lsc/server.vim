@@ -140,6 +140,9 @@ endfunction
 
 " Wait for all running servers to shut down with a 5 second timeout.
 function! lsc#server#exit(do_restart) abort
+  if empty(s:servers)
+      return
+  endif
   let l:sent = v:false
   for l:server in values(s:servers)
       if ch_status(l:server.channel) == "open"
