@@ -15,7 +15,7 @@ enddef
 
 export def ShowHelp(signatureHelp_result: dict<any>): void
     if !has_key(signatureHelp_result, "result")
-        echom signatureHelp_result
+        # echom signatureHelp_result
         return
     endif
     # To avoid inlayhint disappearing for some reason

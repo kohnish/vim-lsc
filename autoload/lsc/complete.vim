@@ -7,9 +7,9 @@ function! lsc#complete#clean(filetype) abort
 endfunction
 
 function! lsc#complete#OnResult(isAuto, completion) abort
-  if !has_key(a:completion, "result")
-      echom a:completion
-      return
+  if !has_key(a:completion, "result") || type(a:completion.result) != type({})
+    " echom a:completion
+    return
   endif
   let l:items = a:completion.result.items
   if (a:isAuto)
