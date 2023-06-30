@@ -1,63 +1,48 @@
 let s:popup_id = 0
 
-function! lsc#reference#goToDeclaration(mods, issplit) abort
-  call lsc#common#FileFlushChanges()
-  call lsc#server#userCall('textDocument/declaration',
-      \ lsc#params#documentPosition(),
-      \ lsc#common#GateResult('GoTo',
-      \   { msg -> s:GoTo('declaration', a:mods, a:issplit) }, []))
-endfunction
-
 function! lsc#reference#goToDefinition(mods, issplit) abort
   call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/definition',
       \ lsc#params#documentPosition(),
-      \ lsc#common#GateResult('GoTo',
-      \   function('<SID>GoTo', ['definition', a:mods, a:issplit]), []))
+      \ lsc#common#GateResult('GoToDefinition', { msg -> s:GoToDefinition(a:mods, a:issplit, msg) }, [])
+      \ )
 endfunction
 
-function! s:GoTo(label, mods, issplit, result) abort
+function! s:GoToDefinition(mods, issplit, result) abort
   if !has_key(a:result, "result")
-      echom a:result
-      return
-  endif
-  let l:result = a:result["result"]
-  if type(l:result) == type(v:null) ||
-      \ (type(l:result) == type([]) && len(l:result) == 0)
-    call lsc#message#error('No'. a:label .'found')
+    call lsc#message#error('No definition found')
     return
   endif
-  if type(l:result) == type([]) && (a:label ==# 'declaration' || len(l:result) == 1)
-    let l:location = l:result[0]
-  elseif type(l:result) == type([]) && len(l:result) > 1
-    call s:setQuickFixLocations('Definitions', l:result)
+  let l:results = a:result["result"]
+  if type(l:results) == type([]) && len(l:results) == 1
+    let l:location = l:results[0]
+  elseif type(l:results) == type([]) && len(l:results) > 2
+    call s:setQuickFixLocations('Definitions', l:results)
     copen
   else
-    let l:location = l:result
+    let l:location = l:results
   endif
-  if exists('l:location')
-    let l:file = lsc#uri#documentPath(l:location.uri)
-    let l:line = l:location.range.start.line + 1
-    let l:character = l:location.range.start.character + 1
-    let l:dotag = &tagstack && exists('*gettagstack') && exists('*settagstack')
-    if l:dotag
-      let l:from = [bufnr('%'), line('.'), col('.'), 0]
-      let l:tagname = expand('<cword>')
-      let l:stack = gettagstack()
-      if l:stack.curidx > 1
-        let l:stack.items = l:stack.items[0:l:stack.curidx-2]
-      else
-        let l:stack.items = []
-      endif
-      let l:stack.items += [{'from': l:from, 'tagname': l:tagname}]
-      let l:stack.curidx = len(l:stack.items)
-      call settagstack(win_getid(), l:stack)
+  let l:file = lsc#uri#documentPath(l:location.uri)
+  let l:line = l:location.range.start.line + 1
+  let l:character = l:location.range.start.character + 1
+  let l:dotag = &tagstack && exists('*gettagstack') && exists('*settagstack')
+  if l:dotag
+    let l:from = [bufnr('%'), line('.'), col('.'), 0]
+    let l:tagname = expand('<cword>')
+    let l:stack = gettagstack()
+    if l:stack.curidx > 1
+      let l:stack.items = l:stack.items[0:l:stack.curidx-2]
+    else
+      let l:stack.items = []
     endif
-    call s:goTo(l:file, l:line, l:character, a:mods, a:issplit)
-    if l:dotag
-      let l:curidx = gettagstack().curidx + 1
-      call settagstack(win_getid(), {'curidx': l:curidx})
-    endif
+    let l:stack.items += [{'from': l:from, 'tagname': l:tagname}]
+    let l:stack.curidx = len(l:stack.items)
+    call settagstack(win_getid(), l:stack)
+  endif
+  call s:goTo(l:file, l:line, l:character, a:mods, a:issplit)
+  if l:dotag
+    let l:curidx = gettagstack().curidx + 1
+    call settagstack(win_getid(), {'curidx': l:curidx})
   endif
 endfunction
 

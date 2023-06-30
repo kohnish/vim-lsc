@@ -1,7 +1,6 @@
 let s:default_maps = {
     \ 'GoToDefinition': '<C-]>',
     \ 'GoToDefinitionSplit': ['<C-W>]', '<C-W><C-]>'],
-    \ 'GoToDeclaration': 'gd',
     \ 'FindReferences': 'gr',
     \ 'IncomingCalls': 'gi',
     \ 'OutgoingCalls': 'gn',
@@ -53,8 +52,6 @@ function! lsc#config#mapKeys() abort
   for l:command in [
       \ 'GoToDefinition',
       \ 'GoToDefinitionSplit',
-      \ 'GoToDeclaration',
-      \ 'GoToDeclarationSplit',
       \ 'FindReferences',
       \ 'IncomingCalls',
       \ 'OutgoingCalls',
@@ -106,8 +103,6 @@ function! lsc#config#UnmapKeys() abort
   for l:command in [
       \ 'GoToDefinition',
       \ 'GoToDefinitionSplit',
-      \ 'GoToDeclaration',
-      \ 'GoToDeclarationSplit',
       \ 'FindReferences',
       \ 'IncomingCalls',
       \ 'OutgoingCalls',
