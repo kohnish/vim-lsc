@@ -14,14 +14,7 @@ function! s:GoToDefinition(mods, issplit, result) abort
     return
   endif
   let l:results = a:result["result"]
-  if type(l:results) == type([]) && len(l:results) == 1
-    let l:location = l:results[0]
-  elseif type(l:results) == type([]) && len(l:results) > 2
-    call s:setQuickFixLocations('Definitions', l:results)
-    copen
-  else
-    let l:location = l:results
-  endif
+  let l:location = l:results[0]
   let l:file = lsc#uri#documentPath(l:location.uri)
   let l:line = l:location.range.start.line + 1
   let l:character = l:location.range.start.character + 1
