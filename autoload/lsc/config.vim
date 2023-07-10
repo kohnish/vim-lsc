@@ -121,7 +121,6 @@ function! lsc#config#UnmapKeys() abort
       continue
     endif
     for l:m in type(l:lhs) == type([]) ? l:lhs : [l:lhs]
-      echom 'unmap <buffer>' .. l:m
       execute ':unmap <buffer>' .. l:m
     endfor
   endfor
