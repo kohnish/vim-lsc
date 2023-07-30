@@ -14,6 +14,10 @@ function! s:GoToDefinition(mods, issplit, result) abort
     return
   endif
   let l:results = a:result["result"]
+  if len(l:results) == 0
+      call lsc#message#error('No definition found')
+      return
+  endif
   let l:location = l:results[0]
   let l:file = lsc#uri#documentPath(l:location.uri)
   let l:line = l:location.range.start.line + 1
