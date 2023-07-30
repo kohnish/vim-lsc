@@ -8,7 +8,7 @@ endfunction
 
 function! lsc#complete#OnResult(isAuto, completion) abort
   if !has_key(a:completion, "result") || type(a:completion.result) != type({})
-    " echom a:completion
+    "lsc#message#error(a:completion)
     return
   endif
   let l:items = a:completion.result.items

@@ -15,7 +15,7 @@ endfunction
 
 function! s:SelectAction(ActionFilter, msg) abort
   if !has_key(a:msg, "result")
-      echom a:msg
+      call lsc#message#show('No code actions available')
       return
   endif
   let l:result = a:msg["result"]

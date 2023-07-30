@@ -175,11 +175,7 @@ def OpenTreeWindow(ignition: dict<any>): void
 enddef
 
 def PrepHierarchyCb(mode_info: dict<any>, msg: dict<any>): void
-    if !has_key(msg, "result")
-        echom msg
-        return
-    endif
-    var results = msg["result"]
+    var results = get(msg, "result", [])
     if len(results) > 0
         var ignition = {
             "server": server.ServerForFileType(&filetype),
@@ -191,7 +187,7 @@ def PrepHierarchyCb(mode_info: dict<any>, msg: dict<any>): void
         }
         OpenTreeWindow(ignition)
     else
-        log.Error("No results for " .. mode_info["call_name"])
+        log.Error("No " .. mode_info["call_name"] .. " found")
     endif
 enddef
 

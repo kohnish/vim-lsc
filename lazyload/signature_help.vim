@@ -15,13 +15,10 @@ enddef
 
 export def ShowHelp(signatureHelp_result: dict<any>): void
     if !has_key(signatureHelp_result, "result")
-        # echom signatureHelp_result
+        # log.Error("No signature help found")
         return
     endif
-    # To avoid inlayhint disappearing for some reason
-    # if exists("b:inlayhint_prop_list") && !empty(b:inlayhint_prop_list)
-    #     return
-    # endif
+
     var signatureHelp = signatureHelp_result.result
 
     if empty(signatureHelp)

@@ -2,6 +2,7 @@ vim9script
 
 import autoload "./diagnostics.vim"
 import autoload "./cursor.vim"
+import autoload "./log.vim"
 
 def CreateLocationList(window_id: number, items: list<any>): void
     setloclist(window_id, [], ' ', {
@@ -90,7 +91,7 @@ export def HighlightClear(): void
             try
                 matchdelete(current_match)
             catch
-                echom "matchdelete error"
+                log.Error("Highlight clearing failed")
             endtry
         endfor
     endif

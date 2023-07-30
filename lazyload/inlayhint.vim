@@ -2,6 +2,7 @@ vim9script
 
 import autoload "./server.vim"
 import autoload "./util.vim"
+import autoload "./log.vim"
 
 const INLAYHINT_PROP_NAME = "inlayhint"
 prop_type_add(INLAYHINT_PROP_NAME, {highlight: 'VertSplit'})
@@ -12,7 +13,7 @@ enddef
 
 def InlayHintCb(bnr: number, msg: dict<any>): void
     if !has_key(msg, "result")
-        echom msg
+        log.Error("No inlay hints found")
         return
     endif
     var text_edits = msg["result"]

@@ -10,7 +10,7 @@ endfunction
 
 function! s:GoToDefinition(mods, issplit, result) abort
   if !has_key(a:result, "result")
-    call lsc#message#error('No definition found')
+    call lsc#message#error('No definition response')
     return
   endif
   let l:results = a:result["result"]
@@ -146,7 +146,7 @@ endfunction
 function! s:showHover(force_preview, msg) abort
   let l:result = a:msg["result"]
   if empty(l:result) || empty(l:result.contents)
-    echom 'No hover information'
+    call lsc#message#error('No hover information found')
     return
   endif
   let l:contents = l:result.contents

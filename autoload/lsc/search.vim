@@ -11,7 +11,7 @@ endfunction
 function! s:setQuickFixSymbols(msg) abort
   let l:results = a:msg["result"]
   if type(l:results) != type([]) || len(l:results) == 0
-    call lsc#message#show('No symbols found')
+    call lsc#message#show('No quick fix symbols found')
     return
   endif
 

@@ -2,7 +2,6 @@ vim9script
 
 def HandleFoldReply(msg: dict<any>): void
     if !has_key(msg, "result")
-        echom msg
         return
     endif
     var end_lnum = 0
