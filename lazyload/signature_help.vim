@@ -8,7 +8,7 @@ export def SignatureHelp(): void
     lsc#common#FileFlushChanges()
     var params = lsc#params#documentPosition()
     try
-        server.UserRequest('textDocument/signatureHelp', params, gates.CreateOrGet('SignatureHelp', ShowHelp, []))
+        server.UserRequest('textDocument/signatureHelp', params, gates.CreateOrGet('SignatureHelp', ShowHelp, gates.SkipCb))
     catch
     endtry
 enddef

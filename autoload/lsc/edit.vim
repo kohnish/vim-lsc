@@ -10,7 +10,7 @@ function! lsc#edit#findCodeActions(...) abort
 
   call lsc#server#userCall('textDocument/codeAction', l:params,
       \ lsc#common#GateResult('CodeActions',
-      \     { msg -> s:SelectAction(l:ActionFilter, msg)}, []))
+      \     { msg -> s:SelectAction(l:ActionFilter, msg)}, function('lsc#common#GatedOnSkipCb')))
 endfunction
 
 function! s:SelectAction(ActionFilter, msg) abort
@@ -92,7 +92,7 @@ function! lsc#edit#rename(...) abort
   let l:params = lsc#params#documentPosition()
   let l:params.newName = l:new_name
   call lsc#server#userCall('textDocument/rename', l:params,
-      \ lsc#common#GateResult('Rename', function('lsc#edit#apply'), []))
+      \ lsc#common#GateResult('Rename', function('lsc#edit#apply'), function('lsc#common#GatedOnSkipCb')))
 endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.

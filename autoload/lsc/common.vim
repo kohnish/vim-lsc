@@ -321,8 +321,12 @@ export def DiagnosticsSetForFile(file_path: string, diags: list<any>): void
     diagnostics.SetForFile(file_path, diags)
 enddef
 
-export def GateResult(name: string, Callback: func, vargs: list<any>): func
-    return gates.CreateOrGet(name, Callback, vargs)
+export def GatedOnSkipCb(result: dict<any>): void
+    return
+enddef
+
+export def GateResult(name: string, Callback: func, OnSkip: func): func
+    return gates.CreateOrGet(name, Callback, OnSkip)
 enddef
 
 export def DiagForLine(file: string, line: number): list<any>

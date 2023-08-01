@@ -4,7 +4,7 @@ function! lsc#reference#goToDefinition(mods, issplit) abort
   call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/definition',
       \ lsc#params#documentPosition(),
-      \ lsc#common#GateResult('GoToDefinition', { msg -> s:GoToDefinition(a:mods, a:issplit, msg) }, [])
+      \ lsc#common#GateResult('GoToDefinition', { msg -> s:GoToDefinition(a:mods, a:issplit, msg) }, function('lsc#common#GatedOnSkipCb'))
       \ )
 endfunction
 

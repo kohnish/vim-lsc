@@ -7,7 +7,7 @@ function! lsc#complete#clean(filetype) abort
 endfunction
 
 function! lsc#complete#OnResult(isAuto, completion) abort
-  if !has_key(a:completion, "result") || type(a:completion.result) != type({})
+  if !has_key(a:completion, "result")
     "lsc#message#error(a:completion)
     return
   endif

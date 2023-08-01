@@ -31,7 +31,9 @@ def StartCompletion(isAuto: bool): void
     lsc#common#Send(server.channel, 'textDocument/completion', params,
         lsc#common#GateResult('Complete',
             funcref(lsc#complete#OnResult, [isAuto]),
-            [funcref(lsc#complete#OnSkip, [bufnr('%')])]))
+            funcref(lsc#complete#OnSkip, [bufnr('%')])
+        )
+    )
 enddef
 
 def TypedCharacter(): void
