@@ -11,6 +11,9 @@ function! lsc#complete#OnResult(isAuto, completion) abort
     "lsc#message#error(a:completion)
     return
   endif
+  if a:completion["result"] == v:null
+      return
+  endif
   let l:items = a:completion.result.items
   if (a:isAuto)
     call s:SuggestCompletions(l:items)
