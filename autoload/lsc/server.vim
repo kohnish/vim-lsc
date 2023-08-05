@@ -78,7 +78,7 @@ endfunction
 function! lsc#server#proj_root() abort
   let l:proj_root = getcwd()
   if exists('g:lsc_get_proj_root_func') && g:lsc_get_proj_root_func
-    let l:user_proj_root = LSClientGetProjRootFunc()
+    let l:user_proj_root = g:LSClientGetProjRootFunc()
     if !empty(l:user_proj_root)
         let l:proj_root = l:user_proj_root
     endif
