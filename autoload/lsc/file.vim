@@ -1,14 +1,14 @@
-if !exists('s:initialized')
-  let s:initialized = v:true
-  " file path -> file version
-  let s:file_versions = {}
-  " file path -> file content
-  let s:file_content = {}
-  " file path -> flush timer
-  let s:flush_timers = {}
-  " full file path -> buffer name
-  let s:normalized_paths = {}
-endif
+let s:file_versions = {}
+let s:file_content = {}
+let s:normalized_paths = {}
+
+function lsc#file#file_versions() abort
+    return s:file_versions
+endfunction
+
+function lsc#file#file_content() abort
+    return s:file_content
+endfunction
 
 " Send a 'didOpen' message for all open buffers with a tracked file type for a
 " running server.
@@ -30,19 +30,19 @@ endfunction
 " Run language servers for this filetype if they aren't already running and
 " flush file changes.
 function! lsc#file#onOpen() abort
-  let l:file_path = lsc#file#fullPath()
+  let l:file_path = lsc#common#FullAbsPath()
   if has_key(s:file_versions, l:file_path)
-    call lsc#file#flushChanges()
+    call lsc#common#FileFlushChanges()
   else
     let l:bufnr = bufnr('%')
-    for l:server in lsc#server#forFileType(&filetype)
-      if !get(l:server.config, 'enabled', v:true) | continue | endif
-      if l:server.status ==# 'running'
-        call s:DidOpen(l:server, l:bufnr, l:file_path, &filetype)
-      else
-        call lsc#server#start(l:server)
-      endif
-    endfor
+    if getwinvar(bufwinid(l:bufnr), '&pvw') | return | endif
+    let l:server = lsc#server#forFileType(&filetype)
+    if !get(l:server.config, 'enabled', v:true) | continue | endif
+    if ch_status(l:server.channel) == "open"
+      call s:DidOpen(l:server, l:bufnr, l:file_path, &filetype)
+    else
+      call lsc#server#start(l:server)
+    endif
   endif
 endfunction
 
@@ -55,27 +55,22 @@ function! lsc#file#onClose(full_path, filetype) abort
   endif
   if !lsc#server#filetypeActive(a:filetype) | return | endif
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
-  for l:server in lsc#server#forFileType(a:filetype)
-    call l:server.notify('textDocument/didClose', l:params)
-  endfor
+  let l:server = lsc#server#forFileType(a:filetype)
+  call lsc#common#Publish(l:server.channel, 'textDocument/didClose', l:params)
 endfunction
 
 " Send a `textDocument/didSave` notification if the server may be interested.
 function! lsc#file#onWrite(full_path, filetype) abort
   let l:params = {'textDocument': {'uri': lsc#uri#documentUri(a:full_path)}}
-  for l:server in lsc#server#forFileType(a:filetype)
-    if !l:server.capabilities.textDocumentSync.sendDidSave | continue | endif
-    call l:server.notify('textDocument/didSave', l:params)
-  endfor
-endfunction
-
-" Flushes changes for the current buffer.
-function! lsc#file#flushChanges() abort
-  call s:FlushIfChanged(lsc#file#fullPath(), &filetype)
+  let l:server = lsc#server#forFileType(a:filetype)
+  if l:server.capabilities.textDocumentSync.sendDidSave
+    call lsc#common#Publish(l:server.channel, 'textDocument/didSave', l:params)
+  endif
 endfunction
 
 " Send the 'didOpen' message for a file.
 function! s:DidOpen(server, bufnr, file_path, filetype) abort
+  if getwinvar(bufwinid(a:bufnr), '&pvw') | return | endif
   let l:buffer_content = has_key(s:file_content, a:file_path)
       \ ? s:file_content[a:file_path]
       \ : getbufline(a:bufnr, 1, '$')
@@ -85,18 +80,16 @@ function! s:DidOpen(server, bufnr, file_path, filetype) abort
   let l:params = {'textDocument':
       \   {'uri': lsc#uri#documentUri(a:file_path),
       \    'version': l:version,
-      \    'text': join(l:buffer_content, "\n")."\n",
+      \    'text': join(l:buffer_content, "\n") .. "\n",
       \    'languageId': a:server.languageId[a:filetype],
       \   }
       \ }
-  if a:server.notify('textDocument/didOpen', l:params)
-    let s:file_versions[a:file_path] = l:version
-    if get(g:, 'lsc_enable_incremental_sync', v:true)
-        \ && a:server.capabilities.textDocumentSync.incremental
-      let s:file_content[a:file_path] = l:buffer_content
-    endif
-    doautocmd <nomodeline> User LSCOnChangesFlushed
+  call lsc#common#Publish(a:server.channel, 'textDocument/didOpen', l:params)
+  let s:file_versions[a:file_path] = l:version
+  if get(g:, 'lsc_enable_incremental_sync', v:true) && a:server.capabilities.textDocumentSync.incremental
+    let s:file_content[a:file_path] = l:buffer_content
   endif
+  doautocmd <nomodeline> User LSCOnChangesFlushed
 endfunction
 
 " Mark all files of type `filetype` as untracked.
@@ -112,86 +105,8 @@ function! lsc#file#clean(filetype) abort
   endfor
 endfunction
 
-function! lsc#file#onChange(...) abort
-  if a:0 >= 1
-    let l:file_path = a:1
-    let l:filetype = getbufvar(lsc#file#bufnr(l:file_path), '&filetype')
-  else
-    let l:file_path = lsc#file#fullPath()
-    let l:filetype = &filetype
-  endif
-  if has_key(s:flush_timers, l:file_path)
-    call timer_stop(s:flush_timers[l:file_path])
-  endif
-  let s:flush_timers[l:file_path] =
-      \ timer_start(get(g:, 'lsc_change_debounce_time', 500),
-      \   {_->s:FlushIfChanged(file_path, filetype)},
-      \   {'repeat': 1})
-endfunction
-
-" Flushes only if `onChange` had previously been called for the file and those
-" changes aren't flushed yet, and the file is tracked by at least one server.
-function! s:FlushIfChanged(file_path, filetype) abort
-  " Buffer may not have any pending changes to flush.
-  if !has_key(s:flush_timers, a:file_path) | return | endif
-  " Buffer may not be tracked with a `didOpen` call by any server yet.
-  if !has_key(s:file_versions, a:file_path) | return | endif
-  let s:file_versions[a:file_path] += 1
-  if has_key(s:flush_timers, a:file_path)
-    call timer_stop(s:flush_timers[a:file_path])
-    unlet s:flush_timers[a:file_path]
-  endif
-  let l:document_params = {'textDocument':
-      \   {'uri': lsc#uri#documentUri(a:file_path),
-      \    'version': s:file_versions[a:file_path],
-      \   },
-      \ }
-  let l:current_content = getbufline(lsc#file#bufnr(a:file_path), 1, '$')
-  for l:server in lsc#server#forFileType(a:filetype)
-    if l:server.status !=# 'running' | continue | endif
-    if l:server.capabilities.textDocumentSync.incremental
-      if !exists('l:incremental_params')
-        let l:old_content = s:file_content[a:file_path]
-        let l:change = lsc#diff#compute(l:old_content, l:current_content)
-        let s:file_content[a:file_path] = l:current_content
-        let l:incremental_params = copy(l:document_params)
-        let l:incremental_params.contentChanges = [l:change]
-      endif
-      let l:params = l:incremental_params
-    else
-      if !exists('l:full_params')
-        let l:full_params = copy(l:document_params)
-        let l:change = {'text': join(l:current_content, "\n")."\n"}
-        let l:full_params.contentChanges = [l:change]
-      endif
-      let l:params = l:full_params
-    endif
-      call l:server.notify('textDocument/didChange', l:params)
-  endfor
-  doautocmd <nomodeline> User LSCOnChangesFlushed
-endfunction
-
 function! lsc#file#version() abort
-  return get(s:file_versions, lsc#file#fullPath(), '')
-endfunction
-
-" The full path to the current buffer.
-"
-" The association between a buffer and full path may change if the file has not
-" been written yet - this makes a best-effort attempt to get a full path anyway.
-" In most cases if the working directory doesn't change this isn't harmful.
-"
-" Paths which do need to be manually normalized are stored so that the full path
-" can be associated back to a buffer with `lsc#file#bufnr()`.
-function! lsc#file#fullPath() abort
-  let l:full_path = expand('%:p')
-  if l:full_path ==# expand('%')
-    " Path could not be expanded due to pointing to a non-existent directory
-    let l:full_path = lsc#file#normalize(getbufinfo('%')[0].name)
-  elseif has('win32')
-    let l:full_path = s:os_normalize(l:full_path)
-  endif
-  return l:full_path
+  return get(s:file_versions, lsc#common#FullAbsPath(), '')
 endfunction
 
 " Like `bufnr()` but handles the case where a relative path was normalized

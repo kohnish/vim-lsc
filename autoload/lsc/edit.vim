@@ -4,21 +4,26 @@ function! lsc#edit#findCodeActions(...) abort
   else
     let l:ActionFilter = function('<SID>ActionMenu')
   endif
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentRange()
-  let l:params.context = {'diagnostics':
-      \ lsc#diagnostics#forLine(lsc#file#fullPath(), line('.') - 1)}
+  let l:params.context = {'diagnostics': lsc#common#DiagForLine(lsc#common#FullAbsPath(), line('.') - 1)}
+
   call lsc#server#userCall('textDocument/codeAction', l:params,
-      \ lsc#util#gateResult('CodeActions',
-      \     function('<SID>SelectAction', [l:ActionFilter])))
+      \ lsc#common#GateResult('CodeActions',
+      \     { msg -> s:SelectAction(l:ActionFilter, msg)}, function('lsc#common#GatedOnSkipCb')))
 endfunction
 
-function! s:SelectAction(ActionFilter, result) abort
-  if type(a:result) != type([]) || len(a:result) == 0
+function! s:SelectAction(ActionFilter, msg) abort
+  if !has_key(a:msg, "result")
+      call lsc#message#show('No code actions available')
+      return
+  endif
+  let l:result = a:msg["result"]
+  if type(l:result) != type([]) || len(l:result) == 0
     call lsc#message#show('No actions available')
     return
   endif
-  call a:ActionFilter(a:result, function('<SID>ExecuteCommand'))
+  call a:ActionFilter(l:result, function('<SID>ExecuteCommand'))
 endfunction
 
 function! s:ExecuteCommand(choice) abort
@@ -73,7 +78,7 @@ function! s:ActionMenu(actions, OnSelected) abort
 endfunction
 
 function! lsc#edit#rename(...) abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   if a:0 >= 1
     let l:new_name = a:1
   else
@@ -87,14 +92,21 @@ function! lsc#edit#rename(...) abort
   let l:params = lsc#params#documentPosition()
   let l:params.newName = l:new_name
   call lsc#server#userCall('textDocument/rename', l:params,
-      \ lsc#util#gateResult('Rename', function('lsc#edit#apply')))
+      \ lsc#common#GateResult('Rename', function('lsc#edit#apply'), function('lsc#common#GatedOnSkipCb')))
 endfunction
 
 " Applies a workspace edit and returns `v:true` if it was successful.
-function! lsc#edit#apply(workspace_edit) abort
+function! lsc#edit#apply(msg) abort
+  if has_key(a:msg, "result")
+      " Rename
+      let l:workspace_edit = a:msg["result"]
+  else
+      " Action
+      let l:workspace_edit = a:msg
+  endif
   if !get(g:, 'lsc_enable_apply_edit', v:true) | return v:false | endif
-  if !has_key(a:workspace_edit, 'changes')
-      \ && !has_key(a:workspace_edit, 'documentChanges')
+  if !has_key(l:workspace_edit, 'changes')
+      \ && !has_key(l:workspace_edit, 'documentChanges')
     return v:false
   endif
   let l:view = winsaveview()
@@ -108,11 +120,11 @@ function! lsc#edit#apply(workspace_edit) abort
   set virtualedit=onemore
 
 
-  if (!has_key(a:workspace_edit, 'documentChanges'))
-    let l:changes = a:workspace_edit.changes
+  if (!has_key(l:workspace_edit, 'documentChanges'))
+    let l:changes = l:workspace_edit.changes
   else
     let l:changes = {}
-    for l:textDocumentEdit in a:workspace_edit.documentChanges
+    for l:textDocumentEdit in l:workspace_edit.documentChanges
       let l:uri = l:textDocumentEdit.textDocument.uri
       let l:changes[l:uri] = l:textDocumentEdit.edits
     endfor
@@ -153,7 +165,7 @@ function! s:ApplyAll(changes) abort
     endif
     execute l:cmd
     if !&hidden | update | endif
-    call lsc#file#onChange(l:file_path)
+    call lsc#common#FileOnChange(l:file_path)
   endfor
 endfunction
 

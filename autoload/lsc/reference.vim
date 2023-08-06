@@ -1,24 +1,41 @@
 let s:popup_id = 0
 
 function! lsc#reference#goToDefinition(mods, issplit) abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/definition',
       \ lsc#params#documentPosition(),
-      \ lsc#util#gateResult('GoToDefinition',
-      \   function('<SID>GoToDefinition', [a:mods, a:issplit])))
+      \ lsc#common#GateResult('GoToDefinition', { msg -> s:GoToDefinition(a:mods, a:issplit, msg) }, function('lsc#common#GatedOnSkipCb'))
+      \ )
+endfunction
+
+function! s:TryUpdateLocationFromLocList(location) abort
+  if !has_key(a:location, "uri") && has_key(a:location, "targetUri")
+      let a:location["uri"] = a:location["targetUri"]
+  endif
+  if !has_key(a:location, "range") && has_key(a:location, "targetSelectionRange")
+      let a:location["range"] = a:location["targetSelectionRange"]
+  endif
 endfunction
 
 function! s:GoToDefinition(mods, issplit, result) abort
-  if type(a:result) == type(v:null) ||
-      \ (type(a:result) == type([]) && len(a:result) == 0)
-    call lsc#message#error('No definition found')
+  if !has_key(a:result, "result")
+    call lsc#message#error('No definition response')
     return
   endif
-  if type(a:result) == type([])
-    let l:location = a:result[0]
-  else
-    let l:location = a:result
+  let l:results = a:result["result"]
+  if l:results == v:null || len(l:results) == 0
+      call lsc#message#error('No definition found')
+      return
   endif
+
+  if len(l:results) > 1
+    call s:setQuickFixLocations("definitions", a:result)
+    return
+  endif
+
+  let l:location = l:results[0]
+  call s:TryUpdateLocationFromLocList(l:location)
+
   let l:file = lsc#uri#documentPath(l:location.uri)
   let l:line = l:location.range.start.line + 1
   let l:character = l:location.range.start.character + 1
@@ -43,8 +60,9 @@ function! s:GoToDefinition(mods, issplit, result) abort
   endif
 endfunction
 
+
 function! lsc#reference#findReferences() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentPosition()
   let l:params.context = {'includeDeclaration': v:true}
   call lsc#server#userCall('textDocument/references', l:params,
@@ -52,20 +70,20 @@ function! lsc#reference#findReferences() abort
 endfunction
 
 function! lsc#reference#findImplementations() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/implementation',
       \ lsc#params#documentPosition(),
       \ function('<SID>setQuickFixLocations', ['implementations']))
 endfunction
 
 function! s:setQuickFixLocations(label, results) abort
-  if empty(a:results)
+  if !has_key(a:results, "result") || empty(a:results["result"])
     call lsc#message#show('No '.a:label.' found')
     return
   endif
-  call map(a:results, {_, ref -> s:QuickFixItem(ref)})
-  call sort(a:results, 'lsc#util#compareQuickFixItems')
-  call setqflist(a:results)
+  call map(a:results["result"], {_, ref -> s:QuickFixItem(ref)})
+  call sort(a:results["result"], 'lsc#util#compareQuickFixItems')
+  call setqflist([], ' ', {'title': a:label , 'items': a:results["result"], 'quickfixtextfunc': 'lsc#common#QflistTrimRoot' })
   copen
 endfunction
 
@@ -85,6 +103,7 @@ endfunction
 "
 " LSP line and column are zero-based, vim is one-based.
 function! s:QuickFixItem(location) abort
+  call s:TryUpdateLocationFromLocList(a:location)
   let l:item = {'lnum': a:location.range.start.line + 1,
       \ 'col': a:location.range.start.character + 1}
   let l:file_path = lsc#uri#documentPath(a:location.uri)
@@ -99,11 +118,14 @@ function! s:QuickFixItem(location) abort
 endfunction
 
 function! s:goTo(file, line, character, mods, issplit) abort
+  if exists('g:lsc_focus_if_open') && g:lsc_focus_if_open
+    call lsc#common#FocusIfOpen(a:file)
+  endif
   let l:prev_buf = bufnr('%')
-  if a:issplit || a:file !=# lsc#file#fullPath()
+  if a:issplit || a:file !=# lsc#common#FullAbsPath()
     let l:cmd = 'edit'
-    if a:issplit
-      let l:cmd = lsc#file#bufnr(a:file) == -1 ? 'split' : 'sbuffer'
+    if &modified
+      let l:cmd = 'vsplit'
     endif
     let l:relative_path = fnamemodify(a:file, ':~:.')
     exec a:mods l:cmd fnameescape(l:relative_path)
@@ -122,7 +144,7 @@ function! s:goTo(file, line, character, mods, issplit) abort
 endfunction
 
 function! lsc#reference#hover() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   let l:params = lsc#params#documentPosition()
   call lsc#server#userCall('textDocument/hover', l:params,
       \ function('<SID>showHover', [s:hasOpenHover()]))
@@ -139,12 +161,13 @@ function! s:hasOpenHover() abort
   return len(popup_getoptions(s:popup_id)) > 0
 endfunction
 
-function! s:showHover(force_preview, result) abort
-  if empty(a:result) || empty(a:result.contents)
-    echom 'No hover information'
+function! s:showHover(force_preview, msg) abort
+  let l:result = a:msg["result"]
+  if empty(l:result) || empty(l:result.contents)
+    call lsc#message#error('No hover information found')
     return
   endif
-  let l:contents = a:result.contents
+  let l:contents = l:result.contents
   if type(l:contents) != type([])
     let l:contents = [l:contents]
   endif
@@ -243,7 +266,7 @@ function! s:openHoverPopup(lines, filetype) abort
     " Close the floating window upon a cursor move.
     " vint: -ProhibitAutocmdWithNoGroup
     " https://github.com/Kuniwak/vint/issues/285
-    autocmd CursorMoved <buffer> ++once call s:closeHoverPopup()
+    "autocmd CursorMoved <buffer> ++once call s:closeHoverPopup()
     " vint: +ProhibitAutocmdWithNoGroup
     " Also close the floating window when focussed into with the escape key.
     call nvim_buf_set_keymap(l:buf, 'n', '<Esc>', ':close<CR>', {})
@@ -273,40 +296,21 @@ endfunction
 " Request a list of symbols in the current document and populate the quickfix
 " list.
 function! lsc#reference#documentSymbols() abort
-  call lsc#file#flushChanges()
+  call lsc#common#FileFlushChanges()
   call lsc#server#userCall('textDocument/documentSymbol',
       \ lsc#params#textDocument(),
       \ function('<SID>setQuickFixSymbols'))
 endfunction
 
-function! s:setQuickFixSymbols(results) abort
-  if empty(a:results)
+function! s:setQuickFixSymbols(msg) abort
+  let l:results = a:msg["result"]
+  if empty(l:results)
     call lsc#message#show('No symbols found')
     return
   endif
 
-  call map(a:results, {_, symbol -> lsc#convert#quickFixSymbol(symbol)})
-  call sort(a:results, 'lsc#util#compareQuickFixItems')
-  call setqflist(a:results)
+  call map(l:results, {_, symbol -> lsc#convert#quickFixSymbol(symbol)})
+  call sort(l:results, 'lsc#util#compareQuickFixItems')
+  call setqflist(l:results)
   copen
-endfunction
-
-
-" If the server supports `textDocument/documentHighlight` and they are enabled,
-" use the active highlights to move the cursor to the next or previous referene
-" in the same document to the symbol under the cursor.
-function! lsc#reference#findNext(direction) abort
-  if exists('w:lsc_references')
-    let l:idx = lsc#cursor#isInReference(w:lsc_references)
-    if l:idx != -1 &&
-        \ l:idx + a:direction >= 0 &&
-        \ l:idx + a:direction < len(w:lsc_references)
-      let l:target = w:lsc_references[l:idx + a:direction].ranges[0][0:1]
-    endif
-  endif
-  if !exists('l:target')
-    return
-  endif
-  " Move with 'G' to ensure a jump is left
-  exec 'normal! '.l:target[0].'G'.l:target[1].'|'
 endfunction

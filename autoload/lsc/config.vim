@@ -1,22 +1,20 @@
-if !exists('s:initialized')
-  let s:initialized = v:true
-  let s:default_maps = {
-      \ 'GoToDefinition': '<C-]>',
-      \ 'GoToDefinitionSplit': ['<C-W>]', '<C-W><C-]>'],
-      \ 'FindReferences': 'gr',
-      \ 'NextReference': '<C-n>',
-      \ 'PreviousReference': '<C-p>',
-      \ 'FindImplementations': 'gI',
-      \ 'FindCodeActions': 'ga',
-      \ 'Rename': 'gR',
-      \ 'ShowHover': v:true,
-      \ 'DocumentSymbol': 'go',
-      \ 'WorkspaceSymbol': 'gS',
-      \ 'SignatureHelp': 'gm',
-      \ 'Completion': 'completefunc',
-      \}
-  let s:skip_marker = {}
-endif
+let s:default_maps = {
+    \ 'GoToDefinition': '<C-]>',
+    \ 'GoToDefinitionSplit': ['<C-W>]', '<C-W><C-]>'],
+    \ 'FindReferences': 'gr',
+    \ 'IncomingCalls': 'gi',
+    \ 'OutgoingCalls': 'gn',
+    \ 'FindImplementations': 'gI',
+    \ 'FindCodeActions': 'ga',
+    \ 'Rename': 'gR',
+    \ 'ShowHover': v:true,
+    \ 'DocumentSymbol': 'go',
+    \ 'WorkspaceSymbol': 'gS',
+    \ 'SignatureHelp': 'gm',
+    \ 'Completion': 'completefunc',
+    \ 'SwitchSourceHeader': 'gs',
+    \}
+let s:skip_marker = {}
 
 function! s:ApplyDefaults(config) abort
   if type(a:config) == type(v:true) || type(a:config) == type(0)
@@ -55,6 +53,8 @@ function! lsc#config#mapKeys() abort
       \ 'GoToDefinition',
       \ 'GoToDefinitionSplit',
       \ 'FindReferences',
+      \ 'IncomingCalls',
+      \ 'OutgoingCalls',
       \ 'NextReference',
       \ 'PreviousReference',
       \ 'FindImplementations',
@@ -63,6 +63,7 @@ function! lsc#config#mapKeys() abort
       \ 'DocumentSymbol',
       \ 'WorkspaceSymbol',
       \ 'SignatureHelp',
+      \ 'SwitchSourceHeader',
       \] + (get(g:, 'lsc_enable_apply_edit', 1) ? ['Rename'] : [])
     let l:lhs = get(l:maps, l:command, [])
     if type(l:lhs) != type('') && type(l:lhs) != type([])
@@ -85,6 +86,57 @@ function! lsc#config#mapKeys() abort
       endif
     endif
   endif
+endfunction
+
+function! lsc#config#UnmapKeys() abort
+  if !exists('g:lsc_auto_map')
+      \ || (type(g:lsc_auto_map) == type(v:true) && !g:lsc_auto_map)
+      \ || (type(g:lsc_auto_map) == type(0) && !g:lsc_auto_map)
+    return
+  endif
+  let l:maps = s:ApplyDefaults(g:lsc_auto_map)
+  if type(l:maps) != type({})
+    call lsc#message#error('g:lsc_auto_map must be a bool or dict')
+    return
+  endif
+
+  for l:command in [
+      \ 'GoToDefinition',
+      \ 'GoToDefinitionSplit',
+      \ 'FindReferences',
+      \ 'IncomingCalls',
+      \ 'OutgoingCalls',
+      \ 'NextReference',
+      \ 'PreviousReference',
+      \ 'FindImplementations',
+      \ 'FindCodeActions',
+      \ 'ShowHover',
+      \ 'DocumentSymbol',
+      \ 'WorkspaceSymbol',
+      \ 'SignatureHelp',
+      \ 'SwitchSourceHeader',
+      \] + (get(g:, 'lsc_enable_apply_edit', 1) ? ['Rename'] : [])
+    let l:lhs = get(l:maps, l:command, [])
+    if type(l:lhs) != type('') && type(l:lhs) != type([])
+      continue
+    endif
+    for l:m in type(l:lhs) == type([]) ? l:lhs : [l:lhs]
+      execute ':unmap <buffer>' .. l:m
+    endfor
+  endfor
+  " if has_key(l:maps, 'Completion') &&
+  "     \ type(l:maps['Completion']) == type('') &&
+  "     \ len(l:maps['Completion']) > 0
+  "   execute 'setlocal '.l:maps['Completion'].'=lsc#complete#complete'
+  " endif
+  " if has_key(l:maps, 'ShowHover')
+  "   let l:show_hover = l:maps['ShowHover']
+  "   if type(l:show_hover) == type(v:true) || type(l:show_hover) == type(0)
+  "     if l:show_hover
+  "       setlocal keywordprg=:LSClientShowHover
+  "     endif
+  "   endif
+  " endif
 endfunction
 
 " Wraps [Callback] with a function that will first translate a result through a
@@ -163,7 +215,7 @@ endfunction
 " By default messages are shown at "Info" or higher, this can be overrided per
 " server.
 function! lsc#config#shouldEcho(server, type) abort
-  let l:threshold = 3
+  let l:threshold = 2
   if has_key(a:server.config, 'log_level')
     if type(a:server.config.log_level) == type(0)
       let l:threshold = a:server.config.log_level

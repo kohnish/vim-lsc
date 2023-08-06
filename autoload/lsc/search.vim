@@ -8,14 +8,15 @@ function! lsc#search#workspaceSymbol(...) abort
       \ function('<SID>setQuickFixSymbols'))
 endfunction
 
-function! s:setQuickFixSymbols(results) abort
-  if type(a:results) != type([]) || len(a:results) == 0
-    call lsc#message#show('No symbols found')
+function! s:setQuickFixSymbols(msg) abort
+  let l:results = a:msg["result"]
+  if type(l:results) != type([]) || len(l:results) == 0
+    call lsc#message#show('No quick fix symbols found')
     return
   endif
 
-  call map(a:results, {_, symbol -> lsc#convert#quickFixSymbol(symbol)})
-  call sort(a:results, 'lsc#util#compareQuickFixItems')
-  call setqflist(a:results)
+  call map(l:results, {_, symbol -> lsc#convert#quickFixSymbol(symbol)})
+  call sort(l:results, 'lsc#util#compareQuickFixItems')
+  call setqflist(l:results)
   copen
 endfunction
