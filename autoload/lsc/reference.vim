@@ -152,12 +152,6 @@ endfunction
 
 function! s:hasOpenHover() abort
   if s:popup_id == 0 | return v:false | endif
-  if !exists('*nvim_win_get_config') && !exists('*popup_getoptions')
-    return v:false
-  endif
-  if has('nvim')
-    return nvim_win_is_valid(s:popup_id)
-  endif
   return len(popup_getoptions(s:popup_id)) > 0
 endfunction
 
@@ -186,8 +180,7 @@ function! s:showHover(force_preview, msg) abort
     endif
   endfor
   let b:lsc_last_hover = l:lines
-  if get(g:, 'lsc_hover_popup', v:true)
-        \ && (exists('*popup_atcursor') || exists('*nvim_open_win'))
+  if get(g:, 'lsc_hover_popup', v:true) && (exists('*popup_atcursor')
     call s:closeHoverPopup()
     if (a:force_preview)
       call lsc#util#displayAsPreview(l:lines, l:filetype,
@@ -203,93 +196,18 @@ endfunction
 
 function! s:openHoverPopup(lines, filetype) abort
   if len(a:lines) == 0 | return | endif
-  if has('nvim')
-    let l:buf = nvim_create_buf(v:false, v:true)
-    call nvim_buf_set_option(l:buf, 'synmaxcol', 0)
-    if g:lsc_enable_popup_syntax
-      call nvim_buf_set_option(l:buf, 'filetype', a:filetype)
-    endif
-    " Note, the +2s below will be used for padding around the hover text.
-    let l:height = len(a:lines) + 2
-    let l:width = 1
-    " The maximum width of the floating window should not exceed 95% of the
-    " screen width.
-    let l:max_width = float2nr(&columns * 0.95)
-
-    " Need to figure out the longest line and base the popup width on that.
-    " Also increase the floating window 'height' if any lines are going to wrap.
-    for l:val in a:lines
-      let l:val_width = strdisplaywidth(l:val) + 2
-      if l:val_width > l:max_width
-        let l:height = l:height + (l:val_width / l:max_width)
-        let l:val_width = l:max_width
-      endif
-      let l:width = l:val_width > l:width ? l:val_width : l:width
-    endfor
-
-    " Prefer an upward floating window, but if there is no space fallback to
-    " a downward floating window.
-    let l:current_position = getpos('.')
-    let l:top_line_number = line('w0')
-    if l:current_position[1] - l:top_line_number >= l:height
-      " There is space to display the floating window above the current cursor
-      " line.
-      let l:vertical_alignment = 'S'
-      let l:row = 0
-    else
-      " No space above, so we will float downward instead.
-      let l:vertical_alignment = 'N'
-      let l:row = 1
-      " Truncate the float height so that the popup always floats below and
-      " never overflows into and above the cursor line.
-      let l:lines_above_cursor = l:current_position[1] - l:top_line_number
-      if l:height > winheight(0) + 2 - l:lines_above_cursor
-        let l:height = winheight(0) - l:lines_above_cursor
-      endif
-    endif
-
-    let l:opts = {
-          \ 'relative': 'cursor',
-          \ 'anchor':  l:vertical_alignment . 'W',
-          \ 'row': l:row,
-          \ 'col': 1,
-          \ 'width': l:width,
-          \ 'height': l:height,
-          \ 'style': 'minimal',
-          \ }
-    let s:popup_id = nvim_open_win(l:buf, v:false, l:opts)
-    call nvim_win_set_option(s:popup_id, 'colorcolumn', '')
-    " Add padding to the left and right of each text line.
-    call map(a:lines, {_, val -> ' ' . val . ' '})
-    call nvim_buf_set_lines(winbufnr(s:popup_id), 1, -1, v:false, a:lines)
-    call nvim_buf_set_option(l:buf, 'modifiable', v:false)
-    " Close the floating window upon a cursor move.
-    " vint: -ProhibitAutocmdWithNoGroup
-    " https://github.com/Kuniwak/vint/issues/285
-    "autocmd CursorMoved <buffer> ++once call s:closeHoverPopup()
-    " vint: +ProhibitAutocmdWithNoGroup
-    " Also close the floating window when focussed into with the escape key.
-    call nvim_buf_set_keymap(l:buf, 'n', '<Esc>', ':close<CR>', {})
-  else
-    let s:popup_id = popup_atcursor(a:lines, {
-          \ 'padding': [1, 1, 1, 1],
-          \ 'border': [0, 0, 0, 0],
-          \ 'moved': 'any',
-          \ })
-    if g:lsc_enable_popup_syntax
-      call setbufvar(winbufnr(s:popup_id), '&filetype', a:filetype)
-    endif
-  end
+  let s:popup_id = popup_atcursor(a:lines, {
+        \ 'padding': [1, 1, 1, 1],
+        \ 'border': [0, 0, 0, 0],
+        \ 'moved': 'any',
+        \ })
+  if g:lsc_enable_popup_syntax
+    call setbufvar(winbufnr(s:popup_id), '&filetype', a:filetype)
+  endif
 endfunction
 
 function! s:closeHoverPopup() abort
-  if has('nvim')
-    if win_id2win(s:popup_id) > 0 && nvim_win_is_valid(s:popup_id)
-      call nvim_win_close(s:popup_id, v:true)
-    endif
-  else
-    call popup_close(s:popup_id)
-  end
+  call popup_close(s:popup_id)
   let s:popup_id = 0
 endfunction
 
