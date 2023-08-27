@@ -4,13 +4,14 @@ import autoload "./server.vim"
 import autoload "./util.vim"
 import autoload "./gates.vim"
 
+def SkipCb(result: dict<any>): void
+    return
+enddef
+
 export def SignatureHelp(): void
     lsc#common#FileFlushChanges()
     var params = lsc#params#documentPosition()
-    try
-        server.UserRequest('textDocument/signatureHelp', params, gates.CreateOrGet('SignatureHelp', ShowHelp, gates.SkipCb))
-    catch
-    endtry
+    server.UserRequest('textDocument/signatureHelp', params, gates.CreateOrGet('SignatureHelp', ShowHelp, SkipCb))
 enddef
 
 export def ShowHelp(signatureHelp_result: dict<any>): void
